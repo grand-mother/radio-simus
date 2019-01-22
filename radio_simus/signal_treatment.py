@@ -60,23 +60,16 @@ def _Filtering(x, fs, lowcut, highcut):
     return butter_bandpass_filter(x, lowcut, highcut, fs, order=5)
 
 
-def filter(f=None, d=None, FREQMIN=50.e6, FREQMAX=200.e6):
+def filter(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
     """Filters signals at specific bandwith (by default 50-200MHz)
 
-    inputs : (file of voltages or array of voltages, frequency min, frequency max)
+    inputs : (array of voltages, frequency min, frequency max)
     outputs : filtered voltages
     """
-
-    if d is None:  # No array of data
-        if f is None:  # No file is given
-            raise RuntimeError("No data input! Abort.")
-        else:  # Load file
-            d = np.loadtxt(f)
-    # Now filter
-    t = d[:, 0]
+    t = voltages[:, 0]
     dt = np.mean(np.diff(t))  # Compute time step
     fs = 1 / dt
-    v = np.array(d[:, 1:])  # Raw signal
+    v = np.array(voltages[:, 1:])  # Raw signal
     nCh = np.shape(v)[1]
     vout = np.zeros(shape=(len(t), nCh))
     res = []
