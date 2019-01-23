@@ -21,7 +21,9 @@ if __name__ == "__main__":
     setup_package(
         # Framework arguments
         __file__, (MAJOR, MINOR, MICRO), EXTRA_CLASSIFIERS,
-
+        install_requires=[
+          'numpy>=1.16', 'scipy>=1.2'
+      ]
         # Vanilla setuptools.setup arguments can be added below,
         # e.g. `entry_points` for executables or `data_files`
     )

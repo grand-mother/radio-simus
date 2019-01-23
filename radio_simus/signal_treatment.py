@@ -1,4 +1,3 @@
-import glob
 import numpy as np
 from scipy.signal import butter, lfilter, resample
 from scipy.fftpack import rfft, irfft, rfftfreq
