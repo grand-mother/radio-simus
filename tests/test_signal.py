@@ -29,14 +29,21 @@ class SignalTest(unittest.TestCase):
 
     def test_digitization(self):
         n = 1000
+
+        def subtest(step, tsampling):
+            input = np.zeros((4, n))
+            input[0, :] = np.arange(0, n * step, step)
+            input[1:, :] = np.random.standard_normal(size=(3, n))
+            return st.digitization(input, tsampling), input
+
         step = np.random.randint(1, 10)
         tsampling = np.random.randint(1, 10) * step
-        input = np.zeros((4, n))
-        input[0, :] = np.arange(0, n * step, step)
-        input[1:, :] = np.random.standard_normal(size=(3, n))
-        res = st.digitization(input, tsampling)
+        res, input = subtest(step, tsampling)
         self.assertLessEqual(res[0, 1] - res[0, 0] - tsampling, 1.e-9)
         self.assertEqual(input.shape[0], res.shape[0])
+        with self.assertRaises(ValueError) :
+            subtest(step, np.pi)
+
 
     def test_filter(self):
         n = 1000
