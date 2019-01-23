@@ -27,22 +27,26 @@ def digitization(voltages, tsampling):
     outputs : digitized voltages
     """
     dt = voltages[0, 1] - voltages[0, 0]
-    num = len(voltages[0,:]) * int(tsampling/dt)
-    if tsampling % dt != 0 : raise ValueError("Sampling time not multiple of simulation time")
-    t_sampled = resample(voltages[0,:], num)
-    Vx_sampled = resample(voltages[1,:], num)
-    Vy_sampled = resample(voltages[2,:], num)
-    Vz_sampled = resample(voltages[3,:], num)
+    num = len(voltages[0, :]) * int(tsampling / dt)
+    if tsampling % dt != 0:
+        raise ValueError("Sampling time not multiple of simulation time")
+    t_sampled = resample(voltages[0, :], num)
+    Vx_sampled = resample(voltages[1, :], num)
+    Vy_sampled = resample(voltages[2, :], num)
+    Vz_sampled = resample(voltages[3, :], num)
     return np.array([t_sampled, Vx_sampled, Vy_sampled, Vz_sampled])
 
 # Filter the voltages at a bandwidth
 ################################################################
 
+
 def _butter_bandpass_filter(data, lowcut, highcut, fs):
     """subfunction of filt
     """
-    b, a = butter(5, [lowcut / (0.5 * fs), highcut / (0.5 * fs)], btype='band') #(order, [low, high], btype)
+    b, a = butter(5, [lowcut / (0.5 * fs), highcut / (0.5 * fs)],
+                  btype='band')  # (order, [low, high], btype)
     return lfilter(b, a, data)
+
 
 def filter(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
     """Filters signals at specific bandwith (by default 50-200MHz)
