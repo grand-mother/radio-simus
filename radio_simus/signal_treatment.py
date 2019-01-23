@@ -1,6 +1,6 @@
 import glob
 import numpy as np
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, lfilter, resample
 from scipy.fftpack import rfft, irfft, rfftfreq
 
 __all__ = ["add_noise", "digitization", "filter"]
@@ -20,45 +20,29 @@ def add_noise(vrms, voltages):
     return voltages
 
 
-def digitization(voltages, tstep, tsampling):
+def digitization(voltages, tsampling):
     """Digitize the voltages at an specific sampling
 
-    inputs : (voltages, time step, sampling time)
+    inputs : (voltages, sampling rate)
     outputs : digitized voltages
     """
-    ratio = int(round(tsampling / tstep))
-    ind = np.arange(0, len(voltages[:, 0]), ratio)
-    vf = voltages[ind, 1:]
-    tf = voltages[ind, 0]
-    return np.array([tf, vf[:, 0], vf[:, 1], vf[:, 2]]).T
+    dt = voltages[0, 1] - voltages[0, 0]
+    num = len(voltages[0,:]) * int(tsampling/dt)
+    if tsampling % dt != 0 : raise ValueError("Sampling time not multiple of simulation time")
+    t_sampled = resample(voltages[0,:], num)
+    Vx_sampled = resample(voltages[1,:], num)
+    Vy_sampled = resample(voltages[2,:], num)
+    Vz_sampled = resample(voltages[3,:], num)
+    return np.array([t_sampled, Vx_sampled, Vy_sampled, Vz_sampled])
 
 # Filter the voltages at a bandwidth
 ################################################################
 
-
-def _butter_bandpass(lowcut, highcut, fs, order):
+def _butter_bandpass_filter(data, lowcut, highcut, fs):
     """subfunction of filt
     """
-    nyq = 0.5 * fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    b, a = butter(order, [low, high], btype='band')
-    return b, a
-
-
-def _butter_bandpass_filter(data, lowcut, highcut, fs, order):
-    """subfunction of filt
-    """
-    b, a = butter_bandpass(lowcut, highcut, fs, order)
-    y = lfilter(b, a, data)
-    return y
-
-
-def _Filtering(x, fs, lowcut, highcut):
-    """subfunction of filt
-    """
-    return butter_bandpass_filter(x, lowcut, highcut, fs, order=5)
-
+    b, a = butter(5, [lowcut / (0.5 * fs), highcut / (0.5 * fs)], btype='band') #(order, [low, high], btype)
+    return lfilter(b, a, data)
 
 def filter(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
     """Filters signals at specific bandwith (by default 50-200MHz)
@@ -66,24 +50,24 @@ def filter(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
     inputs : (array of voltages, frequency min, frequency max)
     outputs : filtered voltages
     """
-    t = voltages[:, 0]
-    dt = np.mean(np.diff(t))  # Compute time step
-    fs = 1 / dt
-    v = np.array(voltages[:, 1:])  # Raw signal
-    nCh = np.shape(v)[1]
-    vout = np.zeros(shape=(len(t), nCh))
+    t = voltages[0, :]
+    v = np.array(voltages[1:, :])  # Raw signal
+
+    fs = 1 / np.mean(np.diff(t))  # Compute frequency step
+    nCh = np.shape(v)[0]
+    vout = np.zeros(shape=(nCh, len(voltages[0, :])))
     res = []
     for i in range(nCh):
         vi = v[:, i]
-        vout[:, i] = Filtering(vi, fs, FREQMIN, FREQMAX)
+        vout[:, i] = _butter_bandpass_filter(vi, FREQMIN, FREQMAX, fs)
         imax = np.argmax(vout[:, i], axis=0)
     for i in range(nCh):
         vi = v[:, i]
-        vout[:, i] = Filtering(vi, fs, FREQMIN, FREQMAX)
+        vout[:, i] = _butter_bandpass_filter(vi, FREQMIN, FREQMAX, fs)
         imax = np.argmax(vout[:, i], axis=0)
         imin = np.argmin(vout[:, i], axis=0)
         res = res + [t[imax], vout[imax, i], t[imin], vout[imin, i]]
 
-    return np.array([t, vout[:, 0], vout[:, 1], vout[:, 2]]).T
+    return np.array([t, vout[0, :], vout[1, :], vout[2, :]])
 ##########################################################################
 ##########################################################################

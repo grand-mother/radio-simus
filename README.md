@@ -4,7 +4,7 @@
     One should edit the docs/README.md file instead.
 -->
 
-[![Coding style](https://img.shields.io/badge/pep8-100%25-brightgreen.svg)](https://github.com/grand-mother/radio-simus/blob/master/docs/.stats.json)
+[![Coding style](https://img.shields.io/badge/pep8-70%25-green.svg)](https://github.com/grand-mother/radio-simus/blob/master/docs/.stats.json)
 [![Code coverage](https://codecov.io/gh/grand-mother/radio-simus/branch/master/graph/badge.svg)](https://codecov.io/gh/grand-mother/radio-simus)
 [![Build status](https://travis-ci.com/grand-mother/radio-simus.svg?branch=master)](https://travis-ci.com/grand-mother/radio-simus)
 [![PyPi version](https://img.shields.io/pypi/v/g.svg)](https://pypi.org/project/grand-radio-simus)
