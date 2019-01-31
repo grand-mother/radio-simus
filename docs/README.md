@@ -8,16 +8,19 @@ _Add a brief description_
 
 ## Installation
 
+_GRAND packages require python3.7. If can be installed from the
+[tarball](https://www.python.org/downloads) on Linux or with brew on OSX._
+
 The latest stable version of this package can be installed from [PyPi][PYPI]
 using [pip][PIP], e.g. as:
 ```bash
-pip install --user grand-radio-simus
+pip3 install --user grand-radio-simus
 ```
 
 Alternatively one can also install the latest development commit directly from
 [GitHub][GITHUB], as:
 ```bash
-pip install --user git+https://github.com/grand-mother/radio-simus.git@master
+pip3 install --user git+https://github.com/grand-mother/radio-simus.git@master
 ```
 
 

@@ -7,6 +7,7 @@
 [![Coding style](https://img.shields.io/badge/pep8-100%25-brightgreen.svg)](https://github.com/grand-mother/radio-simus/blob/master/docs/.stats.json)
 [![Code coverage](https://codecov.io/gh/grand-mother/radio-simus/branch/master/graph/badge.svg)](https://codecov.io/gh/grand-mother/radio-simus)
 [![Build status](https://travis-ci.com/grand-mother/radio-simus.svg?branch=master)](https://travis-ci.com/grand-mother/radio-simus)
+[![Documentation](https://img.shields.io/badge/docs-35%25-yellow.svg)](https://grand-mother.github.io/site/reports.html?radio-simus/docs)
 [![PyPi version](https://img.shields.io/pypi/v/g.svg)](https://pypi.org/project/grand-radio-simus)
 
 # Radio simus
@@ -19,16 +20,19 @@ _Add a brief description_
 
 ## Installation
 
+_GRAND packages require python3.7. If can be installed from the
+[tarball](https://www.python.org/downloads) on Linux or with brew on OSX._
+
 The latest stable version of this package can be installed from [PyPi][PYPI]
 using [pip][PIP], e.g. as:
 ```bash
-pip install --user grand-radio-simus
+pip3 install --user grand-radio-simus
 ```
 
 Alternatively one can also install the latest development commit directly from
 [GitHub][GITHUB], as:
 ```bash
-pip install --user git+https://github.com/grand-mother/radio-simus.git@master
+pip3 install --user git+https://github.com/grand-mother/radio-simus.git@master
 ```
 
 
