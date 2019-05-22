@@ -17,6 +17,11 @@ _Add a brief description_
 
 <!-- Add here a description of the package -->
 
+## NOTES
+Open issues are marked with a TODO, Comments are marked with NOTE.
+Those scripts are still under devlopement and not yet working in the new framework.
+Tests for the script have still to be written.
+
 
 ## Installation
 
