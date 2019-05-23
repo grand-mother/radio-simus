@@ -15,15 +15,6 @@ from astropy.table import hstack
 def inputfromtxt(input_file_path):
     # I will move this function as soon as I know to where :)
 #===========================================================================================================
-    import os
-    from os.path import  join
-
-    import math
-
-
-    import linecache
-
-
     particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
     ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
