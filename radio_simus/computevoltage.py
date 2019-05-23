@@ -32,6 +32,7 @@ fr=np.arange(20,301,5)
 RLp, XLp = compute_ZL(fr*1e6)
 
 DISPLAY = 0
+print('ATTENTION: current version only valid for Cosmic Rays')  
 
 # Load antenna response files
 freespace = 0
@@ -356,6 +357,8 @@ def compute(opt_input,path, zenith_sim, azimuth_sim):
         ### APPLY ANTENNA RESPONSE
         trace = compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
 
+        ### TODO: add here peak-to-peak computation, but how do we wann store it...
+        
         
         ###plots
         if DISPLAY==1:
@@ -432,4 +435,4 @@ if __name__ == '__main__':
     print("VOLTAGE COMPUTATION STARTED")
     compute(opt_input,path, zenith_sim, azimuth_sim)
     
-print("VOLTAGE COMPUTED")
+    print("VOLTAGE COMPUTED")
