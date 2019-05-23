@@ -1,5 +1,5 @@
 ################################
-#### by A. Zilles, last update 22 May 2019
+#### by A. Zilles
 ################################
 
 
@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 # from GRAND packages
 from signal_treatment import filters, add_noise,digitization, Digitization_2
 from computevoltage import get_voltage, compute_antennaresponse
+from in_out import inputfromtxt
 
 
 ### HARDCODED - TODO to be substituted
@@ -29,10 +30,10 @@ Vrms = 28 #muV before filtering - NOTE: should be substituted by function return
 
 
 #===========================================================================================================
-def run(opt_input, efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
+def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         ''' 
         Do the full chain once:
-        1. READ IN THE SIMULATED ELECTRIC FIELD TRACE
+        1. READ IN THE SIMULATED ELECTRIC FIELD TRACE (at higher level) at hand over as parameter
         2. APPLY ANTENNA RESPONSE
         3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
         4. FILTER THE TRACE TO THE 50-200MHz WINDOW
@@ -43,8 +44,6 @@ def run(opt_input, efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., D
         
         Arguments:
         ----------
-        opt_input: str
-            manual, txt etc - not yet fixed, needed for read-in
         efield: np array
             electric field trace
         zenith_sim: float
@@ -63,11 +62,8 @@ def run(opt_input, efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., D
         
         '''
         
-
-        
         
         ### 2. APPLY ANTENNA RESPONSE
-        
         trace = compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
         
         
@@ -178,7 +174,7 @@ def run(opt_input, efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., D
 
 if __name__ == '__main__':
 
-    if ( len(sys.argv)<7 ):
+    if ( len(sys.argv)<1 ):
         print("""
         This is an example script how to use the simulation chain (run() function) starting with the electric field to the voltage trace detected at the antenna level. 
         -- So far just working for a single antenna.
@@ -188,7 +184,8 @@ if __name__ == '__main__':
         Usage for single antenna:
             python full_chain.py [path to traces] [antID] [zenith] [azimuth] [alpha] [beta]
             
-            example: python full_chain.py ./ 58 85 205 10 5 
+            example: python full_chain.py ./ 58 85 205 10 5 (in manual mode)
+                     python full_chain.py ./                (in txt mode)
             
         """)
         sys.exit(0)
@@ -196,52 +193,90 @@ if __name__ == '__main__':
     ## Plotting option
     PLOT=1
 
-
     #folder containing the trace
     path = sys.argv[1] 
-    # Antenna ID
-    antID = sys.argv[2]
     
-    ### 1. READ IN THE SIMULATED ELECTRIC FIELD TRACE
-    efieldtxt=path+'/a'+str(antID)+'.trace'
-    print('\n**  Efield file:',efieldtxt)
+    ### READ-IN Options, TODO to be set as a parameter
+    opt_input = 'txt' 
+    
+    if opt_input=='txt': # for antenna arrays
+        # Read the ZHAireS input (.inp) file to extract the primary type, the energy, the injection height and the direction
+        # NOTE alpha and beta are now hardcoded for whole array - to be fixed
+        inp_file = str(sys.argv[1])
+        showerID=str(inp_file).split("/")[-2] # should be equivalent to folder name
+        inputfile = path+'/inp/'+showerID+'.inp'
+        zenith_sim,azimuth_sim,energy,injh,primarytype= inputfromtxt(inputfile)
+        alpha = 5.
+        beta = 0.
+        print('Attention: alpha, beta have to be adjusted')
         
-    # ------ LOADING FROM TEXT FILE
-    try:
-	# Loadinfg traces
-       #time1_sim, Ex_sim,Ey_sim,Ez_sim = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
-       efield = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
-
-    except IOError:
-       print('IOError: file not found')
-    # ------- NOTE to be substituted by loading from hdf5 file
-    
-    
-    
-    opt_input = 'manual' # TODO: default for now
-    #if opt_input=='txt':
-        ## Read the ZHAireS input (.inp) file to extract the primary type, the energy, the injection height and the direction
-        #inp_file = str(sys.argv[1])
-        #zenith_sim,azimuth_sim = inputfromtxt(inp_file)
-
-    if opt_input=='manual':
-        zenith_sim = float(sys.argv[3]) #deg
-        azimuth_sim = float(sys.argv[4]) #deg
-        alpha = float(sys.argv[5]) #deg
-        beta = float(sys.argv[6]) #deg
+        ### define the loop
+        # NOTE ZHaires, antenna positions given in m, but here doesnt matter 
+        positions=np.genfromtxt(path + '/antpos.dat') # Zhaires
+        start=0
+        end=len(positions)
         
-    ### Start the run
-    voltage = run(opt_input, efield, zenith_sim, azimuth_sim, alpha, beta, PLOT)
 
-    ### save as txt file for later use 
-    # ------- NOTE to be substituted by loading from hdf5 file
-    name = "./out_{:}.dat".format(antID)#os.path.join('./', )
-    with open(name, "w+") as FILE:
-        for i in range(0, len(voltage[0])):
-            args = (voltage[0, i], voltage[1, i], voltage[2, i], voltage[3, i])
+    if opt_input=='manual': # for single antennas
+        antID = sys.argv[2]# Antenna ID
+        zenith_sim = float(sys.argv[3]) #deg, GRAND conv.
+        azimuth_sim = float(sys.argv[4]) #deg, GRAND conv.
+        alpha = float(sys.argv[5]) #deg, defining slope
+        beta = float(sys.argv[6]) #deg, defining slope
+        
+        start = antID
+        end = antID+1
+        
+    #if opt_input=='hdf5':# TODO
+        #from astropy.table import Table
+        ## shower info read-in from header info
+    
+
+    print('Now looping over',end-start,'antenna(s) in folder',path)
+    for l in range(start,end):   
+        
+        ### 1. READ IN THE SIMULATED ELECTRIC FIELD TRACE
+            
+        # ------- NOTE to be substituted by loading from hdf5 file
+        if opt_input=='manual' or 'txt':
             try:
-                print("%e	%1.3e	%1.3e	%1.3e" % args, end='\n', file=FILE)
-            except SyntaxError:
-                print >> FILE, "%1.3e	%1.3e	%1.3e	%1.3e" % args
+                ## Define the path to the electric field trace
+                ## NOTE: Zhaires input: t / ns, Ex / muV/m, Ey / muV/m, Ez / muV/m 
+                efieldtxt=path+'/a'+str(l)+'.trace' # ZHaires
+                print('\n**  Efield file:',efieldtxt)
                 
+                # Loading traces
+                efield = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
                 
+                # NOTE: that CoREAS is working in cgs units -> convert electric field in muV/m and time in ns
+                #       Antenna positions are given in cm -> convert to m (not needed here) 
+
+            except IOError:
+                print('IOError: file not found')       
+        
+        #if opt_input=='hdf5':# TODO
+            #name = path+'/table'+str(l)+'.hdf5'
+            #efield = Table.read(name, path=name)
+            
+            
+        ### Start the run
+        try:
+            voltage = run(efield, zenith_sim, azimuth_sim, alpha, beta, PLOT)
+
+
+            ### save as txt file for later use in <path>
+            # ------- NOTE to be substituted by loading from hdf5 file
+            if opt_input=='manual' or 'txt':
+                name = path+"/out_{:}.dat".format(l)#os.path.join('./', )
+                with open(name, "w+") as FILE:
+                    for i in range(0, len(voltage[0])):
+                        args = (voltage[0, i], voltage[1, i], voltage[2, i], voltage[3, i])
+                        try:
+                            print("%e	%1.3e	%1.3e	%1.3e" % args, end='\n', file=FILE)
+                        except SyntaxError:
+                            print >> FILE, "%1.3e	%1.3e	%1.3e	%1.3e" % args
+            
+            #if opt_input=='hdf5':# TODO
+                    
+        except IndexError:
+            continue      
