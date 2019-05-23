@@ -29,7 +29,7 @@ Vrms = 28 #muV before filtering - NOTE: should be substituted by function return
 
 
 #===========================================================================================================
-def run(opt_input,path,l, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
+def run(opt_input, efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         ''' 
         Do the full chain once:
         1. READ IN THE SIMULATED ELECTRIC FIELD TRACE
@@ -45,10 +45,8 @@ def run(opt_input,path,l, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DI
         ----------
         opt_input: str
             manual, txt etc - not yet fixed, needed for read-in
-        path: str
-            path to folder containing traces
-        l: int
-            antenna ID
+        efield: np array
+            electric field trace
         zenith_sim: float
             zenith of shower in deg (GRAND)
         azimuth_sim: float
@@ -66,20 +64,6 @@ def run(opt_input,path,l, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DI
         '''
         
 
-        ### 1. READ IN THE SIMULATED ELECTRIC FIELD TRACE
-        efieldtxt=path+'/a'+str(l)+'.trace'
-        print('\n**  Efield file:',efieldtxt)
-        
-        # ------ LOADING FROM TEXT FILE
-        try:
-	    # Loadinfg traces
-            #time1_sim, Ex_sim,Ey_sim,Ez_sim = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
-            efield = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
-
-        except IOError:
-            print('IOError: file not found')
-        
-        # ------- NOTE to be substituted by loading from hdf5 file
         
         
         ### 2. APPLY ANTENNA RESPONSE
@@ -218,6 +202,22 @@ if __name__ == '__main__':
     # Antenna ID
     antID = sys.argv[2]
     
+    ### 1. READ IN THE SIMULATED ELECTRIC FIELD TRACE
+    efieldtxt=path+'/a'+str(antID)+'.trace'
+    print('\n**  Efield file:',efieldtxt)
+        
+    # ------ LOADING FROM TEXT FILE
+    try:
+	# Loadinfg traces
+       #time1_sim, Ex_sim,Ey_sim,Ez_sim = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
+       efield = np.loadtxt(efieldtxt,usecols=(0,1,2,3),unpack=True)
+
+    except IOError:
+       print('IOError: file not found')
+    # ------- NOTE to be substituted by loading from hdf5 file
+    
+    
+    
     opt_input = 'manual' # TODO: default for now
     #if opt_input=='txt':
         ## Read the ZHAireS input (.inp) file to extract the primary type, the energy, the injection height and the direction
@@ -231,9 +231,10 @@ if __name__ == '__main__':
         beta = float(sys.argv[6]) #deg
         
     ### Start the run
-    voltage = run(opt_input,path,antID, zenith_sim, azimuth_sim, alpha, beta, PLOT)
+    voltage = run(opt_input, efield, zenith_sim, azimuth_sim, alpha, beta, PLOT)
 
-    ### save as txt file for later use
+    ### save as txt file for later use 
+    # ------- NOTE to be substituted by loading from hdf5 file
     name = "./out_{:}.dat".format(antID)#os.path.join('./', )
     with open(name, "w+") as FILE:
         for i in range(0, len(voltage[0])):
