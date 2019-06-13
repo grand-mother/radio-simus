@@ -19,8 +19,15 @@ _Add a brief description_
 
 ## NOTES
 Open issues are marked with a TODO, Comments are marked with NOTE.
-Those scripts are still under devlopement and not yet working in the new framework.
+Those scripts are still under devlopement and not yet working in the new framework!
 Tests for the script have still to be written.
+
+If you find any bug etc, please raise an issue and we will try to fix it asap. 
+This will give us the chance to improve the coding and to think about the best way to solve the problem.
+
+At the moment we can just guarantee that the script work with python3.7.
+
+ATTENTION: The electric field should be given un muV/s!
 
 
 ## Installation

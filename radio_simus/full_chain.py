@@ -279,4 +279,5 @@ if __name__ == '__main__':
             #if opt_input=='hdf5':# TODO
                     
         except IndexError:
+            print('--- ATTENTION: no voltage trace computed or stored')
             continue      

@@ -4,6 +4,7 @@
 
 #!/usr/bin/env python
 
+import os
 import numpy as np
 import sys
 import glob
@@ -18,6 +19,10 @@ def inputfromtxt(input_file_path):
     particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
     ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
+    if os.path.isfile(input_file_path) ==  False:  # File does not exist 
+        print('--- ATTENTION: inp-file does not exist')
+        exit()
+        
     #datafile = file(input_file_path) # why it is not working...
     datafile = open(input_file_path, 'r') 
 

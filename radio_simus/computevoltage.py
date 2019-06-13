@@ -1,8 +1,9 @@
 # HandsOn session 19/04/2019
 #
 
-##### AZ: 16.05.2019 compute function - introduce compute_antennaresponse()
-##### AZ: vf = np.vstack((timeNS,voltage_EW,voltage_NS,voltage_vert)) --- EW and NS switched - corrected
+##### AZ: 13.06.2019 compute function - introduce compute_antennaresponse()
+##### AZ: vf = np.vstack((timeNS,voltage_EW,voltage_NS,voltage_vert)) --- EW and NS switched - corrected 16.05.19
+#### read in from input file fixed
 
 #!/usr/bin/env python
 import os
@@ -32,7 +33,7 @@ fr=np.arange(20,301,5)
 RLp, XLp = compute_ZL(fr*1e6)
 
 DISPLAY = 0
-print('ATTENTION: current version only valid for Cosmic Rays')  
+print('--- ATTENTION: current version only valid for Cosmic Rays')  
 
 # Load antenna response files
 freespace = 0
@@ -285,14 +286,23 @@ def inputfromtxt(input_file_path):
     particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
     ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
-    datafile = glob.glob(input_file_path+'/*.inp')[0]
-    if os.path.isfile(datafile) ==  False:  # File exists 
-      print('Could not find ZHaireS input file in folder',input_file_path,'! Aborting.')
-      exit()
-    else:
-      print('Now scanning',datafile)
-    # ToDo: implement line-by-line reading  
-    for line in datafile:
+
+    showerID=str(input_file_path).split("/")[-2] # should be equivalent to folder name
+    datafile = input_file_path+'/inp/'+showerID+'.inp'
+    #datafile = glob.glob(input_file_path+'/inp/*.inp')[0]
+    if os.path.isfile(datafile) ==  False:  # File does not exist 
+        try:
+            datafile = input_file_path+'/'+showerID+'.inp' 
+            if os.path.isfile(datafile) ==  True:  # File does not exist 
+                print('\n Get shower parameters from ', datafile )
+        except IOError:
+            print('--- ATTENTION: Could not find ZHaireS input file in folder',datafile,'! Aborting.')
+            exit()
+    else: # File exists
+      print('\n Get shower parameters from ', datafile )
+    # ToDo: implement line-by-line reading 
+    data = open(datafile, 'r') 
+    for line in data:
         if 'PrimaryZenAngle' in line:
             zen=float(line.split(' ',-1)[1])
             zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
@@ -303,11 +313,15 @@ def inputfromtxt(input_file_path):
     try:
         zen
     except NameError:
+        print('--- ATTENTION: zenith could not be read-in')
         zen = 100. #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km by ZHAireS
     try:
         azim
     except NameError:
+        print('--- ATTENTION: azimuth could not be read-in')
         azim = 0
+        
+    print('Shower direction from input file -- azmimuth/deg ='+str(azim)+' , zenith/deg = '+str(zen))
 
     return zen,azim
 
@@ -342,7 +356,7 @@ def compute(opt_input,path, zenith_sim, azimuth_sim):
     print('Now looping over',end-start,'antenna(s) in folder',path)
     for l in range(start,end):
          
-        efieldtxt='a'+str(l)+'.trace'
+        efieldtxt=path+'/a'+str(l)+'.trace'
         print('\n** Antenna',l,', Efield file:',efieldtxt)
 
         try:
@@ -395,14 +409,14 @@ def compute(opt_input,path, zenith_sim, azimuth_sim):
 #===========================================================================================================
 if __name__ == '__main__':
 
-    print('Nb of paras=',len(sys.argv))
+    #print('Nb of paras=',len(sys.argv))
     if ((str(sys.argv[2])=="manual") & (len(sys.argv)<5)) or ((str(sys.argv[2])=="txt") & (len(sys.argv)<3)):
         print("""
 	Wrong minimum number of arguments. All angles are to be expressed in degrees and in GRAND convention.
         Usage:
         if ZHAireS inp file input (Several antennas):
-            python computevoltage.py [path to traces]  [input_option]  [opt: antenna ID] [opt: antenna x,y,z,alpha,beta]
-            example: python computevoltage.py ./ txt  7 100 100 1000 10 5
+            python computevoltage.py [path to traces]  [input_option]
+            example: python computevoltage.py ./ txt 
         if manual input (Single antenna):
             python computevoltage.py [path to traces] [input_option] [zenith] [azimuth] [opt: alpha,beta] [opt: antenna ID]]
             example: python computeVoltage.py ./  manual 85 205 10 5
@@ -413,11 +427,10 @@ if __name__ == '__main__':
         ## -> produces a new json file with copying the original one, but saves as well additional informations as p2p-voltages, and peak times and values in *.voltage.json in the same folder as the original json file
         sys.exit(0)
 
-    print("READING INPUT PARAMETERS")
 
     #folder containing the traces and where the output should go to
     path=sys.argv[1] 
-    print("path=",path)
+    print("path to traces=",path)
     
     # Decide where to retrieve the shower parameters : txt for ZHAireS input file or manual to hand them over by hand
     opt_input = str(sys.argv[2])
