@@ -71,6 +71,7 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         #from invert_computevoltage import compute_electicfield
         #electric = compute_electicfield(trace, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
         
+        print(trace)
 
         ####plots
         if DISPLAY==1:
@@ -109,6 +110,7 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         #Vrms = 28 #muV before filtering - NOTE: should be substituted by function returning the value
         trace = add_noise(Vrms, trace) # remove tranposed in signal_treatment
                        
+        print(trace)
 
         if DISPLAY==1:
             	    
@@ -197,7 +199,7 @@ if __name__ == '__main__':
     path = sys.argv[1] 
     
     ### READ-IN Options, TODO to be set as a parameter
-    opt_input = 'txt' 
+    opt_input = 'manual' 
     
     if opt_input=='txt': # for antenna arrays
         # Read the ZHAireS input (.inp) file to extract the primary type, the energy, the injection height and the direction
