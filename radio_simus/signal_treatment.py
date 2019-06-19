@@ -20,8 +20,6 @@ def add_noise(vrms, voltages):
     """
     voltages[1:,:] = voltages[1:,:] + \
         np.random.normal(0, vrms, size=np.shape(voltages[1:,:]))
-    return voltages
-
 
 def digitization(voltages, tsampling):
     """Digitize the voltages at an specific sampling
