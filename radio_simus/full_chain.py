@@ -218,7 +218,7 @@ if __name__ == '__main__':
         
 
     if opt_input=='manual': # for single antennas
-        antID = sys.argv[2]# Antenna ID
+        antID = int(sys.argv[2])# Antenna ID
         zenith_sim = float(sys.argv[3]) #deg, GRAND conv.
         azimuth_sim = float(sys.argv[4]) #deg, GRAND conv.
         alpha = float(sys.argv[5]) #deg, defining slope
