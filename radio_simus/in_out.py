@@ -5,23 +5,51 @@
 #!/usr/bin/env python
 
 import os
+from os.path import split, join, realpath
 import numpy as np
 import sys
 import glob
-from astropy.table import Table
-from astropy.table import hstack
+
+from astropy import units as u
+muV_m = u.u * u.V / u.m
 
 #===========================================================================================================
 #===========================================================================================================
 def inputfromtxt(input_file_path):
     # I will move this function as soon as I know to where :)
 #===========================================================================================================
+    '''
+    Get shower parameter from inp file for zhaires simulations
+    
+    Parameters:
+        input_file_path: str
+            path of inp file
+        
+    Returns:
+        zen: float
+            zenith, deg in GRAND conv.
+        azim: float
+            azimuth, deg in GRAND conv.
+        energy: float
+            primary energy in eV
+        injh: float
+            in meters, 100km for CRs
+        primarytype: str
+            'proton' or 'iron'
+        core: numpy array
+            core position in meters
+        task: str
+            ID of shower
+    '''
+    
     particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
     ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
+
+    print(input_file_path)
     if os.path.isfile(input_file_path) ==  False:  # File does not exist 
         print('--- ATTENTION: inp-file does not exist')
-        exit()
+        #exit()
         
     #datafile = file(input_file_path) # why it is not working...
     datafile = open(input_file_path, 'r') 
@@ -47,8 +75,19 @@ def inputfromtxt(input_file_path):
             primarytype = str(line.split(' ',-1)[1])
             if primarytype[-1]=='\n':
                 primarytype=primarytype[0:-1]
+            if primarytype[-1]=='\r':
+                primarytype=primarytype[0:-1]
         if 'AddSpecialParticle      RASPASSMulti' in line:
             RASPASSMulti_line = line
+        if 'TaskName' in line:
+            task = str(line.split(' ',-1)[1])
+            if task[-1]=='\n':
+                task=task[0:-1]
+            if task[-1]=='\r':
+                task=task[0:-1]
+        if '#Core Position:' in line:
+            offset = line.split(' ',-1)
+            core = np.array([float(offset[2]), float(offset[3]), float(offset[4])])
 
     try:
         injh
@@ -63,6 +102,14 @@ def inputfromtxt(input_file_path):
         primarytype
     except NameError:
         primarytype = None
+    try:
+        task
+    except NameError:
+        task = None
+    try:
+        core
+    except NameError:
+        core = np.array([0.,0.,0.])
 
 
     if primarytype=='RASPASSMulti':
@@ -80,8 +127,167 @@ def inputfromtxt(input_file_path):
         primarytype='electron'
     elif primarytype=='pi0' or primarytype=='pi-' or primarytype=='pi+':
         primarytype='pion'
+    
+    # TODO: add observer level -- antenna height to be corrected
+    
 
-    return zen,azim,energy,injh,primarytype
+    if task:
+        if core.all:
+            return zen,azim,energy,injh,primarytype,core,task
+    if task:
+        return zen,azim,energy,injh,primarytype,task
+    else:
+        return zen,azim,energy,injh,primarytype
+#===========================================================================================================
+#===========================================================================================================
+
+#===========================================================================================================
+def inputfromtxt_coreas(input_file_path): # still ongoing work
+#===========================================================================================================
+    '''
+    Get shower parameter from inp and reas file for coreas simulations
+    
+    Parameters:
+        input_file_path: str
+            path of inp file
+        
+    Returns:
+        zen: float
+            zenith, deg in GRAND conv.
+        azim: float
+            azimuth, deg in GRAND conv.
+        energy: float
+            primary energy in eV
+        injh: not working
+            Coreas can not yet accept an injection height
+        primarytype: str
+            'proton' or 'iron'
+        core: numpy array
+            core position in meters
+        task: str
+            ID of shower
+    '''
+    
+    
+    if os.path.isfile(input_file_path) ==  False:  # File does not exist 
+        print('--- ATTENTION: inp-file does not exist')
+        exit()
+        
+    #datafile = file(input_file_path) # why it is not working...
+    datafile = open(input_file_path, 'r') 
+
+    for line in datafile:
+        # NOTE: CORSIKA/CoREAS angle = direction of propgation == GRAND conventions
+        if 'THETAP' in line:
+            zen=float(line.split('    ',-1)[1]) # propagation direction
+            zen=180-zen # to GRAND
+        if 'PHIP' in line:
+            azim = float(line.split('    ',-1)[1]) # propagation direction, already in GRAND
+        #if 'RASPASSHeight' in line:
+            #injh = float(line.split(' ',-1)[2])
+        if 'ERANGE' in line:
+            energy = line.split('    ',-1)[1] # GeV by default
+            if energy[-1]=='\n':
+                energy=energy[0:-1]
+            energy = float(energy) *1e9 # GeV to eV
+        if 'PRMPAR' in line:
+            primarytype = str(line.split('    ',-1)[1])
+            if primarytype[-1]=='\n':
+                primarytype=primarytype[0:-1]
+            if primarytype == str(14):
+                primarytype ='proton'
+            if primarytype == str(5626):
+                primarytype ='iron'
+
+    try:
+        energy
+    except NameError:
+        print('No primary energy found in the ZHAireS input text file.')
+        exit()
+    try:
+        primarytype
+    except NameError:
+        print('ATTENTION: No particle type found')
+        primarytype = None
+    try:
+        injh
+    except NameError:
+        injh = 100000.e2 #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km in cm
+            
+    # Get reas file
+    path, reas = os.path.split(input_file_path)
+    base = os.path.basename(reas)
+    base1 = os.path.splitext(base)
+    file_path= path[0:-4]+base1[0]+".reas"
+
+    datafile = open(file_path, 'r') 
+    for line in datafile:
+        if '#TASK' in line:
+            task = str(line.split('    ',-1)[1])
+            if task[-1]=='\n':
+                task=task[0:-1]
+            if task[-1]=='\r':
+                task=task[0:-1]
+            
+        if '#CORE' in line:
+            print(line)
+            offset = line.split('    ',-1)
+            if offset[-1]=='\n':
+                offset=offset[0:-1]
+            core = np.array([float(offset[1])/100, float(offset[2])/100, float(offset[3])/100]) # in cm to m 
+    try:
+        task
+    except NameError:
+        task = None
+    try:
+        core
+    except NameError:
+        core = None       
+        
+        
+    if task:
+        if core[0]:
+            return zen,azim,energy,injh,primarytype,core,task
+    if task:
+        return zen,azim,energy,injh,primarytype,task
+    else:
+        return zen,azim,energy,injh,primarytype
+    
+def _get_positions_coreas(path):
+    '''
+    read in antenna positions from Coreas simulations, wrt to sealevel
+    
+    Parameters:
+    datafile: str
+        path to folder of run
+    
+    Returns:
+    positions: numpy array
+        x,y,z component of antenna positions in meters
+    ID_ant: list
+        corresponding antenna ID for identification !- [0,1,2,....]
+    '''
+    datafile = open(path, 'r') 
+    x_pos1=[]
+    y_pos1=[]
+    z_pos1=[]
+    ID_ant=[]
+    positions=[]
+    for line in datafile:
+    # Coreas
+        if 'AntennaPosition =' in line:
+            x_pos1.append(float(line.split('    ',-1)[1])/100.) #*u.cm) # cm to m
+            y_pos1.append(float(line.split('    ',-1)[2])/100.) #*u.cm) # cm to m
+            z_pos1.append(float(line.split('    ',-1)[3])/100.) #*u.cm) # cm to m
+            ID_ant.append(str(line.split('    ',-1)[4]))
+        
+    x_pos1=np.asarray(x_pos1)
+    y_pos1=np.asarray(y_pos1)
+    z_pos1=np.asarray(z_pos1)
+    positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )
+        
+    print(ID_ant)    
+    return positions, ID_ant
 
 
 #===========================================================================================================
@@ -128,6 +334,7 @@ def _table_efield(efield, pos, info={}):
     efield_ant: astropy table
         
     '''
+    from astropy.table import Table
     
     info.update({'position': pos})
     efield_ant = Table(efield, names=('Time', 'Ex', 'Ey', 'Ez'), meta=info)
@@ -157,6 +364,7 @@ def _table_voltage(voltage, pos, info={}):
     voltage_ant: astropy table
     
     '''
+    from astropy.table import Table
     info.update({'position': pos})
     voltage_ant = Table(voltage, names=('Time', 'Vx', 'Vy', 'Vz'), meta=info)
     voltage_ant['Time'].unit= 's'
@@ -167,7 +375,9 @@ def _table_voltage(voltage, pos, info={}):
 
 #===========================================================================================================
 
-def load_trace_to_table(directory, index, pos=np.array([0,0,0]), info=None, suffix=".trace"):
+#def load_trace_to_table(directory, index, pos=np.array([0,0,0]), info=None, suffix=".trace"):
+def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", sim="zhaires"):
+
     """Load data from an electric field trace file to astropy table
 
    Parameters
@@ -186,12 +396,22 @@ def load_trace_to_table(directory, index, pos=np.array([0,0,0]), info=None, suff
         astropy table
     """
     
-    if suffix==".trace":
-        path = "{:}/a{:}{:}".format(directory, index, suffix)
+    #if suffix==".trace":
+    if content=="e":
+        #path = "{:}/a{:}{:}".format(directory, index, suffix)
         efield = np.loadtxt(path)
+        #zhaires: time in ns and efield in muV/m
+        if simus=="coreas": 
+            efield.T[0]*=1e9 # s to ns
+            ## coreas cgs to SI, V/m to muV/m
+            efield.T[1]*=2.99792458e4* 1.e6 
+            efield.T[2]*=2.99792458e4* 1.e6 
+            efield.T[3]*=2.99792458e4* 1.e6
+            
         efield_ant = _table_efield(efield, pos, info)
-    if suffix==".dat":
-        path = "{:}/out_{:}{:}".format(directory, index, suffix)
+    #if suffix==".dat":
+    if content=="v":
+        #path = "{:}/out_{:}{:}".format(directory, index, suffix)
         voltage = np.loadtxt(path)
         efield_ant = _table_voltage(voltage, pos)
 
@@ -212,62 +432,121 @@ if __name__ == '__main__':
         
         Usage for full antenna array:
             python full_chain.py [path to folder]
-        example: python in_out.py ./
+        example: python in_out.py ./ <zhaires/coreas>
             
         """)
         sys.exit(0)
-
-
+    
     # path to folder containing traces
     path = sys.argv[1]
     
-    # Get the antenna positions from file
-    positions = np.loadtxt(path+"antpos.dat")
-        
-    # Get shower info
+    # coreas or zhaires -- treatment differently
+    simus = str(sys.argv[2])
+   
     showerID=str(path).split("/")[-2] # should be equivalent to folder name
-    inputfile = path+'/inp/'+showerID+'.inp'
+    print(" --- Event : ", showerID, ", in ", path)
     
-    zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
+    task=None
+    core=None
+    
+    if simus == 'zhaires':
+        ####################################### NOTE zhaires
+        # Get the antenna positions from file
+        positions = np.loadtxt(path+"antpos.dat")
+            
+        # Get shower info
+        inputfile = path+showerID+'.inp'
+        print(inputfile)
+        try:
+            zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
+        except:
+            print("no TASK, no CORE")
+            inputfile = path+showerID+'.inp'
+            zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
+        
+        # coorection of shower core
+        positions = positions + np.array([core[0], core[1], 0.])
+
+        ending = "a*.trace"
+               
+
+    if  simus == 'coreas':
+        posfile = path +'SIM'+str(showerID)+'.list'
+        positions, ID_ant = _get_positions_coreas(posfile)
+        
+        inputfile = path+'/inp/SIM'+showerID+'.inp'
+        zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
+        
+        # coorection of shower core
+        positions = positions + np.array([core[0], core[1], 0.])
+
+        #redefinition of path to traces
+        path=path+'/SIM'+showerID+'_coreas/'
+        
+        ending = "raw_a*.dat"
+        
+        
     ########################
-    # TODO: load shower info from inp file
+    # load shower info from inp file
     ########################
     shower = {
-        "ID" : showerID,               # shower ID, number of simulation
-        "primary" : primarytype,        # primary (electron, pion)
-        "energy" : energy,               # EeV
-        "zenith" : zen,               # deg (GRAND frame)
-        "azimuth" : azim,                # deg (GRAND frame)
-        "injection_height" : injh    # m (injection height in the local coordinate system) 
-        }
-    #print(shower)
+            "ID" : showerID,               # shower ID, number of simulation
+            "primary" : primarytype,        # primary (electron, pion)
+            "energy" : energy,               # EeV
+            "zenith" : zen,               # deg (GRAND frame)
+            "azimuth" : azim,                # deg (GRAND frame)
+            "injection_height" : injh,    # m (injection height in the local coordinate system)
+            "task" : task,    # Identification
+            "core" : core,    # m, numpy array, core position
+            "simulation" : simus # coreas or zhaires
+            }
+    ####################################
+    print("shower", shower)
     
-    for ant in glob.glob(path+'*.trace'):
+        
+    from astropy.table import Table
+    from astropy.table import hstack
+    for ant in glob.glob(path+ending):
+        
+        if simus == 'zhaires':
+            ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
+            # define path for storage of hdf5 files
+            name = path+'/table'+str(ant_number)+'.hdf5'
+            print("Table saved as: ", name)
 
-        ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
-        
+        if  simus == 'coreas':
+            base=os.path.basename(ant)
+            # coreas
+            ID=(os.path.splitext(base)[0]).split("_")[1] # remove raw 
+            ant_number = ID_ant.index(ID)
+            # define path for storage of hdf5 files
+            name = path+'/../table'+str(ID)+'.hdf5'
+            print("Table saved as: ", name)
+            
+
         ##### read-in output of simulations
-        print("Getting electric field traces")
-        
         # read in trace from file and store as astropy table
-        a= load_trace_to_table(path, ant_number, pos=positions[ant_number], info=shower, suffix=".trace")
+        a= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="e", sim=simus) 
         #print(a.info)
         #print(a['Ex'])
         #print(a.meta)
         
-        # define a path, NOTE: I havent fully understood the path thingy
-        name = path+'/table'+str(ant_number)+'.hdf5'
-        
         # write astropy table to hdf5 file
         a.write(name, path=name, overwrite=True, serialize_meta=True) #append=True, 
         
-        # read in hdf5 file 
-        read_a = Table.read(name, path=name)
-        #print(read_a.meta['zenith'])
         
-        ### Just examples how output could handled 
-        #summe=a['Ex']+a['Ey']
-        #print(summe[-2])
+        ######## just testing part and examples how to use astropy tables
+        EXAMPLE=False
+        if EXAMPLE:
+                
+            # read in hdf5 file 
+            read_a = Table.read(name, path=name)
+            #print(read_a.meta['zenith'])
+            #print(read_a)
+            
+            ### Just examples how output could handled 
+            #summe=a['Ex']+a['Ey']
+            #print(summe[-2])
         
         DISPLAY=False
         if DISPLAY:
@@ -285,20 +564,24 @@ if __name__ == '__main__':
             plt.show()
             #plt.savefig('test.png', bbox_inches='tight')
             
+        # example how to add voltage as a column    
+        voltage=False
+        if voltage:
+            ##### Hopefully not needed any more if voltage traces are not stored as txt files in future
+            print("Adding voltages")
+            
+            # read in trace from file and store as astropy table - can be substituted by computevoltage operation
+            b= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="v")
+            
+            # stack electric field and voltage traces
+            from astropy.table import hstack
+            c = hstack([a, b])
+            
+            # Write to tables in hdf5 file
+            c.write(name, path=name, overwrite=True, serialize_meta=True) #append=True -- NOTE: Do I need that
 
-        ##### Hopefully not needed any more if voltage traces are not stored as txt files in future
-        print("Adding voltages")
+            # read in hdf5 file 
+            read_c = Table.read(name, path=name)
+            #print(read_b.meta, read_b.info)
+            print(read_c)
         
-        # read in trace from file and store as astropy table - can be substituted by computevoltage operation
-        b= load_trace_to_table(path, ant_number, pos=positions[ant_number], info=shower, suffix=".dat")
-        
-        # stack electric field and voltage traces
-        c = hstack([a, b])
-        
-        # Write to tables in hdf5 file
-        c.write(name, path=name, overwrite=True, serialize_meta=True) #append=True -- NOTE: Do I need that
-
-        # read in hdf5 file 
-        read_c = Table.read(name, path=name)
-        #print(read_b.meta, read_b.info)
-        print(read_c)
