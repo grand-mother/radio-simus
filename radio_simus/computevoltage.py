@@ -16,7 +16,7 @@ from modules import compute_ZL
 import pylab as plt
 import glob
 from signal_treatment import filters
-wkdir = './'
+wkdir = './GRAND_antenna/'
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
@@ -269,15 +269,19 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     Returns
     ---------
     numpy array
-        voltage traces, Time in s, Vx,Vy,Vz in muV
+        voltage traces, Time in ns, Vx,Vy,Vz in muV
     '''
-    
-    voltage_NS, timeNS = get_voltage(signal[0]*1e-9, signal[1], signal[2], signal[3], zenith_sim, azimuth_sim, alpha, beta, typ="X")
-    voltage_EW, timeEW = get_voltage(signal[0]*1e-9, signal[1], signal[2], signal[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
-    voltage_vert, timevert = get_voltage(signal[0]*1e-9, signal[1], signal[2], signal[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
+
+    voltage_NS, timeNS = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="X")
+    voltage_EW, timeEW = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
+    voltage_vert, timevert = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
         
-    # ATTENTION EW AND NS WERE SWITCHED    
-    return np.vstack((timeNS,voltage_NS,voltage_EW,voltage_vert))
+    print(voltage_NS)    
+    # ATTENTION EW AND NS WERE SWITCHED 
+    # ATTENTION voltage now in ns 
+    print("----- ATTENTION stacking changed, ATTENTION voltage time now in ns")
+    #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
+    return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)
     
 
 #===========================================================================================================
