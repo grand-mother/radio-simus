@@ -230,7 +230,7 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
                 task=task[0:-1]
             
         if '#CORE' in line:
-            print(line)
+            #print(line)
             offset = line.split('    ',-1)
             if offset[-1]=='\n':
                 offset=offset[0:-1]
@@ -276,17 +276,18 @@ def _get_positions_coreas(path):
     for line in datafile:
     # Coreas
         if 'AntennaPosition =' in line:
-            x_pos1.append(float(line.split('    ',-1)[1])/100.) #*u.cm) # cm to m
-            y_pos1.append(float(line.split('    ',-1)[2])/100.) #*u.cm) # cm to m
-            z_pos1.append(float(line.split('    ',-1)[3])/100.) #*u.cm) # cm to m
-            ID_ant.append(str(line.split('    ',-1)[4]))
+            #print(line,line.split('    ',-1) )
+            x_pos1.append(float(line.split('  ',-1)[1])/100.) #*u.cm) # cm to m
+            y_pos1.append(float(line.split('  ',-1)[2])/100.) #*u.cm) # cm to m
+            z_pos1.append(float(line.split('  ',-1)[3])/100.) #*u.cm) # cm to m
+            ID_ant.append(str(line.split('  ',-1)[4]))
         
     x_pos1=np.asarray(x_pos1)
     y_pos1=np.asarray(y_pos1)
     z_pos1=np.asarray(z_pos1)
     positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )
         
-    print(ID_ant)    
+    #print(ID_ant)    
     return positions, ID_ant
 
 
@@ -334,14 +335,21 @@ def _table_efield(efield, pos, info={}):
     efield_ant: astropy table
         
     '''
-    from astropy.table import Table
+    from astropy.table import Table, Column
     
     info.update({'position': pos})
-    efield_ant = Table(efield, names=('Time', 'Ex', 'Ey', 'Ez'), meta=info)
-    efield_ant['Time'].unit= 'ns'
-    efield_ant['Ex'].unit= 'muV/m'
-    efield_ant['Ey'].unit= 'muV/m'
-    efield_ant['Ez'].unit= 'muV/m'
+    #efield_ant = Table(efield, names=('Time', 'Ex', 'Ey', 'Ez'), meta=info)
+    #efield_ant['Time'].unit= 'ns'
+    #efield_ant['Ex'].unit= 'muV/m'
+    #efield_ant['Ey'].unit= 'muV/m'
+    #efield_ant['Ez'].unit= 'muV/m'
+    
+    a = Column(data=efield.T[0],unit=u.ns,name='Time')
+    b = Column(data=efield.T[1],unit=u.u*u.V/u.meter,name='Ex')
+    c = Column(data=efield.T[2],unit=u.u*u.V/u.meter,name='Ey')
+    d = Column(data=efield.T[3],unit=u.u*u.V/u.meter,name='Ez')
+    efield_ant = Table(data=(a,b,c,d,), meta=info)
+    
     return efield_ant
     
 #===========================================================================================================
@@ -352,7 +360,7 @@ def _table_voltage(voltage, pos, info={}):
     
     Parameters
     ---------
-    efield: numpy array
+    voltage: numpy array
         voltage trace
     pos: numpy array
         position of antenna 
@@ -364,13 +372,21 @@ def _table_voltage(voltage, pos, info={}):
     voltage_ant: astropy table
     
     '''
-    from astropy.table import Table
+    from astropy.table import Table, Column
+    
     info.update({'position': pos})
-    voltage_ant = Table(voltage, names=('Time', 'Vx', 'Vy', 'Vz'), meta=info)
-    voltage_ant['Time'].unit= 's'
-    voltage_ant['Vx'].unit= 'muV'
-    voltage_ant['Vy'].unit= 'muV'
-    voltage_ant['Vz'].unit= 'muV'
+    #voltage_ant = Table(voltage, names=('Time', 'Vx', 'Vy', 'Vz'), meta=info)
+    #voltage_ant['Time'].unit= 's'
+    #voltage_ant['Vx'].unit= 'muV'
+    #voltage_ant['Vy'].unit= 'muV'
+    #voltage_ant['Vz'].unit= 'muV'
+    
+    a = Column(data=voltage.T[0],unit=u.s,name='Time')
+    b = Column(data=voltage.T[1],unit=u.u*u.V,name='Vx')
+    c = Column(data=voltage.T[2],unit=u.u*u.V,name='Vy')
+    d = Column(data=voltage.T[3],unit=u.u*u.V,name='Vz')
+    voltage_ant = Table(data=(a,b,c,d,), meta=info)
+    
     return voltage_ant
 
 #===========================================================================================================
@@ -428,10 +444,10 @@ if __name__ == '__main__':
     if ( len(sys.argv)<1 ):
         print("""
         Example how to read in an electric field or voltage trace, load it to a table, write it into a hdf5 file and read the file.
-        -- produces hdf5 files
+        -- produces hdf5 files for zhaires and coreas simulations
         
         Usage for full antenna array:
-            python full_chain.py [path to folder]
+            python full_chain.py [path to event folder]
         example: python in_out.py ./ <zhaires/coreas>
             
         """)
@@ -456,7 +472,8 @@ if __name__ == '__main__':
             
         # Get shower info
         inputfile = path+showerID+'.inp'
-        print(inputfile)
+        #inputfile = path+"/inp/"+showerID+'.inp'
+        print("Check inputfile path: ", inputfile)
         try:
             zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
         except:
@@ -467,7 +484,7 @@ if __name__ == '__main__':
         # coorection of shower core
         positions = positions + np.array([core[0], core[1], 0.])
 
-        ending = "a*.trace"
+        ending_e = "a*.trace"
                
 
     if  simus == 'coreas':
@@ -483,7 +500,7 @@ if __name__ == '__main__':
         #redefinition of path to traces
         path=path+'/SIM'+showerID+'_coreas/'
         
-        ending = "raw_a*.dat"
+        ending_e = "raw_a*.dat"
         
         
     ########################
@@ -503,15 +520,18 @@ if __name__ == '__main__':
     ####################################
     print("shower", shower)
     
-        
+    import astropy
     from astropy.table import Table
     from astropy.table import hstack
-    for ant in glob.glob(path+ending):
+    import h5py
+    
+    
+    for ant in glob.glob(path+ending_e):
         
         if simus == 'zhaires':
             ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
             # define path for storage of hdf5 files
-            name = path+'/table'+str(ant_number)+'.hdf5'
+            name = path+'/table'+str(ant_number)+'.h5'
             print("Table saved as: ", name)
 
         if  simus == 'coreas':
@@ -520,7 +540,7 @@ if __name__ == '__main__':
             ID=(os.path.splitext(base)[0]).split("_")[1] # remove raw 
             ant_number = ID_ant.index(ID)
             # define path for storage of hdf5 files
-            name = path+'/../table'+str(ID)+'.hdf5'
+            name = path+'/../table_'+str(ID)+'.hdf5'
             print("Table saved as: ", name)
             
 
@@ -530,22 +550,29 @@ if __name__ == '__main__':
         #print(a.info)
         #print(a['Ex'])
         #print(a.meta)
+        #print(type(a))
+        #print(a)
+
         
         # write astropy table to hdf5 file
-        a.write(name, path=name, overwrite=True, serialize_meta=True) #append=True, 
+        #a.write(name, path=name, overwrite=True, compression=True, serialize_meta=True) #append=True, 
+        a.write(name, path='efield', format="hdf5",  serialize_meta=True)
         
+
         
         ######## just testing part and examples how to use astropy tables
         EXAMPLE=False
         if EXAMPLE:
-                
             # read in hdf5 file 
-            read_a = Table.read(name, path=name)
-            #print(read_a.meta['zenith'])
-            #print(read_a)
+            f=Table.read(name, path="efield")
+            #print(f)
+            #b=f['Ex']*f['Ex']
+            #print(b)
+            print(f.meta, f.info)
+            print(f.meta['zenith'], f['Time'].unit)
             
             ### Just examples how output could handled 
-            #summe=a['Ex']+a['Ey']
+            #summe=f['Ex']+f['Ey']
             #print(summe[-2])
         
         DISPLAY=False
@@ -553,12 +580,12 @@ if __name__ == '__main__':
             import matplotlib.pyplot as plt
 
             plt.figure(1,  facecolor='w', edgecolor='k')
-            plt.plot(a['Time'],a['Ex'], label="Ex")
-            plt.plot(a['Time'],a['Ey'], label="Ey")
-            plt.plot(a['Time'],a['Ez'], label="Ez")
+            plt.plot(f['Time'],f['Ex'], label="Ex")
+            plt.plot(f['Time'],f['Ey'], label="Ey")
+            plt.plot(f['Time'],f['Ez'], label="Ez")
 
-            plt.xlabel('Time ('+str(a['Time'].unit)+')')
-            plt.ylabel('Electric field ('+str(a['Ex'].unit)+')')
+            plt.xlabel('Time ('+str(f['Time'].unit)+')')
+            plt.ylabel('Electric field ('+str(f['Ex'].unit)+')')
             plt.legend(loc='best')
             
             plt.show()
@@ -570,6 +597,8 @@ if __name__ == '__main__':
             ##### Hopefully not needed any more if voltage traces are not stored as txt files in future
             print("Adding voltages")
             
+            ### ATTENTION currently electric field added - adjust <ant=path+ending_e>
+            print("WARNING: adopt path to voltage trace")
             # read in trace from file and store as astropy table - can be substituted by computevoltage operation
             b= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="v")
             
@@ -578,10 +607,10 @@ if __name__ == '__main__':
             c = hstack([a, b])
             
             # Write to tables in hdf5 file
-            c.write(name, path=name, overwrite=True, serialize_meta=True) #append=True -- NOTE: Do I need that
+            b.write(name, path='voltages', append=True, serialize_meta=True) #append=True -- NOTE: Do I need that
 
             # read in hdf5 file 
-            read_c = Table.read(name, path=name)
-            #print(read_b.meta, read_b.info)
-            print(read_c)
+            read_c = Table.read(name, path="voltages")
+            print(read_c.meta, read_c.info)
+            #print(read_c)
         
