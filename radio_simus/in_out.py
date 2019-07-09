@@ -391,21 +391,25 @@ def _table_voltage(voltage, pos, info={}):
 
 #===========================================================================================================
 
-#def load_trace_to_table(directory, index, pos=np.array([0,0,0]), info=None, suffix=".trace"):
-def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", sim="zhaires"):
+def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", sim="zhaires", save=None):
 
     """Load data from an electric field trace file to astropy table
 
    Parameters
    ---------
-        directory: str 
+        path: str 
             path to file -- electric field (.trace) or voltage trace (.dat)
-        index: ind
-            index number of antenna
         pos: numpy array, floats
             optional, position of antenna
-        suffix: str 
-            optional, suffix of file
+        info: str
+            optional. shower infos
+        content: str
+            e/efield or v/voltages
+        sim: str
+            coreas/zhaires, pick the simulation
+        save: str 
+            optional,path to save a hdf5 file
+        
 
    Returns
    ---------
@@ -413,7 +417,7 @@ def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", sim
     """
     
     #if suffix==".trace":
-    if content=="e":
+    if content=="efield" or content=="e":
         #path = "{:}/a{:}{:}".format(directory, index, suffix)
         efield = np.loadtxt(path)
         #zhaires: time in ns and efield in muV/m
@@ -426,14 +430,95 @@ def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", sim
             
         efield_ant = _table_efield(efield, pos, info)
     #if suffix==".dat":
-    if content=="v":
+    if content=="voltages" or content=="v":
         #path = "{:}/out_{:}{:}".format(directory, index, suffix)
         voltage = np.loadtxt(path)
         efield_ant = _table_voltage(voltage, pos)
-
+    
+    if save:
+        if content=="efield" or content=="e":
+            efield_ant.write(save, path='efield', format="hdf5",  serialize_meta=True) #compression=True,
+        if content=="voltages" or content=="v":
+            efield_ant.write(save, path='voltages', format="hdf5", append=True, serialize_meta=True) #compression=True,
         
     return efield_ant
         
+
+def _load_to_array(path_hdf5, content="efield"):
+    """Load data from hdf5 file to numpy array and restore shower info
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file 
+        content: str 
+            grep efield or voltages traces
+
+   Returns
+   ---------
+        voltage1: numpy array
+            containing the electric field trace: time, Ex, Ey, Ez
+        voltage['Time'].unit
+            unit of time column
+        voltage['Ex'].unit
+            unit of electric field
+        shower: list
+            shower parameters etc
+    """   
+    from astropy.table import Table
+    
+    if content=="efield" or content=="e":
+        efield=Table.read(path_hdf5, path="efield")
+        efield1=np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']])
+        #print(efield.T[0], efield.T[1])
+    
+        try:
+            shower = {
+                "ID" : efield.meta['ID'],               # shower ID, number of simulation
+                "primary" : efield.meta['primary'],        # primary (electron, pion)
+                "energy" : efield.meta['energy'],               # EeV
+                "zenith" : efield.meta['zenith'],               # deg (GRAND frame)
+                "azimuth" : efield.meta['azimuth'],                # deg (GRAND frame)
+                "injection_height" : efield.meta['injection_height'],    # m (injection height in the local coordinate system)
+                "task" : efield.meta['task'],    # Identification
+                "core" : efield.meta['core'],    # m, numpy array, core position
+                "simulation" : efield.meta['simulation'] # coreas or zhaires
+                }
+        except:
+            print("NOTE: shower info not contained")
+            shower=None
+        
+    
+        return efield1, efield['Time'].unit, efield['Ex'].unit, shower
+    
+    if content=="voltages" or content=="v":
+        try:
+            voltage=Table.read(path_hdf5, path="voltages")
+            voltage1=np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']])
+            #print(voltage.T[0], voltage.T[1])
+        except:
+            print("Voltages not found")
+            voltage=None
+            voltage1=None
+            
+        try:
+            shower = {
+                "ID" : voltage.meta['ID'],               # shower ID, number of simulation
+                "primary" : voltage.meta['primary'],        # primary (electron, pion)
+                "energy" : voltage.meta['energy'],               # EeV
+                "zenith" : voltage.meta['zenith'],               # deg (GRAND frame)
+                "azimuth" : voltage.meta['azimuth'],                # deg (GRAND frame)
+                "injection_height" : voltage.meta['injection_height'],    # m (injection height in the local coordinate system)
+                "task" : voltage.meta['task'],    # Identification
+                "core" : voltage.meta['core'],    # m, numpy array, core position
+                "simulation" : voltage.meta['simulation'] # coreas or zhaires
+                }
+        except:
+            print("NOTE: shower info not contained")
+            shower=None
+        
+    
+        return voltage1, voltage['Time'].unit, voltage['Ex'].unit, shower
 
     
 #===========================================================================================================
@@ -545,8 +630,11 @@ if __name__ == '__main__':
             
 
         ##### read-in output of simulations
-        # read in trace from file and store as astropy table
-        a= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="e", sim=simus) 
+        # read in trace from file and store as astropy table, saved as hdf5 file (optional)
+        a= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="e", sim=simus, save=name) 
+        
+        ####### From here on only additional feature and nice-to-know
+        ## play around
         #print(a.info)
         #print(a['Ex'])
         #print(a.meta)
@@ -555,8 +643,8 @@ if __name__ == '__main__':
 
         
         # write astropy table to hdf5 file
-        #a.write(name, path=name, overwrite=True, compression=True, serialize_meta=True) #append=True, 
-        a.write(name, path='efield', format="hdf5",  serialize_meta=True)
+        ##a.write(name, path=name, overwrite=True, compression=True, serialize_meta=True) #append=True, 
+        #a.write(name, path='efield', format="hdf5",  serialize_meta=True)
         
 
         
@@ -575,6 +663,7 @@ if __name__ == '__main__':
             #summe=f['Ex']+f['Ey']
             #print(summe[-2])
         
+        ########## Plotting a table
         DISPLAY=False
         if DISPLAY:
             import matplotlib.pyplot as plt
@@ -604,9 +693,9 @@ if __name__ == '__main__':
             
             # stack electric field and voltage traces
             from astropy.table import hstack
-            c = hstack([a, b])
+            #c = hstack([a, b])
             
-            # Write to tables in hdf5 file
+            # Write to tables in hdf5 file of the efield
             b.write(name, path='voltages', append=True, serialize_meta=True) #append=True -- NOTE: Do I need that
 
             # read in hdf5 file 
