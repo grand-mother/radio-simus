@@ -276,7 +276,6 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     voltage_EW, timeEW = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
     voltage_vert, timevert = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
         
-    print(voltage_NS)    
     # ATTENTION EW AND NS WERE SWITCHED 
     # ATTENTION voltage now in ns 
     print("----- ATTENTION stacking changed, ATTENTION voltage time now in ns")
