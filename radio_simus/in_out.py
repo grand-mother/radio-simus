@@ -528,13 +528,13 @@ if __name__ == '__main__':
 
     if ( len(sys.argv)<1 ):
         print("""
-        Example how to read in an electric field or voltage trace, load it to a table, write it into a hdf5 file and read the file.
+        Example how to read in an electric field or voltage trace, load it to a table, write it into a hdf5 file (and read the file.)
         -- produces hdf5 files for zhaires and coreas simulations
         
         Usage for full antenna array:
-            python full_chain.py [path to event folder]
         example: python in_out.py ./ <zhaires/coreas>
-            
+        
+        Note: adopt example to also add voltage traces from txt files
         """)
         sys.exit(0)
     
