@@ -2,7 +2,7 @@ import numpy as np
 
 #===========================================================================================================
 def load_trace(directory, index, suffix=".trace"):
-    """Load data from a trace file
+    """Load data from a trace file (ascii file)
     """
     try:
         path = "{:}/a{:}{:}".format(directory, index, suffix)
@@ -12,6 +12,7 @@ def load_trace(directory, index, suffix=".trace"):
         path = "{0}/a{1:04d}{2}".format(directory, index+1, suffix)
         with open(path, "r") as f:
             return np.array([map(float, line.split()) for line in f])
+        
 #===========================================================================================================
 
 def getn(h):
@@ -23,10 +24,13 @@ def getn(h):
     # h in meters
     return 1. + 325E-06 * np.exp(-0.1218E-03 * h)
 
+#===========================================================================================================
+
 def getCerenkovAngle(h):
    """Get the Cerenkov angle
    """
    return np.arccos(1. / getn(h))
+
 #===========================================================================================================
 def get_integratedn(zen2, injh2, position):
     
@@ -51,8 +55,6 @@ def get_integratedn(zen2, injh2, position):
     currpy=0.
     currpz=injh2
     currh=currpz # just in that case here, since particle injected directly induce a shower
-    
-    
     
     ns=325E-06
     kr=-0.1218E-03
@@ -83,6 +85,7 @@ def get_integratedn(zen2, injh2, position):
     n= 1.+ avn
     
     return  n # integrated n
+
 #===========================================================================================================
 def mag(x):
     return np.sqrt(x.dot(x))
@@ -121,11 +124,30 @@ def hilbert_env(signal):
 def hilbert_peak(signal):
     ''' 
     Returns time and amplitude of peak
+    TODO to be done
     '''
     envelope=hilbert_env(signal)
     #Get time and amp
     return 0
-    
+ 
+ 
+#=========================================================================================================== 
+def _getAngle(injh=None,theta=None,azim=None,ANTENNAS=None, core=[0.,0.,0.]): # theta and azim in Grand convention
+    """ Get angle between antenna and shower axis (injection point or Xmax)
+        TODO to be done
+    """
 
+    zenr = np.radians(theta)
+    azimr= np.radians(azim)
+    ANTENNAS1 = np.copy(ANTENNAS)
+
+    # Compute angle between shower and decay-point-to-antenna axes
+    u_ant = ANTENNAS1+[0.,0.,-injh]
+    u_ant = (u_ant/np.linalg.norm(u_ant))
+
+    u_sh = [np.cos(azimr)*np.sin(zenr), np.sin(azimr)*np.sin(zenr), np.cos(zenr)]
+    ant_angle = np.arccos(np.matmul(u_ant, u_sh))
+
+    return ant_angle
 
 

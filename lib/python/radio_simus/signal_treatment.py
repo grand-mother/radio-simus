@@ -24,6 +24,8 @@ def add_noise(vrms, voltages):
         np.random.normal(0, vrms, size=np.shape(voltages[:,1:]))
     return noisy_voltages
 
+#===========================================================================================================
+
 def digitization(voltages, tsampling):
     """Digitize the voltages at an specific sampling
     inputs : (voltages, sampling rate)
@@ -39,6 +41,7 @@ def digitization(voltages, tsampling):
     Vz_sampled = resample(voltages.T[3, :], num)
     return np.array([t_sampled, Vx_sampled, Vy_sampled, Vz_sampled]).T
 
+#===========================================================================================================
 
 def Digitization_2(v,TSAMPLING):
     """Digitize the voltages at an specific sampling -- v2
@@ -65,6 +68,7 @@ def Digitization_2(v,TSAMPLING):
         tf[k]=tf[k-1]+TSAMPLING
     return np.array([tf, vx, vy, vz]).T
 
+#===========================================================================================================
 
 # Filter the voltages at a bandwidth
 ################################################################
@@ -75,6 +79,7 @@ def _butter_bandpass_filter(data, lowcut, highcut, fs):
                   btype='band')  # (order, [low, high], btype)
     return lfilter(b, a, data)
 
+#===========================================================================================================
 
 def filters(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
   """ Filter signal v(t) in given bandwidth 
