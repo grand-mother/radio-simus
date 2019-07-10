@@ -15,6 +15,7 @@ import glob
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 import radio_simus 
+#This also loads the submodule in_out, and makes it available without its package prefix
 from radio_simus.in_out import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
 
 
@@ -64,7 +65,7 @@ if __name__ == '__main__':
             inputfile = path+showerID+'.inp'
             zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
         
-        # coorection of shower core
+        # correction of shower core
         positions = positions + np.array([core[0], core[1], 0.])
 
         ending_e = "a*.trace"
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         inputfile = path+'/inp/SIM'+showerID+'.inp'
         zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
         
-        # coorection of shower core
+        # correction of shower core
         positions = positions + np.array([core[0], core[1], 0.])
 
         #redefinition of path to traces
@@ -127,10 +128,10 @@ if __name__ == '__main__':
             # define path for storage of hdf5 files
             name = path+'/../table_'+str(ID)+'.hdf5'
             print("Table saved as: ", name)
-            
 
         ##### read-in output of simulations
         # read in trace from file and store as astropy table, saved as hdf5 file (optional)
+        # a is a astropy table
         a= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="e", simus=simus, save=name) 
         
         ####### From here on only additional feature and nice-to-know
@@ -171,7 +172,6 @@ if __name__ == '__main__':
         if voltage:
             ##### Hopefully not needed any more if voltage traces are not stored as txt files in future
             print("Adding voltages")
-            
             ### ATTENTION currently electric field added - adjust <ant=path+ending_e>
             print("WARNING: adopt path to voltage trace")
             # read in trace from file and store as astropy table - can be substituted by computevoltage operation
@@ -185,10 +185,12 @@ if __name__ == '__main__':
             b.write(name, path='voltages', append=True, serialize_meta=True) #append=True -- NOTE: Do I need that
         
         # example VOLATGE COMPUTATION and add to same hdf5 file
-        voltage_compute=False
+        voltage_compute=True
         if voltage_compute:
-            from computevoltage import get_voltage, compute_antennaresponse
-            from full_chain import run
+            from radio_simus.computevoltage import get_voltage, compute_antennaresponse
+            from radio_simus.signal_treatment import run
+            from radio_simus.in_out import _table_voltage
+            
             efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
             # apply only antenna response
             #voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=.0, beta=0. )
@@ -197,7 +199,7 @@ if __name__ == '__main__':
             voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
             # load voltage array to table and store in same hdf5 file
             volt_table = _table_voltage(voltage, shower['position'])
-            volt_table.write(name, path='voltages', format="hdf5", append=True, serialize_meta=True)
+            volt_table.write(name, path='voltages', format="hdf5", append=True, compression=True, serialize_meta=True)
 
         ######## just testing part and examples how to use astropy tables
         EXAMPLE=False
@@ -205,7 +207,7 @@ if __name__ == '__main__':
             # read in hdf5 file 
             f=Table.read(name, path="efield")
             g=Table.read(name, path="voltages")
-            print(f)
+            #print(f)
             print(g)
             #print(f)
             #b=f['Ex']*f['Ex']
@@ -217,6 +219,3 @@ if __name__ == '__main__':
             ### Just examples how output could handled 
             #summe=f['Ex']+f['Ey']
             #print(summe[-2])
-        
-      else:
-        break
