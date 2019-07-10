@@ -111,11 +111,8 @@ if __name__ == '__main__':
     from astropy.table import hstack
     import h5py
     
-    i=0
     for ant in glob.glob(path+ending_e):
-      while i<1:
         print("\n")
-        i+=1
         if simus == 'zhaires':
             ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
             # define path for storage of hdf5 files
@@ -181,7 +178,7 @@ if __name__ == '__main__':
             b= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="v") # read from text files
     
             ## stack electric field and voltage traces
-            #from astropy.table import hstack
+            #from astropy.table import hstack, then write c to a file
             #c = hstack([a, b])
             
             # Write to tables in hdf5 file of the efield
