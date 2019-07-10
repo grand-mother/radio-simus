@@ -23,21 +23,21 @@
     phi_coreas= phi_zhaires - 180deg
 
 * Calculate the voltage traces:
-    The module 'compute_voltage' accepts numpy.array with time in s, Ex, Ey,Ez in muV/m. The shower direction has to be defined in GRAND conventions. (Helper function 'compute_antennaresponse' accepts only ns)
-    It returns  the voltage traces as a numpy.array with time in s, Vx,Vy,Vz in muV
-    
+    The module 'compute_voltage' (or 'run') accepts numpy.array with time in **ns, Ex, Ey,Ez in muV/m**. The shower direction has to be defined in GRAND conventions.
+    It returns  the voltage traces as a numpy.array with time in **ns, Vx,Vy,Vz in muV**
+
+* module storing traces in hdf5 format (using astropy.unit to be implemented):
+    From now on we only use hdf5 file for further processing of the simulated traces (using astropy.Table). That means one has to first convert the ascii files of the simulation output to hdf5 format. The script makes use of the following modules so that in the hdf5 file the information are stored in a coherent way. 
+    * module reading in CoREAS shower parameters (using astropy.unit to be implemented) - meta info
+    * module reading in CoREAS antenna list (using astropy.unit to be implemented)  - meta info
+    * module reading in ZHAireS shower parameters (using astropy.unit to be implemented)  - meta info
+    * module reading in ZHAireS antenna list (using astropy.unit to be implemented)  - meta info
+
     
 ## ToDos:
-* module reading in CoREAS shower parameters (using astropy.unit)
-* module reading in CoREAS antenna list (using astropy.unit)
-* module reading in ZHAireS shower parameters (using astropy.unit)
-* module reading in ZHAireS antenna list (using astropy.unit)
+* how to store shower parameters? -> no framework
+* how to store antenna informations? -> no framework
 
-* module storing traces in hdf5 format (using astropy.unit)
-* how to store shower parameters? -> not framework
-* how to store antenna informations? -> not framework
-
-* adopt full_chain to hdf5 format
 * add astropy logger
 * add unit tests
 
