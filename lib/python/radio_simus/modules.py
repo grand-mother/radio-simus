@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 #Xmax_height, Xmax_distance = modules._dist_decay_Xmax(zen_inj, injh, Xmax_primary) #
 #d_prime: distance from decay point to Xmax
 
+#__all__ = ["compute_ZL", "TopoToAntenna", "_getXmax", "_dist_decay_Xmax"]
 
 
 # Function to compute impedance from GRAND load

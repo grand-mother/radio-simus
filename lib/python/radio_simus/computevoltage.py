@@ -11,16 +11,18 @@ from os.path import  join
 import sys
 import math
 import numpy as np
-from modules import TopoToAntenna
-from modules import compute_ZL
+from radio_simus.modules import TopoToAntenna
+from radio_simus.modules import compute_ZL
 import pylab as plt
 import glob
-from signal_treatment import filters
-wkdir = './GRAND_antenna/'
+from radio_simus.signal_treatment import filters
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
 from scipy.interpolate import interp1d
+
+
+wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
 
 EARTH_RADIUS=6370949. #m
 azstep=5 #step in azimuth in npy file
