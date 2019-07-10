@@ -22,7 +22,7 @@ from in_out import inputfromtxt
 
 
 ### HARDCODED - TODO to be substituted
-tsampling = 2* 1e-9 # ns -> s
+tsampling = 2 # ns
 Vrms = 28 #muV before filtering - NOTE: should be substituted by function returning the value
 
 
@@ -58,20 +58,19 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         Returns:
         ---------
         trace:
-            voltage trace, numpy array
+            voltage trace, numpy array: time in ns, voltages (x,y,z)
         
         '''
-        
+
         
         ### 2. APPLY ANTENNA RESPONSE
         trace = compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
-        
         
         #### 2b. deconvolve antenna response - still ongoing work
         #from invert_computevoltage import compute_electicfield
         #electric = compute_electicfield(trace, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
         
-        print(trace)
+        #print(trace)
 
         ####plots
         if DISPLAY==1:
@@ -109,9 +108,8 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         
         #Vrms = 28 #muV before filtering - NOTE: should be substituted by function returning the value
         trace = add_noise(Vrms, trace) # remove tranposed in signal_treatment
-                       
-        print(trace)
-
+        #print(trace.T[0])               
+        
         if DISPLAY==1:
             	    
             plt.figure(2,  facecolor='w', edgecolor='k')
@@ -126,8 +124,8 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
             
             
         ### 4. FILTER THE TRACE TO THE 50-200MHz WINDOW
-        
         trace = filters(trace, FREQMIN=50.e6, FREQMAX=200.e6)
+    
         
         if DISPLAY==1:
             	    
@@ -154,7 +152,7 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         ### 5. DIGITIZATION -- 2ns 
         #tsampling = 2* 1e-9 # ns -> s
         #trace = digitization(trace, tsampling) # NOTE does not work for me
-        trace =Digitization_2(trace,tsampling)
+        trace =digitization(trace,tsampling)
         
         if DISPLAY==1:
             	    
@@ -167,6 +165,7 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
             plt.legend(loc='best')
             
             plt.show()
+        print(trace)
 
         return trace
             
@@ -229,9 +228,7 @@ if __name__ == '__main__':
         start = antID
         end = antID+1
         
-    #if opt_input=='hdf5':# TODO
-        #from astropy.table import Table
-        ## shower info read-in from header info
+
     
 
     print('Now looping over',end-start,'antenna(s) in folder',path)
@@ -274,11 +271,12 @@ if __name__ == '__main__':
                     for i in range(0, len(voltage[0])):
                         args = (voltage[0, i], voltage[1, i], voltage[2, i], voltage[3, i])
                         try:
-                            print("%e	%1.3e	%1.3e	%1.3e" % args, end='\n', file=FILE)
+                            FILE.write("{0:e}  {1:f}  {2:f}  {3:f}'\n'".format(voltage[0, i], voltage[1, i], voltage[2, i], voltage[3, i]))
                         except SyntaxError:
                             print >> FILE, "%1.3e	%1.3e	%1.3e	%1.3e" % args
+                            
+                
             
-            #if opt_input=='hdf5':# TODO
                     
         except IndexError:
             print('--- ATTENTION: no voltage trace computed or stored')
