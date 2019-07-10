@@ -10,7 +10,12 @@ import numpy as np
 import sys
 import glob
 
-from in_out import _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
+#from in_out import _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
+# Expand the PYTHONPATH and import the radiomorphing package #NOTE: this would be on the shared disc
+root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
+sys.path.append(join(root_dir, "lib", "python"))
+import radio_simus 
+from radio_simus.in_out import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
 
 
 if __name__ == '__main__':
