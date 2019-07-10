@@ -440,9 +440,9 @@ def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", sim
     
     if save:
         if content=="efield" or content=="e":
-            efield_ant.write(save, path='efield', format="hdf5",  serialize_meta=True) #compression=True,
+            efield_ant.write(save, path='efield', format="hdf5",  compression=True,serialize_meta=True) #
         if content=="voltages" or content=="v":
-            efield_ant.write(save, path='voltages', format="hdf5", append=True, serialize_meta=True) #compression=True,
+            efield_ant.write(save, path='voltages', format="hdf5", append=True, compression=True,serialize_meta=True) #
         
     return efield_ant
         

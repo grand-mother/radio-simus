@@ -129,8 +129,8 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
         return([],[])
     
     # Now take care of Efield signals
-    delt = time1[1]-time1[0];
-    Fs = 1/delt
+    delt = np.mean(np.diff(time1));
+    Fs = round(1/delt)
     timeoff=time1[0] # time offset, to get absolute time
     time1 = (time1-time1[0]) #reset to zero
     # Rotate Efield to antenna frame (x along actual arm)
@@ -207,7 +207,8 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     fmin=f[0]
     fmax=f[-1]
     f=f*1e6
-    nf  = int(2**np.floor(np.log(len(amplitudet))/np.log(2)))
+    #nf  = int(2**np.floor(np.log(len(amplitudet))/np.log(2))) # changed in July2019 - shortens the trace
+    nf = len(amplitudet)
     while Fs/nf > fmin*1e6:   # <== Make sure that the DFT resolution is at least fmin.
         nf *= 2
     F = rfftfreq(nf)*Fs
@@ -273,11 +274,15 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     numpy array
         voltage traces, Time in ns, Vx,Vy,Vz in muV
     '''
+    
+    #print("before : ", signal, len(signal.T[0]), signal[1,0] -signal[0,0])
 
     voltage_NS, timeNS = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="X")
     voltage_EW, timeEW = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
     voltage_vert, timevert = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
-        
+    
+    #print("after : ", np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1), len(timeNS), timeNS[1]*1e9 -timeNS[0]*1e9)
+    
     # ATTENTION EW AND NS WERE SWITCHED 
     # ATTENTION voltage now in ns 
     print("----- ATTENTION stacking changed, ATTENTION voltage time now in ns")

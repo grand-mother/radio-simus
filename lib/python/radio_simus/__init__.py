@@ -36,7 +36,7 @@ from .computevoltage import compute, inputfromtxt, compute_antennaresponse, get_
 from .in_out import inputfromtxt, inputfromtxt_coreas, _get_positions_coreas, load_trace, _table_efield, _table_voltage, load_trace_to_table, _load_to_array
 from .modules import compute_ZL, TopoToAntenna, _getXmax, _dist_decay_Xmax
 from .signal_treatment import add_noise, digitization, _butter_bandpass_filter, filters, run
-
+from .utils import p2p
 
 # Register all modules
-__all__ = ["computevoltage", "in_out", "modules", "signal_treatment"]
+__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils"]
