@@ -117,7 +117,7 @@ if __name__ == '__main__':
         if simus == 'zhaires':
             ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
             # define path for storage of hdf5 files
-            name = path+'/table'+str(ant_number)+'.h5'
+            name = path+'/table_a'+str(ant_number)+'.hdf5' # to adopt to coreas style for now 
             print("Table saved as: ", name)
 
         if  simus == 'coreas':
@@ -148,7 +148,13 @@ if __name__ == '__main__':
         #a.write(name, path='efield', format="hdf5",  serialize_meta=True)
         
 
-        
+
+
+
+
+        ############
+        ## PLAYGROUND
+        ############
         
         ########## Plotting a table
         DISPLAY=False
@@ -167,13 +173,16 @@ if __name__ == '__main__':
             plt.show()
             #plt.savefig('test.png', bbox_inches='tight')
             
-        # example how to add voltage from text file as a column    
+            
+        ########### example how to add voltage from text file as a column    
         voltage=False
         if voltage:
             ##### Hopefully not needed any more if voltage traces are not stored as txt files in future
             print("Adding voltages")
+            
             ### ATTENTION currently electric field added - adjust <ant=path+ending_e>
             print("WARNING: adopt path to voltage trace")
+            
             # read in trace from file and store as astropy table - can be substituted by computevoltage operation
             b= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="v") # read from text files
     
@@ -184,32 +193,39 @@ if __name__ == '__main__':
             # Write to tables in hdf5 file of the efield
             b.write(name, path='voltages', append=True, serialize_meta=True) #append=True -- NOTE: Do I need that
         
-        # example VOLATGE COMPUTATION and add to same hdf5 file
-        voltage_compute=True
+        
+        ########### example VOLTAGE COMPUTATION and add to same hdf5 file
+        voltage_compute=False
         if voltage_compute:
             from radio_simus.computevoltage import get_voltage, compute_antennaresponse
             from radio_simus.signal_treatment import run
             from radio_simus.in_out import _table_voltage
             
+            # convert table to numpy array
             efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
-            # apply only antenna response
+            
+            print("ATTENTION: alpha and beta hardcoded")
+            
+            ## apply only antenna response
             #voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=.0, beta=0. )
 
             ## apply full chain
             voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
+            
             # load voltage array to table and store in same hdf5 file
             volt_table = _table_voltage(voltage, shower['position'])
             volt_table.write(name, path='voltages', format="hdf5", append=True, compression=True, serialize_meta=True)
+
 
         ######## just testing part and examples how to use astropy tables
         EXAMPLE=False
         if EXAMPLE:
             # read in hdf5 file 
             f=Table.read(name, path="efield")
-            g=Table.read(name, path="voltages")
-            #print(f)
-            print(g)
-            #print(f)
+            #g=Table.read(name, path="voltages")
+            print(f)
+            #print(g)
+
             #b=f['Ex']*f['Ex']
             #print(b)
             #print(f.meta, f.info)
