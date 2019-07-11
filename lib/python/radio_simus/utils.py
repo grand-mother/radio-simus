@@ -3,6 +3,27 @@ import numpy as np
 #===========================================================================================================
 def load_trace(directory, index, suffix=".trace"):
     """Load data from a trace file (ascii file)
+    
+    Arguments:
+    ----------
+    directory: str
+        path to folder
+    index: int
+        antenna ID
+    suffix: str
+        file ending
+        
+    Returns:
+    --------
+    numpy array
+        field trace
+        
+    Raises:
+    --------
+    IOError:
+        adopt to ID naming
+        
+    Note: currently only usable for Zhaires simulations    
     """
     try:
         path = "{:}/a{:}{:}".format(directory, index, suffix)
@@ -17,9 +38,18 @@ def load_trace(directory, index, suffix=".trace"):
 
 def getn(h):
     """Get the refractive index
-
-       Reference:
-        Zhaires (see email M. Tueros 25/11/2016)
+    
+    Arguments:
+    ----------
+    h: float
+        height in m wrt to sealevel
+        
+    Returns:
+    --------
+    float
+        refractive index at height h
+        
+    Note: Reference: Zhaires (see email M. Tueros 25/11/2016)
     """
     # h in meters
     return 1. + 325E-06 * np.exp(-0.1218E-03 * h)
@@ -28,14 +58,39 @@ def getn(h):
 
 def getCerenkovAngle(h):
    """Get the Cerenkov angle
+    
+    Arguments:
+    ----------
+    h: float
+        height in m wrt to sealevel
+        
+    Returns:
+    --------
+    float
+        Cherenkov angle at height h in deg
    """
-   return np.arccos(1. / getn(h))
+   return np.rad2deg(np.arccos(1. / getn(h)))
 
 #===========================================================================================================
-def get_integratedn(zen2, injh2, position):
+def get_integratedn(injh2, position):
+    '''Calculates the integrated n from a specific height (0,0,height) to the observer position
+        --- works currently only for neutrinos
+        
+    Arguments:
+    ----------
+    injh2: float
+        injection height wrt sealevel in m (0.,0., injh2)
+    position: numpy array
+        observer position wrt sealevel in m 
     
-    # assumption coordinate system so that tau decay at (0.,0, injectionheight)
-    # calculation of integrated n implemented similar as in Zhaires
+    Returns:
+    --------
+    n : float
+        integrated refractive index along a path from injection to observer
+    
+    Note: assumption coordinate system so that tau decay at (0.,0, injectionheight)
+    Note: calculation of integrated n implemented similar as in Zhaires
+    '''
     
     Re= 6370949 # m, Earth radius
     ########
@@ -88,17 +143,24 @@ def get_integratedn(zen2, injh2, position):
 
 #===========================================================================================================
 def mag(x):
+    ''' Calculates the length of a vector or the absolute value
+    '''
     return np.sqrt(x.dot(x))
 
 #===========================================================================================================
 def p2p(trace):
-    ''' 
-    Parameters:
-        trace: np.array with 1 or 4 columns
+    ''' Calculates peak to peak values
+    
+    Arguments:
+    ----------
+    trace: np.array with 1 or 4 columns
+            signal trace
     Returns:
-        peak-to-peak values: floats
+    --------
+    list: floats
+        peak-to-peak values
     '''
-    if trace.ndim==2:
+    if trace.ndim==2: # simply assume np.array([t, x, y, z])
         return max(trace.T[1])-min(trace.T[1]), max(trace.T[2])-min(trace.T[2]), max(trace.T[3])-min(trace.T[3])
     elif trace.ndim==1:
         return max(trace)-min(trace)
@@ -108,11 +170,15 @@ def p2p(trace):
 #===========================================================================================================
 def hilbert_env(signal):
     ''' 
-    Hilbert envelope
-    Parameters
-        signal: np.array
+    Hilbert envelope - abs(analyticcal signal)
+    Arguments:
+    ----------
+    signal: np.array
+        signal trace
     Returns:
-        amplitude_envelope: np.array
+    --------
+    amplitude_envelope: np.array
+        Hilbert envelope
         
     '''
     from scipy.signal import hilbert
@@ -121,20 +187,51 @@ def hilbert_env(signal):
     return amplitude_envelope
 
 #===========================================================================================================
-def hilbert_peak(signal):
-    ''' 
-    Returns time and amplitude of peak
-    TODO to be done
+def hilbert_peak(time, signal):
+    ''' Calculates time and amplitude of peak
+    
+    Arguments:
+    ----------
+    time: numpy array
+        time in ns
+    signal: numpy array
+        signal trace in muV or muV/m
+        
+    Returns:
+    --------
+    maximum of Hilbert envelope in muV or muV/m: float
+    time of maximum in ns : float
+
     '''
     envelope=hilbert_env(signal)
     #Get time and amp
-    return 0
+    
+    return max(envelope), time[np.where(signal == signal.max())][0]
  
  
 #=========================================================================================================== 
-def _getAngle(injh=None,theta=None,azim=None,ANTENNAS=None, core=[0.,0.,0.]): # theta and azim in Grand convention
+def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.,0.]): # theta and azim in Grand convention
     """ Get angle between antenna and shower axis (injection point or Xmax)
-        TODO to be done
+        Arguments:
+        ----------
+        refpos: numpy array
+            sofar position of injection or Xmax
+        theta: float
+            GRAND zenith in deg
+        azim: float
+            GRAND azimuth in deg
+        ANTENNAS: numpy array
+            observer position in m
+        core: numpy array
+            optional, core position in m, not yet used
+            
+        Returns:
+        --------
+        float
+            Angle in deg between shower axis and vector reference position to observer position
+            
+        Note: currently only working for neutrinos
+        TODO make it working for CRs, currently only for neutrinos
     """
 
     zenr = np.radians(theta)
@@ -142,12 +239,10 @@ def _getAngle(injh=None,theta=None,azim=None,ANTENNAS=None, core=[0.,0.,0.]): # 
     ANTENNAS1 = np.copy(ANTENNAS)
 
     # Compute angle between shower and decay-point-to-antenna axes
-    u_ant = ANTENNAS1+[0.,0.,-injh]
+    u_ant = ANTENNAS1-refpos
     u_ant = (u_ant/np.linalg.norm(u_ant))
 
     u_sh = [np.cos(azimr)*np.sin(zenr), np.sin(azimr)*np.sin(zenr), np.cos(zenr)]
     ant_angle = np.arccos(np.matmul(u_ant, u_sh))
 
-    return ant_angle
-
-
+    return np.rad2deg(ant_angle)

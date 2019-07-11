@@ -1,9 +1,6 @@
 # HandsOn session 19/04/2019
-#
+# --- several times modified
 
-##### AZ: 13.06.2019 compute function - introduce compute_antennaresponse()
-##### AZ: vf = np.vstack((timeNS,voltage_EW,voltage_NS,voltage_vert)) --- EW and NS switched - corrected 16.05.19
-#### read in from input file fixed
 
 #!/usr/bin/env python
 import os
@@ -64,7 +61,36 @@ print('Done.')
 #===========================================================================================================
 def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ="X"):
 #===========================================================================================================
-    # Note: azim & zenith are in GRAND convention
+    ''' Applies the antenna response
+    
+    Arguments:
+    ----------
+    time1: numpy array
+        time in s (ATTENTION)
+    Ex: numpy array
+        x component in muV/m
+    Ey: numpy array
+        y component in muV/m
+    Ez: numpy array
+        z component in muV/m
+    zenith_sim: float
+        GRAND zenith in deg
+    azimuth_sim: float
+        GRAND azimuth in deg
+    alpha: float
+        surface angle alpha in deg
+    beta: float
+        surface angle beta in deg
+    typ: str
+        hand over arm (X,Y,Z)
+        
+    Returns:
+    --------
+    voltage: numpy array
+        voltage trace in one arm
+    time: numpy array
+        time trace
+    '''
     
     # Load proper antenna response matrix
     if typ=="X":
@@ -121,6 +147,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     elif azim<0:
         azim = azim+360
     if typ=='X':
+        print('Alpha and beta of surface slope:',alpha, beta)
         print('Zenith & azimuth in GRAND framework:',zenith_sim, azimuth_sim)
         print('Zenith & azimuth in antenna framework:',zen, azim)
     
@@ -254,7 +281,6 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
 #===========================================================================================================
 def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
 #===========================================================================================================
-
     ''' 
     calls compute voltage for each component and stacks the results
     
@@ -293,6 +319,9 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
 #===========================================================================================================
 def inputfromtxt(input_file_path):
 #===========================================================================================================
+    ''' ATTENTION Should be deleted and substituted in modules
+    '''
+
     particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
     ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
@@ -338,10 +367,27 @@ def inputfromtxt(input_file_path):
 #===========================================================================================================
 def compute(opt_input,path, zenith_sim, azimuth_sim):
 #===========================================================================================================
-
-    ##########################################################################################
-    ###Handing over one antenna or a whole array
-    # By default grep all antennas from the antenna file
+    ''' Reads in efield in ascii format (zhaires) and applies the antenna reponse t one antenna or whole array
+        By default grep all antennas from the antenna file
+        
+        Arguments:
+        ----------
+        opt_input: str
+            hand over mode txt or manual
+        path: str
+            path to event
+        zenith_sim: float
+            GRAND zenith in deg
+        zenith_sim: float
+            GRAND zenith in deg
+        
+        Returns:
+        --------
+            --
+        Note: Possible plot of traces if desired
+    '''
+    
+    
     posfile = path + '/antpos.dat'
     positions=np.genfromtxt(posfile)
     start=0

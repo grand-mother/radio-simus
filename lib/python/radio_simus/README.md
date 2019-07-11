@@ -42,3 +42,8 @@
 * add unit tests
 
 
+## NOTE:
+Unified units used as Arguments and returns of all the functions: **eV, deg, m, ns, muV, muV/m**
+
+
+
