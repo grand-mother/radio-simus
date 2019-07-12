@@ -59,9 +59,14 @@ if sys.argv[2] == 'v' or sys.argv[2] == 'voltages':
     #txt.T[0]: time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all electric field in muV/m
     key = "voltages" 
     unit=r'$\mu$V'
+    
+
+### path to full antenna array
+ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt',comments="#")
+print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt')
 
 
-# create an array
+# create an array of simulated observer positions
 p2p_Ex = []
 p2p_Ey = []
 p2p_Ez = []
@@ -132,12 +137,16 @@ for file in glob.glob(path+"*.hdf5"):
 #PLOTTING SECTION
 #################
 
-
+c_array = np.zeros(len(ant_array.T[0]))
 
 ##### Plot a 3d figure of the total peak amplitude to see the actual array and the the signal distribution
 fig = plt.figure(1, figsize=(8,7), dpi=120, facecolor='w', edgecolor='k')
 ax = fig.add_subplot(111, projection='3d')
-col=ax.scatter(x_pos, y_pos,z_pos , c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  marker='o', cmap=cm.gnuplot2_r)
+
+ax.scatter(ant_array.T[0], ant_array.T[1],ant_array.T[2] , c="None",  
+           marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
+col=ax.scatter(x_pos, y_pos,z_pos , c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  
+               marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar=plt.colorbar(col)
 cbar.set_label('peak-to-peak amplitude distribution in '+unit, labelpad=+1)
 
@@ -156,7 +165,9 @@ name = 'NS-component ('+unit+')'
 #plt.title(name)
 ax1.set_xlabel('positions along NS (m)')
 ax1.set_ylabel('positions along EW (m)')
-col1=ax1.scatter(x_pos, y_pos, c=p2p_Ex,  vmin=min(p2p_Ex), vmax=max(p2p_Ex),  marker='o', cmap=cm.gnuplot2_r)
+ax1.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+           marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
+col1=ax1.scatter(x_pos, y_pos, c=p2p_Ex,  vmin=min(p2p_Ex), vmax=max(p2p_Ex),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col1)
 cbar1.set_label(name, labelpad=+1)
 
@@ -167,7 +178,9 @@ name = 'EW-component ('+unit+')'
 #plt.title(name)
 ax2.set_xlabel('positions along NS (m)')
 ax2.set_ylabel('positions along EW (m)')
-col2=ax2.scatter(x_pos, y_pos, c=p2p_Ey,  vmin=min(p2p_Ey), vmax=max(p2p_Ey),  marker='o', cmap=cm.gnuplot2_r)
+ax2.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+           marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
+col2=ax2.scatter(x_pos, y_pos, c=p2p_Ey,  vmin=min(p2p_Ey), vmax=max(p2p_Ey),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col2)
 cbar1.set_label(name, labelpad=+1)
 plt.tight_layout()
@@ -177,7 +190,9 @@ name = 'Up-component ('+unit+')'
 #plt.title(name)
 ax3.set_xlabel('positions along NS (m)')
 ax3.set_ylabel('positions along EW (m)')
-col3=ax3.scatter(x_pos, y_pos, c=p2p_Ez,  vmin=min(p2p_Ez), vmax=max(p2p_Ez),  marker='o', cmap=cm.gnuplot2_r)
+ax3.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+           marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
+col3=ax3.scatter(x_pos, y_pos, c=p2p_Ez,  vmin=min(p2p_Ez), vmax=max(p2p_Ez),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col3)
 cbar1.set_label(name, labelpad=+1)
 plt.tight_layout()
@@ -187,7 +202,9 @@ name = 'total ('+unit+')'
 #plt.title(name)
 ax4.set_xlabel('positions along NS (m)')
 ax4.set_ylabel('positions along EW (m)')
-col4=ax4.scatter(x_pos, y_pos, c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  marker='o', cmap=cm.gnuplot2_r)
+ax4.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+           marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
+col4=ax4.scatter(x_pos, y_pos, c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col4)
 cbar1.set_label(name, labelpad=+1)
 plt.tight_layout()
