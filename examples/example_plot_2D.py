@@ -61,10 +61,11 @@ if sys.argv[2] == 'v' or sys.argv[2] == 'voltages':
     unit=r'$\mu$V'
     
 
-### path to full antenna array
-ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt',comments="#")
-print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt')
-
+### path to full antenna array to plot in the background
+#ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt',comments="#")
+#print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt')
+ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/regular_array.txt',comments="#")
+print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/regular_array.txt')
 
 # create an array of simulated observer positions
 p2p_Ex = []
@@ -132,7 +133,6 @@ for file in glob.glob(path+"*.hdf5"):
 
 
 
-
 #################
 #PLOTTING SECTION
 #################
@@ -149,6 +149,11 @@ col=ax.scatter(x_pos, y_pos,z_pos , c=p2p_total,  vmin=min(p2p_total), vmax=max(
                marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar=plt.colorbar(col)
 cbar.set_label('peak-to-peak amplitude distribution in '+unit, labelpad=+1)
+try:
+    core=txt.meta["core"]
+    ax.scatter(core[0], core[1],core[2] ,c="red", marker='x', s=50)
+except:
+    print("no core info available")
 
 ax.set_xlabel('positions along NS (m)')
 ax.set_ylabel('positions along EW (m)')
@@ -170,6 +175,10 @@ ax1.scatter(ant_array.T[0], ant_array.T[1], c="None",
 col1=ax1.scatter(x_pos, y_pos, c=p2p_Ex,  vmin=min(p2p_Ex), vmax=max(p2p_Ex),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col1)
 cbar1.set_label(name, labelpad=+1)
+try:
+    ax1.scatter(core[0], core[1] ,c="red", marker='x', s=50)
+except:
+    print("no core info available")
 
 plt.tight_layout()
     
@@ -183,6 +192,11 @@ ax2.scatter(ant_array.T[0], ant_array.T[1], c="None",
 col2=ax2.scatter(x_pos, y_pos, c=p2p_Ey,  vmin=min(p2p_Ey), vmax=max(p2p_Ey),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col2)
 cbar1.set_label(name, labelpad=+1)
+try:
+    ax2.scatter(core[0], core[1] ,c="red", marker='x', s=50)
+except:
+    print("no core info available")
+    
 plt.tight_layout()
     
 ax3=fig2.add_subplot(223)
@@ -195,6 +209,11 @@ ax3.scatter(ant_array.T[0], ant_array.T[1], c="None",
 col3=ax3.scatter(x_pos, y_pos, c=p2p_Ez,  vmin=min(p2p_Ez), vmax=max(p2p_Ez),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col3)
 cbar1.set_label(name, labelpad=+1)
+try:
+    ax3.scatter(core[0], core[1] ,c="red", marker='x', s=50)
+except:
+    print("no core info available")
+    
 plt.tight_layout()
 
 ax4=fig2.add_subplot(224)
@@ -207,6 +226,11 @@ ax4.scatter(ant_array.T[0], ant_array.T[1], c="None",
 col4=ax4.scatter(x_pos, y_pos, c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col4)
 cbar1.set_label(name, labelpad=+1)
+try:
+    ax4.scatter(core[0], core[1] ,c="red", marker='x', s=50)
+except:
+    print("no core info available")
+    
 plt.tight_layout()
 
 
