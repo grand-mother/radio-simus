@@ -37,6 +37,7 @@ from .in_out import inputfromtxt, inputfromtxt_coreas, _get_positions_coreas, lo
 from .modules import compute_ZL, TopoToAntenna, _getXmax, _dist_decay_Xmax
 from .signal_treatment import add_noise, digitization, _butter_bandpass_filter, filters, run
 from .utils import p2p
+from .shower import shower, sim_shower, reco_shower, loadInfo_toShower
 
 # Register all modules
-__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils"]
+__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower"]

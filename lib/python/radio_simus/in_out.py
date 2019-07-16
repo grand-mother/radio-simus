@@ -68,9 +68,11 @@ def inputfromtxt(input_file_path):
             energy = float(line.split(' ',-1)[1])
             unit= str(line.split(' ',-1)[2])
             if unit == "eV\n":
-                energy = energy *1e-18
+                energy = energy
             if unit == "GeV\n":
-                energy = energy *1e-9
+                energy = energy *1e9
+            if unit == "EeV\n":
+                energy = energy *1e18
         if 'PrimaryParticle' in line:
             primarytype = str(line.split(' ',-1)[1])
             if primarytype[-1]=='\n':
@@ -218,7 +220,8 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     path, reas = os.path.split(input_file_path)
     base = os.path.basename(reas)
     base1 = os.path.splitext(base)
-    file_path= path[0:-4]+base1[0]+".reas"
+    file_path= path[0:-4]+'/'+base1[0]+".reas"
+    #file_path= path[0:-4]+'/'+base1[0]+"_orig.reas"
 
     datafile = open(file_path, 'r') 
     for line in datafile:
@@ -246,13 +249,14 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
         
         
     if task:
-        if core[0]:
+        if core.all()!=None:
             return zen,azim,energy,injh,primarytype,core,task
     if task:
         return zen,azim,energy,injh,primarytype,task
     else:
         return zen,azim,energy,injh,primarytype
-    
+#===========================================================================================================
+
 def _get_positions_coreas(path):
     '''
     read in antenna positions from Coreas simulations, wrt to sealevel

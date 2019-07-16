@@ -113,6 +113,7 @@ def _getXmax(primarytype, energy):
     Note: factor approximated from https://pos.sissa.it/301/1100/pdf
     '''
        
+    print(primarytype, energy)   
     #    current version for tau decays    
     if primarytype=='electron': # aprroximated by gamma shower
         a=82.5 # g/cm2
@@ -130,7 +131,7 @@ def _getXmax(primarytype, energy):
         c=177.5 #g/cm2
         print("ATTENTION: zenith to be corrected for CR")
     
-    Xmax= a*np.log10(energy*10**-12.)+c # E/eV* 10**-12. to be in TeV
+    Xmax= a*np.log10(energy*10**-12.)+c # eV* 10**-12. to be in TeV
 
     return Xmax#/abs(np.cos(np.pi-zen2)) # TODO: how to correct for slanted shower
 #============================================================================
@@ -141,7 +142,7 @@ def _dist_decay_Xmax(zen, injh2, Xmax_primary):
     Arguments:
     ----------
     zen: float
-        GRAND zenith in deg2rad
+        GRAND zenith in deg
     injh2: float
         injectionheight above sealevel in m
     Xmax_primary: float

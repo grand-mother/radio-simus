@@ -22,14 +22,16 @@ class shower:
         recozenith: float in deg, GRAND
         recoazimuth: float in deg, GRAND
         
+        #TODO: how to use astropy units
+        
     '''
     def __init__(self):
-        self.max_length = 1
+        self.max_length = 1 # prevents overwritting etc, limits to one number per list
         
         self.showerID = [] # attribute references
         self.primary = []
         self.energy = []
-        self.zenith = []    # How to limit to one number per list .....
+        self.zenith = []    
         self.azimuth = [] #instantiation
         self.injectionheight = []
         
@@ -137,15 +139,17 @@ class shower:
         self.add_injectionheight(injectionheight)
         
     def get_all(self):
-        print(self.get_showerID(), self.get_primary(), self.get_energy(), self.get_zenith(), self.get_azimuth(), self.get_injectionheight())
+        return self.get_showerID(), self.get_primary(), self.get_energy(), self.get_zenith(), self.get_azimuth(), self.get_injectionheight()
         
         
     #def get_Xmax(self):
         #computes Xmax for shower
         
-    
     #def get_direction(self):
     #np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)])
+    
+    #def add_impulsion(): vector type, calculate energy, azimuth and zenith and add those
+    #def get_impulsion(): 
  
 #=================================================        
  

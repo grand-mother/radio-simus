@@ -26,7 +26,7 @@
     The module 'compute_voltage' (or 'run') accepts numpy.array with time in **ns, Ex, Ey,Ez in muV/m**. The shower direction has to be defined in GRAND conventions.
     It returns  the voltage traces as a numpy.array with time in **ns, Vx,Vy,Vz in muV**
 
-* module storing traces in hdf5 format (using astropy.unit to be implemented):
+* module **storing traces in hdf5 format** (using astropy.unit to be implemented):
     From now on we only use hdf5 file for further processing of the simulated traces (using astropy.Table). That means one has to first convert the ascii files of the simulation output to hdf5 format. The script makes use of the following modules so that in the hdf5 file the information are stored in a coherent way. 
     * module reading in CoREAS shower parameters (using astropy.unit to be implemented) - meta info
     * module reading in CoREAS antenna list (using astropy.unit to be implemented)  - meta info
