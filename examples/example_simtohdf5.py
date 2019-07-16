@@ -75,7 +75,9 @@ if __name__ == '__main__':
         posfile = path +'SIM'+str(showerID)+'.list'
         positions, ID_ant = _get_positions_coreas(posfile)
         
-        inputfile = path+'/inp/SIM'+showerID+'.inp'
+        #inputfile = path+'/inp/SIM'+showerID+'.inp'
+        print("ATTENTION: hadrcoded inpfile")
+        inputfile ="/home/laval1NS/zilles/CoREAS/GP300-v4-inp/"+showerID+'/inp/SIM'+showerID+'.inp'
         zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
         
         # correction of shower core
@@ -88,7 +90,7 @@ if __name__ == '__main__':
         
         
     ########################
-    # load shower info from inp file
+    # load shower info from inp file via dictionary
     ########################
     shower = {
             "ID" : showerID,               # shower ID, number of simulation
@@ -195,7 +197,7 @@ if __name__ == '__main__':
         
         
         ########### example VOLTAGE COMPUTATION and add to same hdf5 file
-        voltage_compute=False
+        voltage_compute=True
         if voltage_compute:
             from radio_simus.computevoltage import get_voltage, compute_antennaresponse
             from radio_simus.signal_treatment import run
@@ -207,13 +209,13 @@ if __name__ == '__main__':
             print("ATTENTION: alpha and beta hardcoded")
             
             ## apply only antenna response
-            #voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=.0, beta=0. )
+            voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=0., beta=0. )
 
             ## apply full chain
-            voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
+            #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
             
             # load voltage array to table and store in same hdf5 file
-            volt_table = _table_voltage(voltage, shower['position'])
+            volt_table = _table_voltage(voltage, shower['position'],info=shower )
             volt_table.write(name, path='voltages', format="hdf5", append=True, compression=True, serialize_meta=True)
 
 
