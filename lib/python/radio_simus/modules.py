@@ -36,7 +36,7 @@ def _geomagnetic_angle(zen,az):
     # North + Magnetic North, pointing towards East in this case 
     phigeo = 2.72
     thetageo = 152.95
-    print("ATTENTION: theta and phi geo hardcoded: (",thetageo, phigeo ,") deg"
+    print("ATTENTION: theta and phi geo hardcoded: (",thetageo, phigeo ,") deg")
     az_B = np.degtorad(phigeo)
     # Direction where we point to . Inclination=63.05deg
     zen_B = np.degtorad(thetageo)
