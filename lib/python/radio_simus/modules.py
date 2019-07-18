@@ -11,6 +11,42 @@ import matplotlib.pyplot as plt
 
 #============================================================================
 
+
+def _geomagnetic_angle(zen,az):
+    '''
+    Parameters
+    ----------
+    zen : float 
+        zenith of the shower in GRAND, in deg
+    az : float 
+        azimuth of the shower in GRAND, in deg
+
+    Returns
+    -------
+    geo_angle: float
+        geomagnetic angle in deg
+    '''
+  
+    # Direction of shower
+    az_rad = np.degtorad(az)
+    zen_rad= np.degtorad(zen)
+    v = np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)])
+
+    # Direction where Earth mag field points to at Ulastai
+    # North + Magnetic North, pointing towards East in this case 
+    phigeo = 2.72
+    thetageo = 152.95
+    print("ATTENTION: theta and phi geo hardcoded: (",thetageo, phigeo ,") deg"
+    az_B = np.degtorad(phigeo)
+    # Direction where we point to . Inclination=63.05deg
+    zen_B = np.degtorad(thetageo)
+    B = np.array([np.cos(az_B)*np.sin(zen_B),np.sin(az_B)*np.sin(zen_B),np.cos(zen_B)])
+
+    geo_angle = np.arccos(np.matmul(v, B))
+    return np.degtorad(geo_angle)
+
+#============================================================================
+
 def _getXmax(primarytype, energy):
     ''' Xmax value in g/cm2
     Arguments:
