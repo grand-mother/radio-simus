@@ -11,7 +11,7 @@ import numpy as np
 
 import pylab as plt
 import glob
-from radio_simus.signal_treatment import filters
+from radio_simus.signal_processing import filters
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
@@ -407,53 +407,53 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)
     
 
-#===========================================================================================================
-def inputfromtxt(input_file_path):
-#===========================================================================================================
-    ''' ATTENTION Should be deleted and substituted in modules
-    '''
+##===========================================================================================================
+#def inputfromtxt(input_file_path):
+##===========================================================================================================
+    #''' ATTENTION Should be deleted and substituted in modules
+    #'''
 
-    particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
-    ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
+    #particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
+    #,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
 
-    showerID=str(input_file_path).split("/")[-2] # should be equivalent to folder name
-    datafile = input_file_path+'/inp/'+showerID+'.inp'
-    #datafile = glob.glob(input_file_path+'/inp/*.inp')[0]
-    if os.path.isfile(datafile) ==  False:  # File does not exist 
-        try:
-            datafile = input_file_path+'/'+showerID+'.inp' 
-            if os.path.isfile(datafile) ==  True:  # File does not exist 
-                print('\n Get shower parameters from ', datafile )
-        except IOError:
-            print('--- ATTENTION: Could not find ZHaireS input file in folder',datafile,'! Aborting.')
-            exit()
-    else: # File exists
-      print('\n Get shower parameters from ', datafile )
-    # ToDo: implement line-by-line reading 
-    data = open(datafile, 'r') 
-    for line in data:
-        if 'PrimaryZenAngle' in line:
-            zen=float(line.split(' ',-1)[1])
-            zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-        if 'PrimaryAzimAngle' in line:
-            azim = float(line.split(' ',-1)[1])+180 #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-            if azim>=360:
-                azim= azim-360
-    try:
-        zen
-    except NameError:
-        print('--- ATTENTION: zenith could not be read-in')
-        zen = 100. #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km by ZHAireS
-    try:
-        azim
-    except NameError:
-        print('--- ATTENTION: azimuth could not be read-in')
-        azim = 0
+    #showerID=str(input_file_path).split("/")[-2] # should be equivalent to folder name
+    #datafile = input_file_path+'/inp/'+showerID+'.inp'
+    ##datafile = glob.glob(input_file_path+'/inp/*.inp')[0]
+    #if os.path.isfile(datafile) ==  False:  # File does not exist 
+        #try:
+            #datafile = input_file_path+'/'+showerID+'.inp' 
+            #if os.path.isfile(datafile) ==  True:  # File does not exist 
+                #print('\n Get shower parameters from ', datafile )
+        #except IOError:
+            #print('--- ATTENTION: Could not find ZHaireS input file in folder',datafile,'! Aborting.')
+            #exit()
+    #else: # File exists
+      #print('\n Get shower parameters from ', datafile )
+    ## ToDo: implement line-by-line reading 
+    #data = open(datafile, 'r') 
+    #for line in data:
+        #if 'PrimaryZenAngle' in line:
+            #zen=float(line.split(' ',-1)[1])
+            #zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
+        #if 'PrimaryAzimAngle' in line:
+            #azim = float(line.split(' ',-1)[1])+180 #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
+            #if azim>=360:
+                #azim= azim-360
+    #try:
+        #zen
+    #except NameError:
+        #print('--- ATTENTION: zenith could not be read-in')
+        #zen = 100. #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km by ZHAireS
+    #try:
+        #azim
+    #except NameError:
+        #print('--- ATTENTION: azimuth could not be read-in')
+        #azim = 0
         
-    print('Shower direction from input file -- azmimuth/deg ='+str(azim)+' , zenith/deg = '+str(zen))
+    #print('Shower direction from input file -- azmimuth/deg ='+str(azim)+' , zenith/deg = '+str(zen))
 
-    return zen,azim
+    #return zen,azim
 
 #===========================================================================================================
 def compute(opt_input,path, zenith_sim, azimuth_sim):
@@ -584,9 +584,10 @@ if __name__ == '__main__':
     print("opt_input = ",opt_input)
 
     if opt_input=='txt':
+        import in_out
         # Read the ZHAireS input (.inp) file to extract the primary type, the energy, the injection height and the direction
         inp_file = str(sys.argv[1])
-        zenith_sim,azimuth_sim = inputfromtxt(inp_file)
+        zenith_sim,azimuth_sim ,energy,injh,primarytype,core,task= in_out.inputfromtxt(inp_file)
 
     elif opt_input=='manual':
         zenith_sim = float(sys.argv[3]) #deg
