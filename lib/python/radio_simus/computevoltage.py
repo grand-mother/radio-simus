@@ -8,8 +8,7 @@ from os.path import  join
 import sys
 import math
 import numpy as np
-from radio_simus.modules import TopoToAntenna
-from radio_simus.modules import compute_ZL
+
 import pylab as plt
 import glob
 from radio_simus.signal_treatment import filters
@@ -56,6 +55,98 @@ freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=
 RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
 XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
 print('Done.')
+
+#============================================================================
+def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6): # SI UNits: Ohms, Farrads, Henry
+#============================================================================
+
+  ''' Function to compute impedance from GRAND load    
+        
+  Arguments:
+  ----------
+  freq: float
+    frequency in Hz
+  DISPLAY: True/False
+    optional, plotting function
+  R, C, L: float
+    SI UNits: Ohms, Farrads, Henry
+  
+  Returns:
+  ----------
+  RL, XL: float
+    Impdedance  
+  '''
+  
+  w = 2*np.pi*freq # Pulsation
+  w2 = w*w
+  # ZC = 1./(i*C*w)
+  # ZL = i*L*w
+  # ZR = R
+  # Analytic formulas for R//C//L
+  deno = (L*L*w2+R*R*(1-L*C*w2)*(1-L*C*w2))
+  RL = R*L*L*w2/deno  # Computed formula
+  XL = R*R*L*w*(1-L*C*w2)/deno  # Computed formula
+  if DISPLAY:
+    plt.figure(1)
+    plt.plot(freq/1e6,RL,label="R$_L$")
+    plt.plot(freq/1e6,XL,label="X$_L$")
+    plt.legend(loc="best")
+    plt.xlabel("Frequency (MHz)")
+    plt.ylabel("Load impedance ($\Omega$)")
+    plt.xlim([min(freq/1e6), max(freq/1e6)])
+    plt.show()
+
+  return RL, XL
+
+#============================================================================
+def TopoToAntenna(u,alpha,beta): 
+#============================================================================
+
+    '''from coordinates in the topography frame to coordinates in the antenna
+    
+    Arguments:
+    ----------
+    u: numpy array
+        shower vector
+    alpha: float 
+        surface angle alpha in deg
+    beta: float 
+        surface beta alpha in deg  
+        
+    Returns:
+    ----------
+    numpy array:
+        shower vector in coordinates of antenna
+    
+    '''
+    
+    alpha=alpha*np.pi/180 #around y
+    beta=beta*np.pi/180 #around z
+    cb = np.cos(beta)
+    sb = np.sin(beta)
+    ca = np.cos(alpha)
+    sa = np.sin(alpha)
+    roty = np.array([[ca,0,sa],[0,1,0],[-sa,0,ca]])
+    roty = np.linalg.inv(roty)  # Since we rotate referential, inverse transformation should be applied
+    rotz = np.array([[cb,-sb,0],[sb,cb,0],[0,0,1]])
+    rotz = np.linalg.inv(rotz) # Since we rotate referential, inverse transformation should be applied
+    rotyz=roty.dot(rotz)  # beta and then alpha rotation. This induces a EW component for x arm
+
+    # Now rotate along zp so that we are back with x along NS
+    xarm = [1,0,0]  #Xarm
+    xarmp = rotyz.dot(xarm)  # Rotate Xarm along slope
+    # Compute antrot, angle of NS direction in antenna ref = angle to turn Xarm back to North
+    antrot = math.atan2(xarmp[1],xarmp[0])*180/np.pi
+    cz = np.cos(antrot*np.pi/180)
+    sz = np.sin(antrot*np.pi/180)
+    rotzant = np.array([[cz,-sz,0],[sz,cz,0],[0,0,1]])
+    rotzant = np.linalg.inv(rotzant)
+    rottot = rotzant.dot(rotyz)
+
+    [xp,yp,zp] = rottot.dot(u)
+    return np.array([xp,yp,zp])
+
+
 
 
 #===========================================================================================================
