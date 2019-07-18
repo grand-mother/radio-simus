@@ -34,23 +34,7 @@
     * module reading in ZHAireS antenna list (using astropy.unit to be implemented)  - meta info
     
 * **hardcoded values now stored in config file** (eg. test.config read-in by __init__)
-    # define site
-    SITE  Lenghu
-    LONG  92.334037  deg
-    LAT  38.870398  deg 
-    OBSHEIGHT  2734.054  m
-    #antenna file
-    ARRAY  <path>/regular_array_slopes.txt
-    #magnetic field: B_ZHAIRES 54.021 uT 57.43 deg 0.72 deg
-    THETAGEO  147.43  deg
-    PHIGEO  0.72  deg
-    B_COREAS  19.71  -14.18
-    # definition sigma in muV (50-200MHz)
-    VRMS  15
-    #antenna responses
-    ANTX  <path>/GRAND_antenna/HorizonAntenna_SNarm_leff_loaded.npy
-    ANTY  <path>/GRAND_antenna/HorizonAntenna_EWarm_leff_loaded.npy
-    ANTZ  <path>/GRAND_antenna/HorizonAntenna_Zarm_leff_loaded.npy
+    see examples
 
     
 ## ToDos:
