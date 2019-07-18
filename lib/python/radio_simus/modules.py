@@ -4,7 +4,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-
+from .__init__ import phigeo, thetageo
 
 #__all__ = ["compute_ZL", "TopoToAntenna", "_getXmax", "_dist_decay_Xmax"]
 
@@ -28,22 +28,20 @@ def _geomagnetic_angle(zen,az):
     '''
   
     # Direction of shower
-    az_rad = np.degtorad(az)
-    zen_rad= np.degtorad(zen)
+    az_rad = np.deg2rad(az)
+    zen_rad= np.deg2rad(zen)
     v = np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)])
 
     # Direction where Earth mag field points to at Ulastai
     # North + Magnetic North, pointing towards East in this case 
-    phigeo = 2.72
-    thetageo = 152.95
     print("ATTENTION: theta and phi geo hardcoded: (",thetageo, phigeo ,") deg")
-    az_B = np.degtorad(phigeo)
+    az_B = np.deg2rad(phigeo)
     # Direction where we point to . Inclination=63.05deg
-    zen_B = np.degtorad(thetageo)
+    zen_B = np.deg2rad(thetageo)
     B = np.array([np.cos(az_B)*np.sin(zen_B),np.sin(az_B)*np.sin(zen_B),np.cos(zen_B)])
 
     geo_angle = np.arccos(np.matmul(v, B))
-    return np.degtorad(geo_angle)
+    return np.rad2deg(geo_angle)
 
 #============================================================================
 

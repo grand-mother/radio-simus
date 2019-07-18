@@ -10,8 +10,8 @@ import numpy as np
 import sys
 import glob
 
-from astropy import units as u
-muV_m = u.u * u.V / u.m
+#from astropy import units as u
+#muV_m = u.u * u.V / u.m
 
 #===========================================================================================================
 #===========================================================================================================
@@ -133,13 +133,16 @@ def inputfromtxt(input_file_path):
     # TODO: add observer level -- antenna height to be corrected
     
 
-    if task:
-        if core.all:
-            return zen,azim,energy,injh,primarytype,core,task
-    if task:
-        return zen,azim,energy,injh,primarytype,task
-    else:
-        return zen,azim,energy,injh,primarytype
+    #if task:
+        #if core.all:
+            #return zen,azim,energy,injh,primarytype,core,task
+    #if task:
+        #return zen,azim,energy,injh,primarytype,task
+    #else:
+        #return zen,azim,energy,injh,primarytype
+        
+    return zen,azim,energy,injh,primarytype,core,task
+
 #===========================================================================================================
 #===========================================================================================================
 

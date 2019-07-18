@@ -11,50 +11,23 @@ import numpy as np
 
 import pylab as plt
 import glob
+
 from radio_simus.signal_processing import filters
+from .__init__ import antx, anty, antz
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
 from scipy.interpolate import interp1d
 
 
-wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
+
+DISPLAY = 0
 
 EARTH_RADIUS=6370949. #m
 azstep=5 #step in azimuth in npy file
 freqscale=1 #freq*2 if h/2 and sizeant/2
 #loaded=1 #if antenna is loaded or not in npy file --- NOTE: Not needed
 
-# Compute load impendance
-#impRLC R = 300;C = 6.5e-12;L = 1e-6; 20 300 MHz
-fr=np.arange(20,301,5)
-RLp, XLp = compute_ZL(fr*1e6)
-
-DISPLAY = 0
-print('--- ATTENTION: current version only valid for Cosmic Rays')  
-
-# Load antenna response files
-freespace = 0
-if freespace==1:
-  fileleff_x=wkdir+'butthalftripleX4p5mfreespace_leff.npy' # 
-  fileleff_y=wkdir+'butthalftripleY4p5mfreespace_leff.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
-  fileleff_z=wkdir+'butthalftripleZ4p5mfreespace_leff.npy'
-else:
-  fileleff_x=wkdir+'HorizonAntenna_SNarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, NS component
-  fileleff_y=wkdir+'HorizonAntenna_EWarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
-  fileleff_z=wkdir+'HorizonAntenna_Zarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, Vert component
-
-print('Loading',fileleff_x,'...')  
-freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(fileleff_x) ### this line cost 6-7s
-RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
-XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
-freq2,realimp2,reactance2,theta2,phi2,lefftheta2,leffphi2,phasetheta2,phasephi2=np.load(fileleff_y) ### this line cost 6-7s
-RL2=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
-XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
-freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(fileleff_z) ### this line cost 6-7s
-RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
-XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
-print('Done.')
 
 #============================================================================
 def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6): # SI UNits: Ohms, Farrads, Henry
@@ -97,6 +70,47 @@ def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6): # SI UNit
     plt.show()
 
   return RL, XL
+#============================================================================
+
+
+
+# Compute load impendance
+#impRLC R = 300;C = 6.5e-12;L = 1e-6; 20 300 MHz
+fr=np.arange(20,301,5)
+RLp, XLp = compute_ZL(fr*1e6)
+
+print('--- ATTENTION: current version only valid for Cosmic Rays') 
+
+#wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
+# Load antenna response files
+#freespace = 0
+#if freespace==1:
+  #fileleff_x=wkdir+'butthalftripleX4p5mfreespace_leff.npy' # 
+  #fileleff_y=wkdir+'butthalftripleY4p5mfreespace_leff.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
+  #fileleff_z=wkdir+'butthalftripleZ4p5mfreespace_leff.npy'
+#else:
+  #fileleff_x=wkdir+'HorizonAntenna_SNarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, NS component
+  #fileleff_y=wkdir+'HorizonAntenna_EWarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
+  #fileleff_z=wkdir+'HorizonAntenna_Zarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, Vert component
+  
+fileleff_x = antx
+fileleff_y = anty
+fileleff_z = antz
+
+print('Loading',fileleff_x,'...')  
+freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(fileleff_x) ### this line cost 6-7s
+RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
+XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
+freq2,realimp2,reactance2,theta2,phi2,lefftheta2,leffphi2,phasetheta2,phasephi2=np.load(fileleff_y) ### this line cost 6-7s
+RL2=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
+XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
+freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(fileleff_z) ### this line cost 6-7s
+RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
+XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
+print('Done.')
+
+
+
 
 #============================================================================
 def TopoToAntenna(u,alpha,beta): 
