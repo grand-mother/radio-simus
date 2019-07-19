@@ -46,7 +46,6 @@ def inputfromtxt(input_file_path):
     ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
 
 
-    print(input_file_path)
     if os.path.isfile(input_file_path) ==  False:  # File does not exist 
         print('--- ATTENTION: inp-file does not exist')
         #exit()
@@ -279,7 +278,10 @@ def _get_positions_coreas(path):
     y_pos1=[]
     z_pos1=[]
     ID_ant=[]
-    positions=[]
+    #positions=[]
+    
+    alpha=[]
+    beta=[]
     for line in datafile:
     # Coreas
         if 'AntennaPosition =' in line:
@@ -288,14 +290,26 @@ def _get_positions_coreas(path):
             y_pos1.append(float(line.split('  ',-1)[2])/100.) #*u.cm) # cm to m
             z_pos1.append(float(line.split('  ',-1)[3])/100.) #*u.cm) # cm to m
             ID_ant.append(str(line.split('  ',-1)[4]))
-        
+            alpha.append(0)
+            beta.append(0)
+        if 'ANTENNA' in line:
+            {0}  {1:.1f}  {2:.1f}  {3:.1f}  {4}  {5}
+            x_pos1.append(float(line.split('  ',-1)[2])) #*u.m) 
+            y_pos1.append(float(line.split('  ',-1)[3])) #*u.m) 
+            z_pos1.append(float(line.split('  ',-1)[4])) #*u.m) 
+            ID_ant.append(str(line.split('  ',-1)[1]))
+            alpha.append(float(line.split('  ',-1)[5]))
+            beta.append(float(line.split('  ',-1)[6]))
+            
+            
     x_pos1=np.asarray(x_pos1)
     y_pos1=np.asarray(y_pos1)
     z_pos1=np.asarray(z_pos1)
     positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )
-        
+    slopes=np.stack((alpha, beta), axis=-1 )    
     #print(ID_ant)    
-    return positions, ID_ant
+    
+    return positions, ID_ant, slopes
 
 
 #===========================================================================================================

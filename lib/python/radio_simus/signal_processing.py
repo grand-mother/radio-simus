@@ -7,14 +7,26 @@ import numpy as np
 from scipy.signal import butter, lfilter, resample
 from scipy.fftpack import rfft, irfft, rfftfreq
 
+from .__init__ import Vrms, Vrms2, tsampling
 
-#__all__ = ["add_noise", "digitization", "filter", "run"]
+__all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_create_emptytrace", "run"]
+
 
 ##########################################################################
 ##########################################################################
+def include_shadowing():
+    print("TODO: include mountain shadowing for antennas")
+    # TODO: check line of sight between antenna and shower to calculate mountain shadowing by realistic topography - TURTLE
+    # Could be a module for creation of simulation inp files as well
+    
+    return 0
 
 
-def add_noise(vrms, voltages):
+
+##########################################################################
+
+
+def add_noise(vrms=Vrms2, voltages):
     """Add normal random noise on voltages
     inputs : (voltage noise rms, voltages)
     outputs : noisy voltages (time in ns)
@@ -26,7 +38,7 @@ def add_noise(vrms, voltages):
 
 #===========================================================================================================
 
-def digitization(voltages, tsampling):
+def digitization(voltages, tsampling=tsampling):
     """Digitize the voltages at an specific sampling
     inputs : (voltages, sampling rate)
     outputs : digitized voltages
@@ -43,7 +55,7 @@ def digitization(voltages, tsampling):
 
 #===========================================================================================================
 
-def Digitization_2(v,TSAMPLING):
+def Digitization_2(v,TSAMPLING=tsampling):
     """Digitize the voltages at an specific sampling -- v2
     inputs : (voltages, sampling rate)
     outputs : digitized voltages (time in ns)
@@ -70,8 +82,6 @@ def Digitization_2(v,TSAMPLING):
 
 #===========================================================================================================
 
-# Filter the voltages at a bandwidth
-################################################################
 def _butter_bandpass_filter(data, lowcut, highcut, fs):
     """subfunction of filt
     """
@@ -132,12 +142,39 @@ def filters(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
 
 #===========================================================================================================
 
+def _create_emptytrace(nbins=599, tstep=1):
+    ''' Create a noise trace
+    
+    Arguments:
+    ----------
+    nbins: int
+        bins of time trace, check simulations
+    tspep: float
+        time binning in ns
+        
+    Returns:
+    --------
+    trace: numpy array
+        empty signal trace
+    '''
+
+    vx=np.zeros(nbins)
+    vy=np.zeros(nbins)
+    vz=np.zeros(nbins)
+    t=np.fromfunction(lambda i: i*tstep, (nbins,), dtype=float) 
+    trace=np.vstack((t,vx,vy,vz))
+    
+    return trace
+
+#===========================================================================================================
+
+
+
+
+
 ##########################################################################
-#### RUN THE FULL CHAIN
+#### RUN THE FULL CHAIN --- EXAMPLE
 ##########################################################################
-### HARDCODED - TODO to be substituted
-tsampling = 2 # ns
-Vrms = 28 #muV before filtering - NOTE: should be substituted by function returning the value
 
 #===========================================================================================================
 def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
@@ -148,6 +185,12 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
         4. FILTER THE TRACE TO THE 50-200MHz WINDOW
         5. DIGITIZATION -- 2ns 
+        
+        -- To produce noise traces:
+        -- 1. _create_emptytrace
+        -- 3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
+        -- 4. FILTER THE TRACE TO THE 50-200MHz WINDOW
+        -- 5. DIGITIZATION -- 2ns 
         
         TODO: make it modular so that people can pick the steps they need
     
@@ -261,8 +304,8 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
 
 
         ### 5. DIGITIZATION -- 2ns 
-        ##trace = digitization(trace,tsampling)
-        #trace = Digitization_2(trace,tsampling)
+        #trace = digitization(trace,tsampling)
+        trace = Digitization_2(trace,tsampling)
     
         if DISPLAY==1:
             	    

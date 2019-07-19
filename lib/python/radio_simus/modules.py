@@ -62,7 +62,6 @@ def _getXmax(primarytype, energy):
     Note: factor approximated from https://pos.sissa.it/301/1100/pdf
     '''
        
-    print(primarytype, energy)   
     #    current version for tau decays    
     if primarytype=='electron': # aprroximated by gamma shower
         a=82.5 # g/cm2
