@@ -14,7 +14,7 @@ import glob
 # Expand the PYTHONPATH and import the radiomorphing package #NOTE: this would be on the shared disc
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
-import radio_simus 
+#import radio_simus 
 #This also loads the submodule in_out, and makes it available without its package prefix
 from radio_simus.in_out import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
 
@@ -30,8 +30,8 @@ if __name__ == '__main__':
         -- example hoe to read in tables from hdf5 files
         
         Usage for full antenna array:
-        usage: python in_out.py <path to event folder> <zhaires/coreas>
-        example: python in_out.py ./ coreas
+        usage: python example_simtohdf5.py <path to event folder> <zhaires/coreas>
+        example: python example_simtohdf5.py ./ coreas
         
         Note: adopt example to also add voltage traces from txt files
         """)
@@ -72,12 +72,12 @@ if __name__ == '__main__':
                
 
     if  simus == 'coreas':
-        posfile = path +'SIM'+str(showerID)+'.list'
-        positions, ID_ant = _get_positions_coreas(posfile)
+        #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
+        posfile = path +'SIM'+str(showerID)+'.info'
+        positions, ID_ant, slopes = _get_positions_coreas(posfile)
+        #print(positions, ID_ant, slopes)
         
-        #inputfile = path+'/inp/SIM'+showerID+'.inp'
-        print("ATTENTION: hadrcoded inpfile")
-        inputfile ="/home/laval1NS/zilles/CoREAS/GP300-v4-inp/"+showerID+'/inp/SIM'+showerID+'.inp'
+        inputfile = path+'/inp/SIM'+showerID+'.inp'
         zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
         
         # correction of shower core
@@ -125,7 +125,7 @@ if __name__ == '__main__':
         if  simus == 'coreas':
             base=os.path.basename(ant)
             # coreas
-            ID=(os.path.splitext(base)[0]).split("_")[1] # remove raw 
+            ID=(os.path.splitext(base)[0]).split("_a")[1] # remove raw 
             ant_number = ID_ant.index(ID)
             # define path for storage of hdf5 files
             name = path+'/../table_'+str(ID)+'.hdf5'
@@ -133,8 +133,8 @@ if __name__ == '__main__':
 
         ##### read-in output of simulations
         # read in trace from file and store as astropy table, saved as hdf5 file (optional)
-        # a is a astropy table
-        a= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="e", simus=simus, save=name) 
+        # a is a astropy table, saved as <name> as hdf5-file
+        a= load_trace_to_table(path=ant, pos=positions[ant_number], slopes=slopes[ant_number],  info=shower, content="e", simus=simus, save=name) 
         
         ####### From here on only additional feature and nice-to-know
         ## play around
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
 
 
-
+        ####################################################################
 
         ############
         ## PLAYGROUND
@@ -186,7 +186,7 @@ if __name__ == '__main__':
             print("WARNING: adopt path to voltage trace")
             
             # read in trace from file and store as astropy table - can be substituted by computevoltage operation
-            b= load_trace_to_table(path=ant, pos=positions[ant_number], info=shower, content="v") # read from text files
+            b= load_trace_to_table(path=ant, pos=positions[ant_number], slopes=slopes[ant_number], info=shower, content="v") # read from text files
     
             ## stack electric field and voltage traces
             #from astropy.table import hstack, then write c to a file
@@ -197,26 +197,30 @@ if __name__ == '__main__':
         
         
         ########### example VOLTAGE COMPUTATION and add to same hdf5 file
-        voltage_compute=True
+        voltage_compute=False
         if voltage_compute:
             from radio_simus.computevoltage import get_voltage, compute_antennaresponse
-            from radio_simus.signal_treatment import run
+            from radio_simus.signal_processing import run
             from radio_simus.in_out import _table_voltage
             
-            # convert table to numpy array
+            ##load info from hdf5 file
+            #path_hdf5=name
+            #efield1, time_unit, efield_unit, shower, position = _load_to_array(path_hdf5, content="efield")
+            # or convert from existing table to numpy array
             efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
             
-            print("ATTENTION: alpha and beta hardcoded")
             
             ## apply only antenna response
-            voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=0., beta=0. )
-
+            voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
+            shower.update({'voltage': 'antennaresponse'})
+            
             ## apply full chain
             #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
-            
+            #shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
+                        
             # load voltage array to table and store in same hdf5 file
-            volt_table = _table_voltage(voltage, shower['position'],info=shower )
-            volt_table.write(name, path='voltages', format="hdf5", append=True, compression=True, serialize_meta=True)
+            volt_table = _table_voltage(voltage, pos=positions[ant_number], slopes=slopes[ant_number] ,info=shower )
+            volt_table.write(name, path='voltages', format="hdf5", append=True, serialize_meta=True) #compression=True,
 
 
         ######## just testing part and examples how to use astropy tables
