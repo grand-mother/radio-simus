@@ -52,7 +52,7 @@ global Vrms, Vrms2, tsampling
 global antx, anty, antz
 
 ### set global parameters
-configfile = open("/home/laval1NS/zilles/radio-simus/examples/test.config", 'r') 
+configfile = open("/mnt/c/Users/Anne/work/radio-simus/examples/test.config", 'r') 
 for line in configfile:
     line = line.rstrip() 
     if 'SITE' in line:
@@ -72,9 +72,10 @@ for line in configfile:
     if 'PHIGEO' in line:
         phigeo=float(line.split('  ',-1)[1]) # deg, GRAND ->astropy.units
     if 'B_COREAS' in line: # B_COREAS  19.71  -14.18
-        Bcoreas=list(line.split('  ',-1)) # deg, deg  ->astropy.units     
-    if 'B_ZHAIRES' in line: # B_ZHAIRES 54.021  57.43  0.72  #54.021 uT 57.43 deg 0.72 deg
-        Bzhaires=list(line.split('  ',-1)) # deg, deg  ->astropy.units    
+        Bcoreas=list(line.split('  ',-1)) # deg, deg  ->astropy.units 
+    if 'B_ZHAIRES' in line: # B_COREAS  19.71  -14.18
+        Bzhaires=list(line.split('  ',-1)) # deg, deg  ->astropy.units      
+    
         
     if 'VRMS' in line:
         Vrms=float(line.split('  ',-1)[1]) # muV  ->astropy.units  
@@ -124,12 +125,13 @@ except NameError:
 try:
     Bcoreas
 except NameError:
-    print("Warning: Bcoreas not defined")   
+    print("Warning: Bcoreas not defined")
 try:
     Bzhaires
 except NameError:
     print("Warning: Bzhaires not defined")   
-       
+    
+
 try:
     Vrms
 except NameError:

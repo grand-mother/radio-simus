@@ -82,20 +82,87 @@ class detector:
 #=================================================        
 
 def create_from_file(self, array_file): 
-    # reading in whole antenna array as file
-    # antID == index of position
+    ''' reading in whole antenna array as file: antID, position and slope
+    Arguments:
+    ----------
+    self
+    array_file: str
+        filepath containing ID, positions and slope
+    
+    Returns:
+    -------
+    -        
+    '''
     print(array_file)
     ant_array = np.loadtxt(array_file,  comments="#")
-    for i in range(0,len(ant_array.T[0])):     
-        self.add_position(i, ant_array[i, 0:3])
-        self.add_slope(i, ant_array[i, 3:])
+    for i in range(0,len(ant_array.T[0])):
+        self.add_position(int(ant_array[i,0]), ant_array[i, 1:4])
+        self.add_slope(int(ant_array[i,0]), ant_array[i, 4:])
 
 def get_array(self):
-        # returns array of antenna ID and position
-        return np.array(self.array[:][1:])
+    '''returns array of antenna ID and position for detector
+    Arguments:
+    ----------
+    self
+    
+    Returns:
+    --------
+    numpy array
+        array of IDs [0] and positions [1:]
+    '''
+    return np.array(self.array)
     
 def get_slopes(self):
-        # returns array of antenna ID and position
-        return np.array(self.slopes[:][1:])
+    '''returns array of antenna ID and slopes for detector
+    Arguments:
+    ----------
+    self
+    
+    Returns:
+    --------
+    numpy array
+        array of IDs [0] and slopes [1:]: alpha and beta
+    '''
+    return np.array(self.slopes)
     
 
+def find_antennaposition(self, ID):
+    ''' find antenna position per ID in detector array
+    Arguments:
+    ----------
+    det: object
+    ID: int
+        desired antenna ID
+        
+    Returns:
+    --------
+    positions: array
+        desired antenna position
+    '''
+    array = get_array(self)
+    positions = array[:,1:] 
+    antIDs = array.T[0]
+    index = np.where(antIDs == int(ID))[0][0]
+    #print(index)
+    return positions[index]
+
+
+def find_antennaslope(self, ID):
+    ''' find antenna slope per ID in detector array
+    Arguments:
+    ----------
+    det: object
+    ID: int
+        desired antenna ID
+        
+    Returns:
+    --------
+    positions: array
+        desired antenna slope
+    '''
+    array = get_slopes(self)
+    slopes = array[:,1:] 
+    antIDs = array.T[0]
+    index = np.where(antIDs == int(ID))[0][0]
+    #print(index)
+    return slopes[index]
