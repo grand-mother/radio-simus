@@ -38,7 +38,8 @@ from os.path import split, join, realpath
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 import radio_simus 
-from radio_simus.utils import p2p, hilbert_env, hilbert_peak, _getAngle
+from radio_simus.utils import _getAngle
+from radio_simus.signal_treatment import p2p, hilbert_env, hilbert_peak
 
 
 # path to folder containing the inp-file, trace files and antpos.dat 

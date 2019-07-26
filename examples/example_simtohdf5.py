@@ -197,7 +197,7 @@ if __name__ == '__main__':
         
         
         ########### example VOLTAGE COMPUTATION and add to same hdf5 file
-        voltage_compute=False
+        voltage_compute=True
         if voltage_compute:
             from radio_simus.computevoltage import get_voltage, compute_antennaresponse
             from radio_simus.signal_processing import run

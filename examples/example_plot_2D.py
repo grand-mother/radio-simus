@@ -131,7 +131,9 @@ for file in glob.glob(path+"*.hdf5"):
     #print(x_pos[-1].to(u.m))
 
 
+### Missing legend containing shower information
 
+print(txt.meta)
 
 #################
 #PLOTTING SECTION
