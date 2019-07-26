@@ -12,21 +12,21 @@ from .__init__ import Vrms, Vrms2, tsampling
 __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_create_emptytrace", "run"]
 
 
-##########################################################################
-##########################################################################
-def include_shadowing():
-    print("TODO: include mountain shadowing for antennas")
-    # TODO: check line of sight between antenna and shower to calculate mountain shadowing by realistic topography - TURTLE
-    # Could be a module for creation of simulation inp files as well
+###########################################################################
+###########################################################################
+#def include_shadowing(Xmax_pos=None):
+    #print("TODO: include mountain shadowing for antennas")
+    ## TODO: check line of sight between antenna and shower to calculate mountain shadowing by realistic topography - TURTLE
+    ## Could be a module for creation of simulation inp files as well
     
-    return 0
+    #return 0
 
 
 
 ##########################################################################
 
 
-def add_noise(vrms=Vrms2, voltages):
+def add_noise(voltages, vrms=Vrms2):
     """Add normal random noise on voltages
     inputs : (voltage noise rms, voltages)
     outputs : noisy voltages (time in ns)
@@ -258,7 +258,7 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         
         ### 3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
         #Vrms = 28 #muV before filtering - NOTE: should be substituted by function returning the value
-        trace = add_noise(Vrms, trace) # remove tranposed in signal_treatment
+        trace = add_noise(trace, vrms=Vrms2) # remove tranposed in signal_treatment
         
         if DISPLAY==1:
             	    

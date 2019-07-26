@@ -10,7 +10,7 @@ import numpy as np
 import sys
 import glob
 
-#from astropy import units as u
+from astropy import units as u
 #muV_m = u.u * u.V / u.m
 
 #===========================================================================================================
@@ -222,24 +222,24 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     path, reas = os.path.split(input_file_path)
     base = os.path.basename(reas)
     base1 = os.path.splitext(base)
-    file_path= path[0:-4]+'/'+base1[0]+".reas"
-    #file_path= path[0:-4]+'/'+base1[0]+"_orig.reas"
+    file_path= path[0:-4]+'/'+base1[0]+".info"
+    #file_path= path[0:-4]+'/'+base1[0]+".reas"
 
     datafile = open(file_path, 'r') 
     for line in datafile:
-        if '#TASK' in line:
-            task = str(line.split('    ',-1)[1])
+        if 'TASK' in line:
+            task = str(line.split('  ',-1)[1])
             if task[-1]=='\n':
                 task=task[0:-1]
             if task[-1]=='\r':
                 task=task[0:-1]
             
-        if '#CORE' in line:
+        if 'CORE' in line:
             #print(line)
-            offset = line.split('    ',-1)
+            offset = line.split('  ',-1)
             if offset[-1]=='\n':
                 offset=offset[0:-1]
-            core = np.array([float(offset[1])/100, float(offset[2])/100, float(offset[3])/100]) # in cm to m 
+            core = np.array([float(offset[1]), float(offset[2]), float(offset[3])]) # in cm to m 
     try:
         task
     except NameError:
@@ -284,7 +284,7 @@ def _get_positions_coreas(path):
     beta=[]
     for line in datafile:
     # Coreas
-        if 'AntennaPosition =' in line:
+        if 'AntennaPosition =' in line: #list file
             #print(line,line.split('    ',-1) )
             x_pos1.append(float(line.split('  ',-1)[1])/100.) #*u.cm) # cm to m
             y_pos1.append(float(line.split('  ',-1)[2])/100.) #*u.cm) # cm to m
@@ -292,8 +292,7 @@ def _get_positions_coreas(path):
             ID_ant.append(str(line.split('  ',-1)[4]))
             alpha.append(0)
             beta.append(0)
-        if 'ANTENNA' in line:
-            {0}  {1:.1f}  {2:.1f}  {3:.1f}  {4}  {5}
+        if 'ANTENNA' in line: #info file
             x_pos1.append(float(line.split('  ',-1)[2])) #*u.m) 
             y_pos1.append(float(line.split('  ',-1)[3])) #*u.m) 
             z_pos1.append(float(line.split('  ',-1)[4])) #*u.m) 
@@ -311,7 +310,18 @@ def _get_positions_coreas(path):
     
     return positions, ID_ant, slopes
 
+#===========================================================================================================
 
+#def _get_Xmax_coreas(path):
+
+
+    #for line in glob.glob(path + "*.long"):
+    ## Coreas
+        #if 'PARAMETERS         =' in line: #list file 
+            ##PARAMETERS         =   2.5632E+08 -3.1624E+02  7.2411E+02  3.6003E+01 -9.4986E-03  1.7744E-05
+            #Xmax = line[3]
+    #return 0
+    
 #===========================================================================================================
 #===========================================================================================================
 
@@ -338,7 +348,7 @@ def load_trace(directory, index, suffix=".trace"):
     
 #===========================================================================================================
     
-def _table_efield(efield, pos, info={}):
+def _table_efield(efield, pos, slopes=None, info={}):
     ''' 
     Load electric field trace in table with header info (numpy array to astropy table)
     
@@ -358,7 +368,7 @@ def _table_efield(efield, pos, info={}):
     '''
     from astropy.table import Table, Column
     
-    info.update({'position': pos})
+    info.update({'position': pos, 'slopes': slopes})
     #efield_ant = Table(efield, names=('Time', 'Ex', 'Ey', 'Ez'), meta=info)
     #efield_ant['Time'].unit= 'ns'
     #efield_ant['Ex'].unit= 'muV/m'
@@ -375,7 +385,7 @@ def _table_efield(efield, pos, info={}):
     
 #===========================================================================================================
 
-def _table_voltage(voltage, pos, info={}):    
+def _table_voltage(voltage, pos=None, slopes=None, info={}):    
     ''' 
     Load voltage trace in table with header info  (numpy array to astropy table)
     
@@ -397,7 +407,7 @@ def _table_voltage(voltage, pos, info={}):
     
     #print(voltage.T[0])
     
-    info.update({'position': pos})
+    info.update({'position': pos, 'slopes': slopes})
     #voltage_ant = Table(voltage, names=('Time', 'Vx', 'Vy', 'Vz'), meta=info)
     #voltage_ant['Time'].unit= 's'
     #voltage_ant['Vx'].unit= 'muV'
@@ -415,7 +425,7 @@ def _table_voltage(voltage, pos, info={}):
 
 #===========================================================================================================
 
-def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", simus="zhaires", save=None):
+def load_trace_to_table(path, pos=np.array([0,0,0]), slopes=np.array([0,0]), info=None, content="e", simus="zhaires", save=None):
 
     """Load data from an electric field trace file to astropy table
 
@@ -452,7 +462,7 @@ def load_trace_to_table(path, pos=np.array([0,0,0]), info=None, content="e", sim
             efield.T[2]*=2.99792458e4* 1.e6 
             efield.T[3]*=2.99792458e4* 1.e6
             
-        efield_ant = _table_efield(efield, pos, info)
+        efield_ant = _table_efield(efield, pos=pos, slopes=slopes, info=info)
     #if suffix==".dat":
     if content=="voltages" or content=="v":
         #path = "{:}/out_{:}{:}".format(directory, index, suffix)
@@ -488,6 +498,8 @@ def _load_to_array(path_hdf5, content="efield"):
             unit of electric field
         shower: list
             shower parameters etc
+        position: numpy array
+        slopes: numpy array
     """   
     from astropy.table import Table
     
@@ -511,9 +523,17 @@ def _load_to_array(path_hdf5, content="efield"):
         except:
             print("NOTE: shower info not contained")
             shower=None
-        
-    
-        return efield1, efield['Time'].unit, efield['Ex'].unit, shower
+            
+        try:
+            position=efield.meta['position']
+        except IOError:
+            position=None
+        try:
+            slopes=efield.meta['slopes']
+        except IOError:
+            slopes=None
+
+        return efield1, efield['Time'].unit, efield['Ex'].unit, shower, position, slopes
     
     if content=="voltages" or content=="v":
         try:
@@ -541,8 +561,16 @@ def _load_to_array(path_hdf5, content="efield"):
             print("NOTE: shower info not contained")
             shower=None
         
-    
-        return voltage1, voltage['Time'].unit, voltage['Ex'].unit, shower
+        try:
+            position=voltage.meta['position']
+        except IOError:
+            position=None
+        try:
+            slopes=voltage.meta['slopes']
+        except IOError:
+            slopes=None
+        
+        return voltage1, voltage['Time'].unit, voltage['Ex'].unit, shower, position, slopes
 
     
 

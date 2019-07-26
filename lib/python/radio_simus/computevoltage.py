@@ -20,7 +20,7 @@ from scipy.fftpack import rfft, irfft, rfftfreq
 from scipy.interpolate import interp1d
 
 
-
+PRINT_ON=False
 DISPLAY = 0
 
 EARTH_RADIUS=6370949. #m
@@ -83,7 +83,7 @@ print('--- ATTENTION: current version only valid for Cosmic Rays')
 
 #wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
 # Load antenna response files
-#freespace = 0
+freespace = 0
 #if freespace==1:
   #fileleff_x=wkdir+'butthalftripleX4p5mfreespace_leff.npy' # 
   #fileleff_y=wkdir+'butthalftripleY4p5mfreespace_leff.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
@@ -97,7 +97,8 @@ fileleff_x = antx
 fileleff_y = anty
 fileleff_z = antz
 
-print('Loading',fileleff_x,'...')  
+if PRINT_ON:
+    print('Loading',fileleff_x,'...')  
 freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(fileleff_x) ### this line cost 6-7s
 RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
 XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
@@ -107,7 +108,8 @@ XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
 freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(fileleff_z) ### this line cost 6-7s
 RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
 XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
-print('Done.')
+if PRINT_ON:
+    print('Done.')
 
 
 
@@ -252,9 +254,10 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     elif azim<0:
         azim = azim+360
     if typ=='X':
-        print('Alpha and beta of surface slope:',alpha, beta)
-        print('Zenith & azimuth in GRAND framework:',zenith_sim, azimuth_sim)
-        print('Zenith & azimuth in antenna framework:',zen, azim)
+        if PRINT_ON:
+            print('Alpha and beta of surface slope:',alpha, beta)
+            print('Zenith & azimuth in GRAND framework:',zenith_sim, azimuth_sim)
+            print('Zenith & azimuth in antenna framework:',zen, azim)
     
     if (freespace==0) and (zen>90):
         print('Signal originates below antenna horizon! No antenna response computed. Abort.')

@@ -40,19 +40,19 @@ except ImportError:
 #from .shower import shower, sim_shower, reco_shower, loadInfo_toShower
 
 # Register all modules
-__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower"]
+__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower", "detector", "frame", "signal_processing"]
 
 
 print("..... Loading CONFIG FILE .....: "+"./test.config") 
 global site
 global location, longitude, latitude, obs_height
 global arrayfile
-global thetageo, phigeo, Bcoreas
-global Vrms
+global thetageo, phigeo, Bcoreas, Bzhaires
+global Vrms, Vrms2, tsampling
 global antx, anty, antz
 
 ### set global parameters
-configfile = open("test.config", 'r') 
+configfile = open("/home/laval1NS/zilles/radio-simus/examples/test.config", 'r') 
 for line in configfile:
     line = line.rstrip() 
     if 'SITE' in line:
@@ -73,9 +73,15 @@ for line in configfile:
         phigeo=float(line.split('  ',-1)[1]) # deg, GRAND ->astropy.units
     if 'B_COREAS' in line: # B_COREAS  19.71  -14.18
         Bcoreas=list(line.split('  ',-1)) # deg, deg  ->astropy.units     
+    if 'B_ZHAIRES' in line: # B_ZHAIRES 54.021  57.43  0.72  #54.021 uT 57.43 deg 0.72 deg
+        Bzhaires=list(line.split('  ',-1)) # deg, deg  ->astropy.units    
         
     if 'VRMS' in line:
-        Vrms=float(line.split('  ',-1)[1]) # muV  ->astropy.units        
+        Vrms=float(line.split('  ',-1)[1]) # muV  ->astropy.units  
+    if 'VRMS2' in line:
+        Vrms2=float(line.split('  ',-1)[1]) # muV  ->astropy.units        
+    if 'TSAMPLING' in line:
+        tsampling=float(line.split('  ',-1)[1]) # ns  ->astropy.units 
         
     if 'ANTX' in line:
         antx=str(line.split('  ',-1)[1])
@@ -119,13 +125,23 @@ try:
     Bcoreas
 except NameError:
     print("Warning: Bcoreas not defined")   
-    
-
+try:
+    Bzhaires
+except NameError:
+    print("Warning: Bzhaires not defined")   
+       
 try:
     Vrms
 except NameError:
     print("Warning: Vrms not defined")   
-
+try:
+    Vrms2
+except NameError:
+    print("Warning: Vrms2 not defined") 
+try:
+    tsampling
+except NameError:
+    print("Warning: tsampling not defined") 
     
 try:
     antx, anty, antz
