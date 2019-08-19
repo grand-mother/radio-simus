@@ -61,7 +61,7 @@ def Digitization_2(v,TSAMPLING=tsampling):
     outputs : digitized voltages (time in ns)
     """
     v=v.T
-    tstep = 1/round(1/(v[0,1] - v[0,0])) # tweak the sh**
+    tstep = np.mean(np.diff(v[0])) # tweak the sh**
     ratio=int(round(TSAMPLING/tstep))
     SAMPLESIZE = int(len(v[0])/ratio)
     vx=np.zeros(SAMPLESIZE)
