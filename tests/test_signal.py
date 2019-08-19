@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Unit tests for the radio_simus.version module
+
+TODO: add the rest of unit test
+
 """
 
 import unittest
