@@ -12,3 +12,12 @@ build
 
 # Ignore temporary coverage reports
 .coverage
+
+# Ignore test plots
+# *.png
+
+./lib/python/radio_simus/GRAND_antenna/HorizonAntenna_EWarm_leff_loaded.npy
+./lib/python/radio_simus/GRAND_antenna/HorizonAntenna_SNarm_leff_loaded.npy
+./lib/python/radio_simus/GRAND_antenna/HorizonAntenna_Zarm_leff_loaded.npy
+./lib/python/radio_simus/GRAND_antenna
+
