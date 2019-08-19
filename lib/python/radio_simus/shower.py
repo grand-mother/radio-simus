@@ -25,7 +25,7 @@ class shower:
         #TODO: how to use astropy units
         
     '''
-    def __init__(self):
+    def __init__(self): # Constructor
         self.max_length = 1 # prevents overwritting etc, limits to one number per list
         
         self.showerID = [] # attribute references
@@ -119,7 +119,7 @@ class shower:
         if len(self.injectionheight)==self.max_length:
             print("Warning for shower ", str(self.showerID),": Can't add injectionheight=", str(injectionheight)," -- already set to: ", self.injectionheight[0])
         elif injectionheight is None:
-            print("Warning for shower ", str(self.showerID),": Azimuth not given")
+            print("Warning for shower ", str(self.showerID),": injectionheight not given")
         else:
             self.injectionheight.append(injectionheight)
         
@@ -160,7 +160,7 @@ class sim_shower(shower):
         self.simulation.append(simulation)
         
     def get_simulation(self):
-        print(self.simulation)
+        return self.simulation
         
 #=================================================        
 
@@ -233,7 +233,7 @@ class reco_shower(shower):
         self.add_recoazimuth(azimuth)
         
     def get_recoall(self):
-        print(self.get_recoXmax(), self.get_recoenergy(), self.get_recozenith(), self.get_recoazimuth())
+        return self.get_recoXmax(), self.get_recoenergy(), self.get_recozenith(), self.get_recoazimuth()
         
         
 #=================================================        
