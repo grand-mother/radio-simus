@@ -99,6 +99,8 @@ if __name__ == '__main__':
  
  
     from astropy import units as u
+    print("ToDo: save units of parameters, astropy units or unyt")
+    print("ToDo: save shower parameters on highest level, together with availble antenn positions")
     
     ########################
     # load shower info from inp file via dictionary
@@ -118,7 +120,7 @@ if __name__ == '__main__':
     print("shower", shower)
     
     
-    
+    shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
     
     import astropy
     from astropy.table import Table
