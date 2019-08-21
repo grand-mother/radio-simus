@@ -24,18 +24,22 @@ if __name__ == '__main__':
     if ( len(sys.argv)<1 ):
         print("""
         Example how to read in an electric field or voltage trace, load it to a table, write it into a hdf5 file (and read the file.)
+        -- define ALL in script to write all antennas in one hdf5 file and event info in an own column
+        -- define SINGLE in script to write single antennas in one hdf5 file each and event info as meta for each antenna
         -- produces hdf5 files for zhaires and coreas simulations
         -- can compute the full chain for the voltage traces and save them im hdf5 file
         -- can only only apply antenna response
-        -- example hoe to read in tables from hdf5 files
+        -- example how to read in tables from hdf5 files
         
         Usage for full antenna array:
         usage: python example_simtohdf5.py <path to event folder> <zhaires/coreas>
         example: python example_simtohdf5.py ./ coreas
         
-        ATTENTION: To be specified SINGLE/ALL True or False depending on favorite saving mode
+        ATTENTION: To be specified SINGLE/ALL True or False depending on favorite saving mode, same size file in total
         
-        Note: adopt example to also add voltage traces from txt files
+        Note: 
+        --- ToDo: adopt example to also add voltage traces from txt files
+        --- ToDo: save units of parameters, astropy units or unyt
         """)
         sys.exit(0)
     
@@ -96,19 +100,17 @@ if __name__ == '__main__':
         ending_e = "raw_a*.dat"
         
  
+    #----------------------------------------------------------------------   
+
  
- 
-    from astropy import units as u
-    print("ToDo: save units of parameters, astropy units or unyt")
-    print("ToDo: save shower parameters on highest level, together with availble antenn positions")
-    
+    from astropy import units as u    
     ########################
     # load shower info from inp file via dictionary
     ########################
     shower = {
             "ID" : showerID,               # shower ID, number of simulation
             "primary" : primarytype,        # primary (electron, pion)
-            "energy" : energy,               # EeV
+            "energy" : energy,               # eV
             "zenith" : zen,               # deg (GRAND frame)
             "azimuth" : azim,                # deg (GRAND frame)
             "injection_height" : injh,    # m (injection height in the local coordinate system)
@@ -120,19 +122,42 @@ if __name__ == '__main__':
     print("shower", shower)
     
     
-    shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+    #shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+    #positions.write(name_all, path='positions', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+    #slopes.write(name_all, path='slopes', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+    #ID_ant.write(name_all, path='IDs', format="hdf5", append=True,  compression=True,serialize_meta=True)
+
     
     import astropy
     from astropy.table import Table
     from astropy.table import hstack
     import h5py
+    
 
     
     if ALL:
         name_all = path+'/event_'+showerID+'.hdf5'
+        ##hf = h5py.File(name_all, 'w')
         #hf = h5py.File(name_all, 'w')
-        
+        #hf.create_dataset('positions', data=positions)
+        #hf.create_dataset('slopes', data=slopes)
+        ##hf.create_dataset('ID_ant', data=np.asarray(ID_ant))
+        ##hf.create_dataset('shower', data=shower)
+        ##dset = hf.create_dataset("shower", shower) 
+        #hf.close()
    
+        from astropy.table import Table, Column
+        a1 = Column(data=np.array(ID_ant), name='ant_ID')
+
+        b1 = Column(data=positions.T[0], unit=u.m, name='pos_x')
+        c1 = Column(data=positions.T[1], unit=u.m, name='pos_y')
+        d1 = Column(data=positions.T[2], unit=u.m, name='pos_z')  #u.eV, u.deg
+        e1 = Column(data=slopes.T[0], unit=u.deg, name='alpha')
+        f1 = Column(data=slopes.T[1], unit=u.deg, name='beta')  #u.eV, u.deg    
+        event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower) 
+        event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
+
+
 
     for ant in glob.glob(path+ending_e):
         print("\n Read in data from ", ant)
@@ -177,7 +202,7 @@ if __name__ == '__main__':
             # create a group per antenna  --- save ID, position, slope as attributes of group 
             #g1 = hf.create_group(str(ant_number))
             
-            a= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(),  info=shower, content="e", simus=simus, save=name_all, ant="/"+str(ant_number)+"/")
+            a= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(),  info={}, content="e", simus=simus, save=name_all, ant="/"+str(ant_number)+"/")
             
             #g1.create_dataset('efield', data = a,compression="gzip", compression_opts=9)
             
@@ -238,7 +263,7 @@ if __name__ == '__main__':
              
             if ALL:
                 # read in trace from file and store as astropy table - can be substituted by computevoltage operation
-                b= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(), info=shower, content="v",simus=simus, save=name_all, ant="/"+str(ant_number)+"/") # read from text files
+                b= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(), info=None, content="v",simus=simus, save=name_all, ant="/"+str(ant_number)+"/") # read from text files
                 #g1.create_dataset('voltages', data = b,compression="gzip", compression_opts=9)
         
         ########### example VOLTAGE COMPUTATION and add to same hdf5 file
@@ -263,18 +288,21 @@ if __name__ == '__main__':
             ## apply full chain
             #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
             #shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
-                
-            # load voltage array to table and store in same hdf5 file
-            volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=shower )
             
             
-            if SINGLE:             
+            if SINGLE:   
+                # load voltage array to table and store in same hdf5 file
+                volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=shower )
                 volt_table.write(name, path='voltages', format="hdf5", append=True, serialize_meta=True) #compression=True,
 
             if ALL:
                 #voltage = compute_antennaresponse(efield, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
                 #g1.create_dataset('voltages', data = volt_table, compression="gzip", compression_opts=9)
                 
+                v_info = {'voltage': 'antennaresponse'}
+                #v_info = {'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
+                volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=v_info )
+
                 volt_table.write(name_all, path="/"+str(ant_number)+"/"+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) 
 
 
@@ -314,5 +342,6 @@ if __name__ == '__main__':
                     #print(info, arr1)
                     
                 f=Table.read(name_all, path="/"+str(ant_number)+"/efield")
+                g=Table.read(name_all, path="/event")
                 print(f)
-                print(f.meta, f.info)
+                print(f.meta, f.info, g.meta, g.info)
