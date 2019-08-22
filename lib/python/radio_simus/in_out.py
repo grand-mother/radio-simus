@@ -425,7 +425,7 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}):
 
 #===========================================================================================================
 
-def load_trace_to_table(path, pos=np.array([0,0,0]), slopes=np.array([0,0]), info=None, content="e", simus="zhaires", save=None):
+def load_trace_to_table(path, pos=np.array([0,0,0]), slopes=np.array([0,0]), info=None, content="e", simus="zhaires", save=None, ant="/"):
 
     """Load data from an electric field trace file to astropy table
 
@@ -471,9 +471,9 @@ def load_trace_to_table(path, pos=np.array([0,0,0]), slopes=np.array([0,0]), inf
     
     if save:
         if content=="efield" or content=="e":
-            efield_ant.write(save, path='efield', format="hdf5",  compression=True,serialize_meta=True) #
+            efield_ant.write(save, path=ant+'efield', format="hdf5", append=True,  compression=True,serialize_meta=True) #
         if content=="voltages" or content=="v":
-            efield_ant.write(save, path='voltages', format="hdf5", append=True, compression=True,serialize_meta=True) #
+            efield_ant.write(save, path=ant+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) #
         
     return efield_ant
         
