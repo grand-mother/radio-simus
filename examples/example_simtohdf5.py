@@ -40,6 +40,7 @@ if __name__ == '__main__':
         Note: 
         --- ToDo: adopt example to also add voltage traces from txt files
         --- ToDo: save units of parameters, astropy units or unyt
+        --- ToDo: implement calculation of alpha and beta, so far read in from file or set to (0,0) [in_out.py]
         """)
         sys.exit(0)
     
@@ -174,7 +175,8 @@ if __name__ == '__main__':
             base=os.path.basename(ant)
             # coreas
             ID=(os.path.splitext(base)[0]).split("_a")[1] # remove raw 
-            ant_number = ID_ant.index(ID)
+            ant_number = ID_ant.index(ID) # index of antenna in positions
+            print("--- ant_ID: ", ID)
             # define path for storage of hdf5 files
             if SINGLE:
                 name = path+'/../table_'+str(ID)+'.hdf5'
@@ -202,7 +204,7 @@ if __name__ == '__main__':
             # create a group per antenna  --- save ID, position, slope as attributes of group 
             #g1 = hf.create_group(str(ant_number))
             
-            a= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(),  info={}, content="e", simus=simus, save=name_all, ant="/"+str(ant_number)+"/")
+            a= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(),  info={}, content="e", simus=simus, save=name_all, ant="/"+str(ID)+"/")
             
             #g1.create_dataset('efield', data = a,compression="gzip", compression_opts=9)
             
@@ -263,7 +265,7 @@ if __name__ == '__main__':
              
             if ALL:
                 # read in trace from file and store as astropy table - can be substituted by computevoltage operation
-                b= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(), info=None, content="v",simus=simus, save=name_all, ant="/"+str(ant_number)+"/") # read from text files
+                b= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(), info=None, content="v",simus=simus, save=name_all, ant="/"+str(ID)+"/") # read from text files
                 #g1.create_dataset('voltages', data = b,compression="gzip", compression_opts=9)
         
         ########### example VOLTAGE COMPUTATION and add to same hdf5 file
@@ -303,7 +305,7 @@ if __name__ == '__main__':
                 #v_info = {'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
                 volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=v_info )
 
-                volt_table.write(name_all, path="/"+str(ant_number)+"/"+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) 
+                volt_table.write(name_all, path="/"+str(ID)+"/"+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) 
 
 
 
@@ -341,7 +343,7 @@ if __name__ == '__main__':
                     #arr1 = np.array(gp1.get('efield'))
                     #print(info, arr1)
                     
-                f=Table.read(name_all, path="/"+str(ant_number)+"/efield")
+                f=Table.read(name_all, path="/"+str(ID)+"/efield")
                 g=Table.read(name_all, path="/event")
                 print(f)
                 print(f.meta, f.info, g.meta, g.info)
