@@ -6,7 +6,7 @@
 Currently, the script can produce one single hdf5-file per event, for ALL=True. 
 The data structure for the produced hdf5-file is:
 
-    in hdf5 files, containing all antennas of event [event*.hdf5]:
+ **Structure of hdf5 files, containing all antennas of event [event*.hdf5]:**
     /event: stores ID, position and slopes of antennas in event
     /event _meta: example:
         datatype:, 
