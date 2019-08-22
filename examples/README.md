@@ -1,4 +1,5 @@
 # Information on scripts
+Collection of example scripts using the python radio-simus library 
    
    
    
@@ -52,3 +53,52 @@ The data structure for the produced hdf5-file is:
         position: [999.9973888519853, -2499.964022173601, 2734.0], 
         slopes: [0.0, 0.0], 
         voltage: antennaresponse, 
+        
+ToDo: add units in meta info (python dict)) for the event. Currently, the units are set via the read-in from the raw simulation files.
+Units:
+* ID: - (ID of the event)
+* azimuth: GRAND deg (azimuth of shower)
+* zenith: GRAND deg (zenith of shower)
+* core: m (shower core position wrt to array center)
+* energy: eV (primary energy)
+* injection_height: m (for CR = 100km, for nu = injection height above sealevel) 
+* primary: string (primary nature)
+* simulation: string (coreas/zhaires/RM,...)
+* task: string (task ID, eg from DANTON or RETRO output)
+
+
+
+
+## Example of configuration file (still ongoing design phase)
+The config files contains all information needed to run simulations as well as for later processing. 
+
+ Given example test.config:
+
+    # define site  ## not yet needed
+    SITE  Lenghu
+    LONG  92.334037  deg
+    LAT  38.870398  deg 
+    OBSHEIGHT  2734.0  m
+
+    #antenna file
+    ARRAY  /home/laval1NS/zilles/CoREAS/regular_array_slopes.txt
+
+    #magnetic field: 
+    THETAGEO  147.43  deg
+    PHIGEO  0.72  deg
+    B_COREAS  28.17  28.17  # Bx  Bz  uT 
+    B_ZHAIRES  54.021  57.43  0.72  #54.021 uT 57.43 deg 0.72 deg
+
+    # definition sigma in muV (50-200MHz)
+    VRMS  15
+    VRMS2  28  # before filtering
+    TSAMPLING  2  ns  # for digitisation
+
+    #antenna responses
+    ANTX  /home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/HorizonAntenna_SNarm_leff_loaded.npy
+    ANTY  /home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/HorizonAntenna_EWarm_leff_loaded.npy
+    ANTZ  /home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/HorizonAntenna_Zarm_leff_loaded.npy
+
+    # # AddSite Ulastai 42.55 deg 86.68 deg 1500 
+    # # GeomagneticField 56.5000 uT 63.18 deg 2.72 deg
+    
