@@ -40,7 +40,7 @@ import create_simulation
 from create_simulation import _project_starshape, reduce_antenna_array, create_input_coreas, create_input_zhaires
 
 from os.path import split, join, realpath
-root_dir = realpath(join(split(__file__)[0], "../radio-simus")) # = $PROJECT
+root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 
 #from radio_simus.modules import _getXmax, _dist_decay_Xmax, _get_CRzenith
@@ -118,7 +118,7 @@ for filename in os.listdir(directory):
         shower = {
           "ID" : showerID,         # shower ID, number of simulation
           "primary" : primarytype,        # primary (electron, pion)
-          "energy" : energy,         # EeV
+          "energy" : energy,         # eV
           "zenith" : zen,         # deg (GRAND frame)
           "azimuth" : az,          # deg (GRAND frame)
           "injection_height" : injh,    # m (injection height in the local coordinate system)
