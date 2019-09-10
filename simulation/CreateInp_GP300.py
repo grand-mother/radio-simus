@@ -1,3 +1,28 @@
+''' WORK IN PROGRESS
+
+    run: python3 CreateInp_GP300.py <dir of zhaires sims>
+
+    ATTENTION: this scripts run with an input of zhaires simulations (Matias ones)
+    hardcoded: 
+    * antenna file
+    * groundaltitude
+    * antenna positions and observation height treated differently than matias does (here I am using one fixed height)
+    * thinninglevel and timebinning
+    * simus, executable and simpath
+    
+
+    ToDo:
+    * Documentation
+    * effectful reduction of antenna
+    * implemnt matias shadowing and antenna selection
+    * read in info from config file
+    * get the up-to-date antenna file
+    *...
+'''
+
+
+
+
 import sys
 from sys import argv
 import numpy as np
@@ -39,6 +64,8 @@ run='test'
 # path where to store files
 wkdir="./"+run
 
+
+# TODO: read from general config-file
 # Simulation specifics: path for storage on cluster, simulation program, executable, thinninlevel, timebinning
 simus = "zhaires"
 executable = 'zhaires_go'
@@ -82,7 +109,7 @@ for filename in os.listdir(directory):
         # Do a core corection to get the core at observerlevel, only for Zhaires files as input
         core = create_simulation._correct_core(CORE1, theta=zen, azim=az, groundaltitude=groundaltitude)
         #core= np.array([1000.,0.,groundaltitude])
-        print("Core at: ",core, CORE1)
+        print("Core at: ",core, ", original position: ",  CORE1)
         
     
         ########################
