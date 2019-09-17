@@ -44,7 +44,7 @@ root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 import radio_simus 
 from radio_simus.signal_treatment import p2p
-
+from radio_simus.__init__ import arrayfile 
 
 
 # path to folder containing the inp-file, trace files and antpos.dat 
@@ -65,8 +65,10 @@ if sys.argv[2] == 'v' or sys.argv[2] == 'voltages':
     
 
 ### path to full antenna array to plot in the background
-ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt',comments="#")
-print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt')
+#ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt',comments="#")
+#print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt')
+ant_array = np.loadtxt(arrayfile,comments="#")
+print("Loading full array: ", arrayfile)
 
 # create an array of simulated observer positions
 p2p_Ex = []
