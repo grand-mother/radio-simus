@@ -15,6 +15,9 @@ Output:
     - will plot the peak-to-peak distribution for the single components as a 2D scatter plot
 Note: This is just an example file for reading-in and plotting signals of a full array.
     It is far from being perfect, just for beginners in the hand-on session
+    
+TODO: How to handle not-existing positions    
+    
 '''
 
 import sys
@@ -27,7 +30,7 @@ from numpy import *
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm 
-from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d import Axes3D ## leading to troubles with python3
 
 #from astropy import units as u
 #muV_m = u.u * u.V / u.m
@@ -40,7 +43,7 @@ from os.path import split, join, realpath
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 import radio_simus 
-from radio_simus.utils import p2p
+from radio_simus.signal_treatment import p2p
 
 
 
@@ -62,10 +65,8 @@ if sys.argv[2] == 'v' or sys.argv[2] == 'voltages':
     
 
 ### path to full antenna array to plot in the background
-#ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt',comments="#")
-#print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/AntennasAnneG300.txt')
-ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/regular_array.txt',comments="#")
-print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/regular_array.txt')
+ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt',comments="#")
+print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt')
 
 # create an array of simulated observer positions
 p2p_Ex = []
@@ -77,23 +78,33 @@ x_pos=[]
 y_pos=[]
 z_pos=[]
 
+trigger_any=[]
+trigger_xy=[]
+
 for file in glob.glob(path+"*.hdf5"):   
     # get ID and antenna position
     base=os.path.basename(file)
     # coreas
-    ID=(os.path.splitext(base)[0]).split("_a")[1] # remove table_a 
+    ID=(os.path.splitext(base)[0]).split("_")[1] # remove table_ 
 
     try: # load corresponding file
         txt = Table.read(file, path=key)
         if key == "efield":
             keywords = [txt['Time'], txt['Ex'], txt['Ey'], txt['Ez']]
             ## TODO check units - no idea zet to hanlde it properly
-            print(" Is efield in muV/m: ",txt['Ex'].unit)
+            #print(" Is efield in muV/m: ",txt['Ex'].unit)
         if key == "voltages":
             keywords = [txt['Time'], txt['Vx'], txt['Vy'], txt['Vz']]
             ## TODO check units - no idea zet to hanlde it properly
-            print(" Is voltages in muV: ",txt['Vx'].unit)
+            #print(" Is voltages in muV: ",txt['Vx'].unit)
         
+        try:
+            if txt.meta["trigger"][0] ==1:
+                trigger_any.append(ID)
+            if txt.meta["trigger"][1] ==1:
+                trigger_xy.append(ID)
+        except KeyError:
+            print()
         
         # get antenna position
         position = txt.meta['position']
@@ -101,7 +112,6 @@ for file in glob.glob(path+"*.hdf5"):
         y_pos.append(position[1])
         z_pos.append(position[2])
 
-                
         # convert astropy table to np array
         trace=np.array(keywords).T
 
@@ -118,22 +128,24 @@ for file in glob.glob(path+"*.hdf5"):
         p2p_Ey.append(p2ps[1])
         p2p_Ez.append(p2ps[2]) 
         
-        amplitude = (np.sqrt(trace.T[1]**2. + trace.T[2]**2. + trace.T[3]**2.)) # combined components
-        p2p_total.append(p2p(amplitude))
+        p2p_total.append(p2ps[4])
+        print( p2ps)
 
     except IOError: # in case file does not exist
-        print("-- File ", base, " does not exist -> set to 0.")
-        p2p_Ex.append(0.)
-        p2p_Ey.append(0.)
-        p2p_Ez.append(0.)
-        p2p_total.append(0.)
+        print("-- File ", base, " does not exist -> set to empty")
+        #p2p_Ex.append(0.)
+        #p2p_Ey.append(0.)
+        #p2p_Ez.append(0.)
+        #p2p_total.append(0.)
         
     #print(x_pos[-1].to(u.m))
 
 
 ### Missing legend containing shower information
 
-print(txt.meta)
+print("meta info on shower:", txt.meta)
+if len(trigger_any)>5 or len(trigger_xy)>5:
+    print(" ===> shower would have triggered: any =", len(trigger_any), " xy = ", len(trigger_xy))
 
 #################
 #PLOTTING SECTION
@@ -141,26 +153,26 @@ print(txt.meta)
 
 c_array = np.zeros(len(ant_array.T[0]))
 
-##### Plot a 3d figure of the total peak amplitude to see the actual array and the the signal distribution
-fig = plt.figure(1, figsize=(8,7), dpi=120, facecolor='w', edgecolor='k')
-ax = fig.add_subplot(111, projection='3d')
+###### Plot a 3d figure of the total peak amplitude to see the actual array and the the signal distribution ## leading to troubles with python3
+#fig = plt.figure(1, figsize=(8,7), dpi=120, facecolor='w', edgecolor='k')
+#ax = fig.add_subplot(111, projection='3d')
 
-ax.scatter(ant_array.T[0], ant_array.T[1],ant_array.T[2] , c="None",  
-           marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
-col=ax.scatter(x_pos, y_pos,z_pos , c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  
-               marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
-cbar=plt.colorbar(col)
-cbar.set_label('peak-to-peak amplitude distribution in '+unit, labelpad=+1)
-try:
-    core=txt.meta["core"]
-    ax.scatter(core[0], core[1],core[2] ,c="red", marker='x', s=50)
-except:
-    print("no core info available")
+#ax.scatter(ant_array.T[1], ant_array.T[2],ant_array.T[3] , c="None",  
+           #marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
+#col=ax.scatter(x_pos, y_pos,z_pos , c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  
+               #marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
+#cbar=plt.colorbar(col)
+#cbar.set_label('peak-to-peak amplitude distribution in '+unit, labelpad=+1)
+#try:
+    #core=txt.meta["core"]
+    #ax.scatter(core[0], core[1],core[2] ,c="red", marker='x', s=50)
+#except:
+    #print("no core info available")
 
-ax.set_xlabel('positions along NS (m)')
-ax.set_ylabel('positions along EW (m)')
-ax.set_zlabel('positions Up (m)')
-#plt.title('peak-to-peak amplitude distribution in '+unit)
+#ax.set_xlabel('positions along NS (m)')
+#ax.set_ylabel('positions along EW (m)')
+#ax.set_zlabel('positions Up (m)')
+##plt.title('peak-to-peak amplitude distribution in '+unit)
 
 
 
@@ -172,12 +184,13 @@ name = 'NS-component ('+unit+')'
 #plt.title(name)
 ax1.set_xlabel('positions along NS (m)')
 ax1.set_ylabel('positions along EW (m)')
-ax1.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+ax1.scatter(ant_array.T[1], ant_array.T[2], c="None",  
            marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
 col1=ax1.scatter(x_pos, y_pos, c=p2p_Ex,  vmin=min(p2p_Ex), vmax=max(p2p_Ex),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col1)
 cbar1.set_label(name, labelpad=+1)
 try:
+    core=txt.meta["core"]
     ax1.scatter(core[0], core[1] ,c="red", marker='x', s=50)
 except:
     print("no core info available")
@@ -189,7 +202,7 @@ name = 'EW-component ('+unit+')'
 #plt.title(name)
 ax2.set_xlabel('positions along NS (m)')
 ax2.set_ylabel('positions along EW (m)')
-ax2.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+ax2.scatter(ant_array.T[1], ant_array.T[2], c="None",  
            marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
 col2=ax2.scatter(x_pos, y_pos, c=p2p_Ey,  vmin=min(p2p_Ey), vmax=max(p2p_Ey),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col2)
@@ -206,7 +219,7 @@ name = 'Up-component ('+unit+')'
 #plt.title(name)
 ax3.set_xlabel('positions along NS (m)')
 ax3.set_ylabel('positions along EW (m)')
-ax3.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+ax3.scatter(ant_array.T[1], ant_array.T[2], c="None",  
            marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
 col3=ax3.scatter(x_pos, y_pos, c=p2p_Ez,  vmin=min(p2p_Ez), vmax=max(p2p_Ez),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col3)
@@ -223,7 +236,7 @@ name = 'total ('+unit+')'
 #plt.title(name)
 ax4.set_xlabel('positions along NS (m)')
 ax4.set_ylabel('positions along EW (m)')
-ax4.scatter(ant_array.T[0], ant_array.T[1], c="None",  
+ax4.scatter(ant_array.T[1], ant_array.T[2], c="None",  
            marker='o', edgecolor='gray', cmap=cm.gnuplot2_r)
 col4=ax4.scatter(x_pos, y_pos, c=p2p_total,  vmin=min(p2p_total), vmax=max(p2p_total),  marker='o', edgecolor='black', cmap=cm.gnuplot2_r)
 cbar1=plt.colorbar(col4)
