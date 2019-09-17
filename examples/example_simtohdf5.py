@@ -28,7 +28,7 @@ if __name__ == '__main__':
         -- define SINGLE in script to write single antennas in one hdf5 file each and event info as meta for each antenna
         -- produces hdf5 files for zhaires and coreas simulations
         -- can compute the full chain for the voltage traces and save them im hdf5 file
-        -- can only only apply antenna response
+        -- can only only apply antenna response, and also apply trigger algorithm on p2p
         -- example how to read in tables from hdf5 files
         
         Usage for full antenna array:
@@ -49,10 +49,11 @@ if __name__ == '__main__':
     # coreas or zhaires -- treatment differently
     simus = str(sys.argv[2])
    
-    SINGLE=None # save each antenna as single antenna file
-    ALL=True # all antenna in one file
+    SINGLE=True # save each antenna as single antenna file
+    ALL=False # all antenna in one file
    
-   
+    # for triggering
+    threshold = 3*15 #muV
    #----------------------------------------------------------------------   
    
    
@@ -281,37 +282,46 @@ if __name__ == '__main__':
             #efield1, time_unit, efield_unit, shower, position = _load_to_array(path_hdf5, content="efield")
             # or convert from existing table to numpy array
             efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
-                
+            
                 
             ## apply only antenna response
-            voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
-            shower.update({'voltage': 'antennaresponse'})
+            try:
+                voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
                 
-            ## apply full chain
-            #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
-            #shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
-            
-            
-            if SINGLE:   
-                # load voltage array to table and store in same hdf5 file
-                volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=shower )
-                volt_table.write(name, path='voltages', format="hdf5", append=True, serialize_meta=True) #compression=True,
+                # add some info on trigger if wanted: trigger on any component, or x-y combined
+                from radio_simus.signal_treatment import p2p, _trigger
+                trigger =  [_trigger(p2p(voltage), 'any', threshold), _trigger(p2p(voltage), 'xy', threshold)]
 
-            if ALL:
-                #voltage = compute_antennaresponse(efield, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
-                #g1.create_dataset('voltages', data = volt_table, compression="gzip", compression_opts=9)
+                # Update info
+                shower.update({'voltage': 'antennaresponse', 'trigger': trigger})
                 
-                v_info = {'voltage': 'antennaresponse'}
-                #v_info = {'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
-                volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=v_info )
+                ## apply full chain
+                #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
+                #shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
+                                
+                if SINGLE:   
+                    # load voltage array to table and store in same hdf5 file
+                    volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=shower )
+                    volt_table.write(name, path='voltages', format="hdf5", append=True, serialize_meta=True) #compression=True,
 
-                volt_table.write(name_all, path="/"+str(ID)+"/"+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) 
+                        
+                if ALL:
+                    #voltage = compute_antennaresponse(efield, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
+                    #g1.create_dataset('voltages', data = volt_table, compression="gzip", compression_opts=9)
+                    
+                    #v_info = {'voltage': 'antennaresponse'}
+                    #v_info = {'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
+                    volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=shower) #v_info )
 
+                    volt_table.write(name_all, path="/"+str(ID)+"/"+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) 
+                    
+            except : 
+                    print("====== ATTENTION: ValueError --- check computevoltage =======")
 
 
 
         ######## just testing part and examples how to use astropy tables
-        EXAMPLE=True
+        EXAMPLE=False
         if EXAMPLE:
             if SINGLE:
                 # read in hdf5 file 
