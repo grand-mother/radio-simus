@@ -14,6 +14,9 @@ Output:
 will plot all 3 field components for an antenna 
 Note: This is just an example file for reading-in and plotting signals of a full array.
 It is far from being perfect, just for beginners in the hand-on session
+
+
+TODO: add a SNR calculation as example how to treat signal
 '''
 
 ### frequency, used if 'f' is chosen in MHz
@@ -51,11 +54,11 @@ i = sys.argv[3]
 if sys.argv[2] == 'e': 
     # readin electric field trace from astropy table (can be in principle directly plotted as done in in_out) 
     # and convert its to numpy array for later use 
-    txt = Table.read(path+ 'table_a'+str(i)+'.hdf5', path="efield") #txt.T[0]:time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all electric field in muV/m
+    txt = Table.read(path+ 'table_'+str(i)+'.hdf5', path="efield") #txt.T[0]:time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all electric field in muV/m
     trace = np.array([txt['Time'], txt['Ex'], txt['Ey'], txt['Ez']]).T
     unit='muV/m'
 if sys.argv[2] == 'v': # readin voltage trace and convert to numpy array
-    txt = Table.read(path+ 'table_a'+str(i)+'.hdf5', path="voltages")#txt.T[0]: time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all voltage in muV
+    txt = Table.read(path+ 'table_'+str(i)+'.hdf5', path="voltages")#txt.T[0]: time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all voltage in muV
     trace=np.array([txt['Time'], txt['Vx'], txt['Vy'], txt['Vz']]).T
     unit='muV (' +str(f1)+'-'+str(f2)+'MHz)'
 ### Filtered traces not yet explicitely implemented
@@ -108,7 +111,7 @@ if ANGLE: # Only for neutrino showers
     
     Xmaxpos =  _get_XmaxPosition(txt.meta["primary"],txt.meta["energy"],txt.meta["zenith"], txt.meta["azimuth"], txt.meta["injection_height"])
     #zen_CR = _get_CRzenith(txt.meta["zenith"],txt.meta["injection_height"], 0.)
-    print("Amgle in deg: ", _getAngle(refpos=Xmaxpos ,theta=txt.meta["zenith"],azim=txt.meta["azimuth"],ANTENNAS=txt.meta["position"], core=txt.meta["core"]))
+    print("Angle in deg: ", _getAngle(refpos=Xmaxpos ,theta=txt.meta["zenith"],azim=txt.meta["azimuth"],ANTENNAS=txt.meta["position"], core=txt.meta["core"]))
     
     ## explicit example
     #Xmaxpos =  _get_XmaxPosition('electron', 0.5*1e18, 87., 0., 2800.)
