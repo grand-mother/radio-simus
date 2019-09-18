@@ -6,7 +6,7 @@ Shower class: shall contain all infos on the shower
 
 import numpy as np
 
-class shower:
+class shower(object):
     ''' info on shower parameter 
         
         showerID: str
@@ -25,7 +25,11 @@ class shower:
         #TODO: how to use astropy units
         
     '''
+    # list of class attributes: Storing constants or default values
+    
+    
     def __init__(self): # Constructor
+        # list of instance attributes
         self.max_length = 1 # prevents overwritting etc, limits to one number per list
         
         self.showerID = [] # attribute references
@@ -43,6 +47,8 @@ class shower:
         self.recoenergy = []
         self.recozenith = []
         self.recoazimuth = []
+        
+        self.trigger = []
     
     def add_showerID(self, showerID):
         if len(self.showerID)==self.max_length:
@@ -141,11 +147,29 @@ class shower:
     def get_all(self):
         return self.get_showerID(), self.get_primary(), self.get_energy(), self.get_zenith(), self.get_azimuth(), self.get_injectionheight()
         
+        
+        
+    def add_trigger(self, trigger):
+        if len(self.trigger)==self.max_length:
+            print("Warning for shower ", str(self.trigger),": Can't add trigger=", str(trigger)," -- already set to: ", self.trigger[0])
+        elif trigger is None:
+            print("Warning: Primary not given")
+        else:
+            self.trigger.append(trigger)
+        
+    def get_trigger(self):
+        if len(self.trigger)==0:
+            print("Warning: no trigger set")
+        else:
+            return self.trigger[0] # str    
+        
+        
     ### TODO:    
     #def get_Xmax(self):
-        #computes Xmax for shower
+        ##computes Xmax for shower or read in from simulation file
         
     #def get_direction(self):
+    ## agree on a definition of direction
     #np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)])
     
     #def add_impulsion(): vector type, calculate energy, azimuth and zenith and add those
