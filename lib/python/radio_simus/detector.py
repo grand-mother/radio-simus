@@ -1,9 +1,12 @@
+'''
+    TODO: several missing functions to be implemented, marked in the code
+'''
 
 
 import numpy as np 
-#from .__init__ import site, latitude, longitude  ## not yet needed
+from .__init__ import site, latitude, longitude  ## not yet needed
 
-#print("here", site)
+print("\n================\n Detector set up at:", site,"\n================ \n")
 
 class detector:
     ''' info on antenna array
@@ -66,8 +69,8 @@ class detector:
                 
         
         
-    
-    #def get_slope() # from position, or antID
+    ## missing
+    # def get_slope() # from position, or antID
     
     # get_position() # get the whole detector
     
@@ -75,10 +78,22 @@ class detector:
         ##empty array [antID, 0]
         ##if antID in list of simulated antenna position set 0 to one, return list of antIDs with 1s
         
-    #def set_selection():
+    #def set_selection(parameters):
         ##empty array [antID, 0]
         ## under any reqirement fulfilled set 0 to one, return list of antIDs with 1s
-
+        
+    # def set_antennatype():
+    # string
+    
+    # def get_antennatype():
+    # string
+    
+    # def set_antennaheight():
+    # not necessarily the same for all antennas, dependend on antenna type
+    
+    # def get_antennaheight():
+    # not necessarily the same for all antennas, dependend on antenna type
+    
 #=================================================        
 
 def create_from_file(self, array_file): 
@@ -93,14 +108,14 @@ def create_from_file(self, array_file):
     -------
     -        
     '''
-    print(array_file)
+    print("Creating array from: ", array_file, "\n")
     ant_array = np.loadtxt(array_file,  comments="#")
     for i in range(0,len(ant_array.T[0])):
         self.add_position(int(ant_array[i,0]), ant_array[i, 1:4])
         self.add_slope(int(ant_array[i,0]), ant_array[i, 4:])
 
 def get_array(self):
-    '''returns array of antenna ID and position for detector
+    '''returns array of antenna ID and position for detector, equivalent to get_positions(det) in doc-file
     Arguments:
     ----------
     self
@@ -166,3 +181,10 @@ def find_antennaslope(self, ID):
     index = np.where(antIDs == int(ID))[0][0]
     #print(index)
     return slopes[index]
+
+
+
+## missing
+#def find_antennaID(positions, antIDs, pos):
+#    ...
+#   return antIDs[index]
