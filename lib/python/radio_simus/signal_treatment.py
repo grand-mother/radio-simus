@@ -96,13 +96,23 @@ def _trigger(p2p, mode, thrs):
            return  1
         else:
            return 0    
+    #elif mode == 'xy':
+        #if p2p[0] >= thrs and p2p[1] >= thrs:
+           #return 1
+        #else:
+           #return 0    
+    #elif mode == 'all':
+        #if p2p[0] >= thrs and p2p[1] >= thrs and p2p[2] >=thrs:
+           #return 1
+        #else:
+           #return 0
     elif mode == 'xy':
-        if p2p[0] >= thrs and p2p[1] >= thrs:
+        if p2p[3] >= thrs:
            return 1
         else:
            return 0    
     elif mode == 'all':
-        if p2p[0] >= thrs and p2p[1] >= thrs and p2p[2] >=thrs:
+        if p2p[4] >=thrs:
            return 1
         else:
            return 0
