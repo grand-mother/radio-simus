@@ -111,21 +111,14 @@ def plot_2D(path1, key, save=None):
             # convert astropy table to np array
             trace=np.array(keywords).T
 
-            ### no solution find yet to treat the units nicely
-            #txt.T[0]*=u.nanosecond 
-            #txt.T[1]*=muV_m
-            #txt.T[2]*=muV_m
-            #txt.T[3]*=muV_m
-
             ### call p2p function
             p2ps = p2p(trace)
+            
             # now it depends of which parameter we need the peak amplitude: here we go for the peak-to-peak amplitude
             p2p_Ex.append(p2ps[0])
             p2p_Ey.append(p2ps[1])
             p2p_Ez.append(p2ps[2]) 
-            
             p2p_total.append(p2ps[4])
-            print( p2ps)
 
         except IOError: # in case file does not exist
             print("-- File ", base, " does not exist -> set to empty")
