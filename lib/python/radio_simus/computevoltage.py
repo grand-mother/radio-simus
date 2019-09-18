@@ -1,5 +1,13 @@
-# HandsOn session 19/04/2019
-# --- several times modified
+'''
+    original from HandsOn session 19/04/2019
+    --- several times modified
+    
+    TODO:
+        - problem with shape of A and B in computevoltage for time traces with odd number of lines
+        - handle neutrinos and in general upward going showers
+'''
+
+
 
 
 #!/usr/bin/env python
