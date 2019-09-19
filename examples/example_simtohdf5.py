@@ -60,8 +60,8 @@ if __name__ == '__main__':
     ALL=False # all antenna in one file
    
     # for triggering
-    threshold = 3*15 #muV
-    
+    threshold_aggr = 3*15 #muV
+    threshold_cons = 5*15 #muV  
     
    #----------------------------------------------------------------------   
    
@@ -305,20 +305,23 @@ if __name__ == '__main__':
                 # or convert from existing table to numpy array
                 efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
                 
-                    
-                ## apply only antenna response
+                
                 try:
+                    ## apply only antenna response
                     voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
                     
-                    # add some info on trigger if wanted: trigger on any component, or x-y combined
-                    from radio_simus.signal_treatment import p2p, _trigger
-                    trigger =  [_trigger(p2p(voltage), 'any', threshold), _trigger(p2p(voltage), 'xy', threshold), threshold]
-
-                    # Update info
-                    shower.update({'voltage': 'antennaresponse', 'trigger': trigger})
-                    
                     ## apply full chain
-                    #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False)
+                    #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False) # alpha = 0, beta = 0
+                    
+                    ### add some info on P2P and  TRIGGER if wanted: trigger on any component, or x-y combined
+                    from radio_simus.signal_treatment import p2p, _trigger
+                    # peak-to-peak values: x, y, z, xy-, all-combined
+                    p2p_values = p2p(voltage)
+                    # trigger info: trigger = [any_aggr, xz_aggr, thr_aggr, any_cons, xy_cons, thr_cons]
+                    trigger =  [threshold_aggr, _trigger(p2p_values, 'any', threshold_aggr), _trigger(p2p_values, 'xy', threshold_aggr), threshold_cons, _trigger(p2p_values, 'any', threshold_cons), _trigger(p2p_values, 'xy', threshold_cons)]
+                    
+                    # Update info
+                    shower.update({'voltage': 'antennaresponse', 'trigger': trigger, 'p2p': p2p_values })
                     #shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
                                     
                     if SINGLE:   
