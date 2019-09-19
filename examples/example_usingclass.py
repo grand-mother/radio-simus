@@ -1,6 +1,7 @@
 '''
     Example on how to use classes
-    -- Analysis trigger for events, create a list of events (class objects) and adds trigger info 
+    -- Analysis trigger for events, create a list of events (class objects) and  trigger 1/0 to class attributes
+    -- create a png with statistic for triggering
     
     Use: python3 example_usingclass.py <folder event set>
     Example: python3 example_usingclass.py ../../CoREAS/GP300_centered/
@@ -31,6 +32,7 @@ import logging
 logging.basicConfig(filename="example_usingclass.log", level=logging.INFO)
 logger = logging.getLogger('Main')
 
+import tqdm
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm 
@@ -103,15 +105,16 @@ slopes = get_slopes(det)
 antIDs = array.T[0]
 positions = array[:,1:4] 
 
-event = []
+event = [] # python list
 
 
 #with logger.log_to_file(eventfolder +'/ana_trigger.log', filter_level='INFO'):
 
+print("\nScan of events ...")
 # loop over all folder
-for path in glob.glob(eventfolder+"/*"):
+for path in tqdm.tqdm(glob.glob(eventfolder+"/*/")):
     if os.path.isdir(path): # only pick event folders
-        logger.info("... Reading Event from:"+ path)
+        logger.debug("... Reading Event from:"+ path)
 
         
         # loop over all antenna positions in event
@@ -121,16 +124,17 @@ for path in glob.glob(eventfolder+"/*"):
             
 
         for file in glob.glob(path+"/*.hdf5"):
-            f = Table.read(file, path='efield') 
-            #print("\n simulated position ", f.meta["position"])
-                
             ## find antenna position and its slope per ID - works
             ID = int(file.split('/')[-1].split('.hdf5')[0].split('table_')[-1])
             #pos_ant = find_antennaposition(det, ID)
             #pos_slope = find_antennaslope(det, ID)
-
+               
+            if i==0: # just get the first antenna to readin meta info            
+                #### EFIELD just as example how to read in
+                f = Table.read(file, path='efield') 
+                #print("\n simulated position ", f.meta["position"])
                 
-            if i==0: # just get the first antenna to readin meta info
+                # create shower object and set attributes
                 testshower = sim_shower()
                 loadInfo_toShower(testshower, f.meta)
                 param = testshower.get_all() # get all parameters, all call them separately
@@ -140,9 +144,12 @@ for path in glob.glob(eventfolder+"/*"):
             i+=1
                 
                 
-            ## read voltages for analysis
+            #### VOLTAGES
             try:
                 g = Table.read(file, path='voltages') 
+                
+                # info: trigger = [any_aggr, xz_aggr, thr_aggr, any_cons, xy_cons, thr_cons]
+                # Here: only ask for aggressive value for triggering
                 if g.meta["trigger"][0] ==1:
                     trigger_any.append(ID)
                 if g.meta["trigger"][1] ==1:
@@ -151,16 +158,16 @@ for path in glob.glob(eventfolder+"/*"):
                 logger.error("Voltages not computed for antenna: "+ str(ID) +" in "+path)
                 
             # check whether voltages exists, if not compute voltage
-                
-                
+            
             # check whether antenna ID position and slope already exits, otherwise load to detector
-                
-        ## Trigger Analysis
+            
+            
+            
+        ## EXAMPLE: Trigger Analysis
         if len(trigger_any)>5 or len(trigger_xy)>5:
-            logger.info("   => shower would have triggered: any =" + str(len(trigger_any)) + " xy = " + str(len(trigger_xy)))
-            # TODO: add trigger info to class
-            #print(event[-1].showerID)
-            #event[-1].add_trigger(1)
+            logger.info("   => shower triggers (aggr): any =" + str(len(trigger_any)) + " xy = " + str(len(trigger_xy)))
+            # add trigger info to class
+            event[-1].add_trigger(1)
         else:
             testshower.add_trigger(0)
             
@@ -170,10 +177,54 @@ for path in glob.glob(eventfolder+"/*"):
         
     else: 
         continue
-        
-print("How to handle now the list of events...")    
-print(event[0].showerID, event[0].trigger)
-    
+ 
+ 
+###### START ANALYSIS ################### 
+print("\nStart an analysis ...")    
+#print(event[0].showerID, event[0].trigger)
+Event_ID=map(lambda i: i.showerID, event)
+
+### Calculate Ratio of detected events
+trigger=list(map(lambda i: i.get_trigger(), event))
+print("\n"+str(sum(trigger))+" out of "+str(len(trigger))+" events detected --> "+str(100.* sum(trigger)/len(trigger))+"% detection rate"+"\n")    
+
+### find triggered events
+trigger=np.asarray(trigger)
+index = np.where(trigger==1)[0]
+
+# parameters
+energy=np.asarray(list(map(lambda i: i.get_energy(), event)))
+zenith=np.asarray(list(map(lambda i: i.get_zenith(), event)))
+azimuth=np.asarray(list(map(lambda i: i.get_azimuth(), event)))
+primary=np.asarray(list(map(lambda i: i.get_primary(), event)))
+
+# Plot
+plt.rcParams.update({'figure.figsize':(12,5)})
+
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4)
+ax1.hist(energy, color="orange", bins=50, alpha=0.5, label='all = '+str(len(trigger)))
+ax1.hist(energy[index], bins=50, label='trigger (aggr.) = '+str(sum(trigger)))
+ax1.legend()
+ax1.set_title('energy in eV')
+ax2.hist(zenith, color="orange", bins=50, alpha=0.5)
+ax2.hist(zenith[index], bins=50)
+ax2.set_title('zenith in deg')
+ax3.hist(azimuth, color="orange", bins=50, alpha=0.5)
+ax3.hist(azimuth[index], bins=50)
+ax3.set_title('azimuth in deg')
+ax4.hist(primary, color="orange", bins=50, alpha=0.5)
+ax4.hist(primary[index], bins=50)
+ax4.set_title('primary')
+
+fig.tight_layout()
+plt.savefig(eventfolder+"/trigger_stats.png")
+print("PNG saved:" + eventfolder+"/trigger_stats.png")
+logger.info("PNG saved:" + eventfolder+"/trigger_stats.png")
+plt.show()    
+
+
+
+#====== end of run =======      
 logger.info("Done within "+str(time.clock()) +"s")    
     
     
