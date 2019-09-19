@@ -12,12 +12,25 @@
 
 
 import sys
+
 from sys import argv
 import os
 import glob
 
+import time
+
 import numpy as np
 from numpy import *
+
+#### Astropy logger
+#from astropy import log
+#log.setLevel("INFO")
+#log.info("...")
+
+import logging
+logging.basicConfig(filename="example_usingclass.log", level=logging.INFO)
+logger = logging.getLogger('Main')
+
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm 
@@ -92,39 +105,41 @@ positions = array[:,1:4]
 
 event = []
 
+
+#with logger.log_to_file(eventfolder +'/ana_trigger.log', filter_level='INFO'):
+
 # loop over all folder
 for path in glob.glob(eventfolder+"/*"):
     if os.path.isdir(path): # only pick event folders
-        print("\n==> Reading Event from:", path)
+        logger.info("... Reading Event from:"+ path)
 
-    
+        
         # loop over all antenna positions in event
         i=0
         trigger_any=[]
         trigger_xy=[]
-        
+            
 
         for file in glob.glob(path+"/*.hdf5"):
             f = Table.read(file, path='efield') 
             #print("\n simulated position ", f.meta["position"])
-            
+                
             ## find antenna position and its slope per ID - works
             ID = int(file.split('/')[-1].split('.hdf5')[0].split('table_')[-1])
             #pos_ant = find_antennaposition(det, ID)
             #pos_slope = find_antennaslope(det, ID)
 
-            
+                
             if i==0: # just get the first antenna to readin meta info
                 testshower = sim_shower()
                 loadInfo_toShower(testshower, f.meta)
                 param = testshower.get_all() # get all parameters, all call them separately
-                print("=== SUMMARY EVENT ===")
-                print("ShowerID = ",  param[0], " primary = ", param[1], " energy/eV = ", param[2] , " zenith/deg = ", param[3], " azimuth/deg = ", param[4],  " injectionheight/m = ", param[5] )
-                
+                logger.info("   SUMMARY EVENT: ShowerID = "+  str(param[0])+ " primary = "+ str(param[1])+ " energy/eV = "+ str(param[2]) + " zenith/deg = "+ str(param[3])+ " azimuth/deg = "+ str(param[4])+ " injectionheight/m = "+ str(param[5]) )
+                    
                 event.append(testshower)
             i+=1
-            
-            
+                
+                
             ## read voltages for analysis
             try:
                 g = Table.read(file, path='voltages') 
@@ -133,29 +148,33 @@ for path in glob.glob(eventfolder+"/*"):
                 if g.meta["trigger"][1] ==1:
                     trigger_xy.append(ID)
             except IOError:
-                print("voltages not computed for antenna: ", str(ID))
-            
+                logger.error("Voltages not computed for antenna: "+ str(ID) +" in "+path)
+                
             # check whether voltages exists, if not compute voltage
-            
-            
+                
+                
             # check whether antenna ID position and slope already exits, otherwise load to detector
-            
+                
         ## Trigger Analysis
         if len(trigger_any)>5 or len(trigger_xy)>5:
-            print(" ===> shower would have triggered: any =", len(trigger_any), " xy = ", len(trigger_xy))
+            logger.info("   => shower would have triggered: any =" + str(len(trigger_any)) + " xy = " + str(len(trigger_xy)))
             # TODO: add trigger info to class
-            print(event[-1].showerID)
-            event[-1].add_trigger(1)
-            
+            #print(event[-1].showerID)
+            #event[-1].add_trigger(1)
         else:
             testshower.add_trigger(0)
-        
             
+                
         # plot full array (gray), simulated position with voltages and mark triggers (red) for each event, save as png
         ## could be similar to example_plot_2D
-    
+        
     else: 
         continue
-    
+        
 print("How to handle now the list of events...")    
 print(event[0].showerID, event[0].trigger)
+    
+logger.info("Done within "+str(time.clock()) +"s")    
+    
+    
+    
