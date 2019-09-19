@@ -17,6 +17,9 @@ import sys
 import math
 import numpy as np
 
+import logging
+logger = logging.getLogger("ComuteVoltage")
+
 import pylab as plt
 import glob
 

@@ -1,5 +1,7 @@
 import numpy as np
 
+import logging
+logger = logging.getLogger("Signal_Treatment")
 
 #===========================================================================================================
 def p2p(trace):

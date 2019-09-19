@@ -1,6 +1,12 @@
 # Local frame transforms for pulse shape computations.
 import numpy
+
+import logging
+logger = logging.getLogger("Frame")
+
 from .__init__ import phigeo, thetageo
+
+
 
 def get_rotation(zen, az, phigeo=phigeo, thetageo=thetageo):
     """Utility function for getting the rotation matrix between frames

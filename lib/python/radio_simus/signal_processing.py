@@ -7,6 +7,9 @@ import numpy as np
 from scipy.signal import butter, lfilter, resample
 from scipy.fftpack import rfft, irfft, rfftfreq
 
+import logging
+logger = logging.getLogger("Signal_Processing")
+
 from .__init__ import Vrms, Vrms2, tsampling
 
 __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_create_emptytrace", "run"]

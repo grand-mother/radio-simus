@@ -4,6 +4,9 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
+import logging
+logger = logging.getLogger("Modules")
+
 from .__init__ import phigeo, thetageo
 
 #__all__ = ["compute_ZL", "TopoToAntenna", "_getXmax", "_dist_decay_Xmax"]

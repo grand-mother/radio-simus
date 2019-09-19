@@ -26,8 +26,10 @@ except ImportError:
     __version__ = None
     __githash__ = None
 
-# Initialise the package below
+import logging
+logger = logging.getLogger("__init__")
 
+# Initialise the package below
 
 ### NOTE: I am not sure that I have to import all of those... _function should be private, but still ongoing work
 
@@ -43,7 +45,7 @@ except ImportError:
 __all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower", "detector", "frame", "signal_processing"]
 
 
-print("..... Loading CONFIG FILE .....: "+"./test.config") 
+
 global site
 global location, longitude, latitude, obs_height
 global arrayfile
@@ -52,7 +54,8 @@ global Vrms, Vrms2, tsampling
 global antx, anty, antz
 
 ### set global parameters
-configfile = open("/mnt/c/Users/Anne/work/radio-simus/examples/test.config", 'r') 
+configfile = open("/home/laval1NS/zilles/radio-simus/examples/test.config", 'r') 
+print("..... Loading CONFIG FILE .....: "+"/home/laval1NS/zilles/radio-simus/examples/test.config") 
 for line in configfile:
     line = line.rstrip() 
     if 'SITE' in line:

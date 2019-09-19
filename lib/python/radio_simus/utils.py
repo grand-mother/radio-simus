@@ -1,5 +1,8 @@
 import numpy as np
 
+import logging
+logger = logging.getLogger("Utils")
+
 #===========================================================================================================
 def load_trace(directory, index, suffix=".trace"):
     """Load data from a trace file (ascii file)

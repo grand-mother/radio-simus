@@ -10,6 +10,9 @@ import numpy as np
 import sys
 import glob
 
+import logging
+logger = logging.getLogger("In_Out")
+
 from astropy import units as u
 #muV_m = u.u * u.V / u.m
 

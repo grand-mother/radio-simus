@@ -2,11 +2,13 @@
     TODO: several missing functions to be implemented, marked in the code
 '''
 
-
 import numpy as np 
 from .__init__ import site, latitude, longitude  ## not yet needed
 
-print("\n================\n Detector set up at:", site,"\n================ \n")
+#from astropy import log
+import logging
+logger = logging.getLogger("Detector")
+logger.info("================   Detector set up at: " +site +"    ================")
 
 class detector:
     ''' info on antenna array
@@ -40,13 +42,13 @@ class detector:
     def add_position(self, antID, position):
         # add antID and position to array
         if antID in self.array:
-            print("AntID already exists")
+            logger.warning("AntID already exists: "+str(antID))
         elif antID is None:
-            print("Warning: AntID not given")
+            logger.warning("Warning: AntID not given: "+str(antID))
         elif position in self.array:
-            print("position already exists")
+            logger.warning("position already exists: "+str(antID))
         elif position is None:
-            print("Warning: position not given")
+            logger.warning("Warning: position not given: "+str(antID))
         else:
             self.array.append([antID, position[0], position[1], position[2]])
         
@@ -56,9 +58,9 @@ class detector:
     def add_slope(self, antID, slope):
         # add antID and slope (alpha, beta) to array
         if antID in self.slopes:
-            print("AntID already exists")
+            logger.warning("AntID already exists: "+str(antID))
         elif antID is None:
-            print("Warning: AntID not given")
+            logger.warning("Warning: AntID not given: "+str(antID))
         #elif position in self.array:
             #print("position already exists")
         #elif position is None:
@@ -108,7 +110,7 @@ def create_from_file(self, array_file):
     -------
     -        
     '''
-    print("Creating array from: ", array_file, "\n")
+    logger.info("Creating array from: " + str(array_file))
     ant_array = np.loadtxt(array_file,  comments="#")
     for i in range(0,len(ant_array.T[0])):
         self.add_position(int(ant_array[i,0]), ant_array[i, 1:4])

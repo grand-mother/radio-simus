@@ -6,6 +6,9 @@ Shower class: shall contain all infos on the shower
 
 import numpy as np
 
+import logging
+logger = logging.getLogger("Shower")
+
 class shower(object):
     ''' info on shower parameter 
         
