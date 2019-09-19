@@ -56,54 +56,44 @@ from radio_simus.__init__ import arrayfile
 
 
 
-##############################
-### define new functions and test
+###############################
+#### WORK in PROGRESS: define new functions and test
 
-#def find_antennaposition(positions, antIDs, ID):
-    #index = np.where(antIDs == int(ID))[0][0]
-    ##print(index)
-    #return positions[index]
+##def find_antennaposition(positions, antIDs, ID):
+    ##index = np.where(antIDs == int(ID))[0][0]
+    ###print(index)
+    ##return positions[index]
 
-def find_antennaID(positions, antIDs, pos):
-    pos=np.around(pos)
-    print(type(positions), type(pos))
-    print(positions[0], pos)
-    index = np.where((positions[:]== pos).all())
-    print('indexx', index, positions[index,0])
-    return antIDs[index]
-## not yet working
-#pos_ID = find_antennaID(positions, antIDs, np.asarray(f.meta["position"]))
-#print("----", f.meta["position"], pos_ID, "original", ID)
-################################
+#def find_antennaID(positions, antIDs, pos):
+    #pos=np.around(pos)
+    #print(type(positions), type(pos))
+    #print(positions[0], pos)
+    #index = np.where((positions[:]== pos).all())
+    #print('indexx', index, positions[index,0])
+    #return antIDs[index]
+### not yet working
+##pos_ID = find_antennaID(positions, antIDs, np.asarray(f.meta["position"]))
+##print("----", f.meta["position"], pos_ID, "original", ID)
+#################################
 
 
 # path to folder containing the inp-file, trace files and antpos.dat 
 eventfolder = sys.argv[1]
-
-
-# create an array
-p2p_Ex = []
-p2p_Ey = []
-p2p_Ez = []
-p2p_total = []
-
-x_pos=[]
-y_pos=[]
-z_pos=[]
-
 
 #create  "empty detector"
 det = detector()
 #create detector=antenna array from file defined in config file
 create_from_file(det, arrayfile)
 
-# get all antennas positions
-array = get_array(det)
-# get all slopes
-slopes = get_slopes(det)
+## get all antennas positions
+#array = get_array(det)
+## get all slopes
+#slopes = get_slopes(det)
 
-antIDs = array.T[0]
-positions = array[:,1:4] 
+## antenna IDs
+#antIDs = array.T[0]
+## get only position info
+#positions = array[:,1:4] 
 
 event = [] # python list
 
