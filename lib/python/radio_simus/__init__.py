@@ -80,7 +80,7 @@ for line in configfile:
         Bzhaires=list(line.split('  ',-1)) # deg, deg  ->astropy.units      
     
         
-    if 'VRMS' in line:
+    if 'VRMS1' in line:
         Vrms=float(line.split('  ',-1)[1]) # muV  ->astropy.units  
     if 'VRMS2' in line:
         Vrms2=float(line.split('  ',-1)[1]) # muV  ->astropy.units        
