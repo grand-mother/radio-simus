@@ -244,6 +244,19 @@ def plot_2D(path1, key, save=None):
 
 
 def main():
+    if ( len(sys.argv)<3 ):
+        print("""
+            Example on how to do a 2D plot, show the radio footprint in the array
+                -- read in original array list (from config-file)
+                -- plots the p2p distribution componentwise
+                -- reads in single antenna hdf5 files
+            
+            Usage: python3 example_plot_2D.py <path to event folder> <e/v>(efield or voltages to plot)
+            Example: python3 example_plot_2d.py ../../CoREAS/GP300_test2/000001/ v
+            
+        """)
+        sys.exit(0)
+        
   # path to folder containing the inp-file, trace files and antpos.dat 
     path = sys.argv[1]
 
