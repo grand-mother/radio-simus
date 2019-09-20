@@ -5,6 +5,9 @@
     TODO:
         - problem with shape of A and B in computevoltage for time traces with odd number of lines
         - handle neutrinos and in general upward going showers
+        
+    ATTENTION:
+    ----- computevoltage : stacking changed,  voltage time now in ns
 '''
 
 
@@ -90,7 +93,7 @@ def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6): # SI UNit
 fr=np.arange(20,301,5)
 RLp, XLp = compute_ZL(fr*1e6)
 
-print('--- ATTENTION: current version only valid for Cosmic Rays') 
+print('--- ATTENTION: current version of computevoltage only valid for Cosmic Rays') 
 
 #wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
 # Load antenna response files
@@ -110,6 +113,7 @@ fileleff_z = antz
 
 if PRINT_ON:
     print('Loading',fileleff_x,'...')  
+logger.debug("Loading antenna files " + fileleff_x +"....")
 freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(fileleff_x) ### this line cost 6-7s
 RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
 XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
@@ -272,6 +276,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     
     if (freespace==0) and (zen>90):
         print('Signal originates below antenna horizon! No antenna response computed. Abort.')
+        logger.info('Signal originates below antenna horizon! No antenna response computed. Abort.')
         return([],[])
     
     # Now take care of Efield signals
@@ -317,6 +322,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
         roundazimuth=round(azim)
     else:
         print('Error on azimuth step!')
+        logger.error('Error on azimuth step!')
         return(0)
     if roundazimuth>=91 and roundazimuth<=180:
         roundazimuth=180-roundazimuth
@@ -430,7 +436,6 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     
     # ATTENTION EW AND NS WERE SWITCHED 
     # ATTENTION voltage now in ns 
-    print("----- ATTENTION stacking changed, ATTENTION voltage time now in ns")
     #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
     return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)
     
