@@ -10,6 +10,18 @@ import numpy as np
 import sys
 import glob
 
+import logging
+logging.basicConfig(filename="example_simtohdf5.log", level=logging.INFO)
+logger = logging.getLogger('Main')
+
+import tqdm
+
+import astropy
+from astropy.table import Table, Column
+from astropy.table import hstack
+from astropy import units as u  
+import h5py
+
 #from in_out import _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
 # Expand the PYTHONPATH and import the radiomorphing package #NOTE: this would be on the shared disc
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
@@ -17,20 +29,22 @@ sys.path.append(join(root_dir, "lib", "python"))
 #import radio_simus 
 #This also loads the submodule in_out, and makes it available without its package prefix
 from radio_simus.in_out import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
+from radio_simus.__init__ import Vrms
 
 
 if __name__ == '__main__':
 
-    if ( len(sys.argv)<1 ):
+    if ( len(sys.argv)<2 ):
         print("""
-        Scripts loops over event folders
+        Script loops over event folders and produces hdf5 files per antenna, containing efield and voltage trace
         
         Example how to read in an electric field or voltage trace, load it to a table, write it into a hdf5 file (and read the file.)
+        -- loops over complete event sets
         -- define ALL in script to write all antennas in one hdf5 file and event info in an own column
         -- define SINGLE in script to write single antennas in one hdf5 file each and event info as meta for each antenna
         -- produces hdf5 files for zhaires and coreas simulations
-        -- can compute the full chain for the voltage traces and save them im hdf5 file
-        -- can only only apply antenna response, and also 
+        -- (can compute the full chain for the voltage traces and save them im hdf5 file)
+        -- currently only applies antenna response, calculates trigger and p2p, and stores them in the hadf5 file 
         -- example how to read in tables from hdf5 files
         
         Usage for full antenna array:
@@ -38,13 +52,15 @@ if __name__ == '__main__':
         example: python example_simtohdf5.py ./ coreas
         
         ATTENTION: 
+        -- adapt the paths given in the config-file so that eg Vrms (for threshold) can be read-in correctly
         -- To be specified SINGLE/ALL True or False depending on favorite saving mode, same size file in total
-        -- Hardcoded threshold value in muV
+        -- Hardcoded threshold value in muV, read-in from config file
         
         Note: 
         --- ToDo: adopt example to also add voltage traces from txt files
         --- ToDo: save units of parameters, astropy units or unyt
-        --- ToDo: implement calculation of alpha and beta, so far read in from  file or set to (0,0) [in_out.py]
+        --- ToDo: implement calculation of alpha and beta, so far read in from file or set to (0,0) [in_out.py]
+        --- ToDo: fix the problem of array size in computevoltage which leads to not-produced traces at the moment
         """)
         sys.exit(0)
     
@@ -60,10 +76,25 @@ if __name__ == '__main__':
     ALL=False # all antenna in one file
    
     # for triggering
-    threshold_aggr = 3*15 #muV
-    threshold_cons = 5*15 #muV  
+    threshold_aggr = 3*Vrms #muV
+    threshold_cons = 5*Vrms #muV  
     
-   #----------------------------------------------------------------------   
+    # set option on what done in this script, more options in the script
+    # here, we switch on teh computation of the voltage response at teh storage of the voltage trace in the hdf5 file
+    # + trigger info + p2p value (at least for now)  -- not done (digitise, filter etc, can be done as well)
+    voltage_compute=True
+    if voltage_compute:
+        from radio_simus.computevoltage import get_voltage, compute_antennaresponse
+        from radio_simus.signal_processing import run
+        from radio_simus.in_out import _table_voltage
+        
+        
+        
+    #----------------------------------------------------------------------   
+    # General info statement for later identification
+    logger.info("general: Eventset =" +str(eventfolder)+ ", Simulation = "  +str(simus)+ ", SINGLE/ALL = "  +str(SINGLE)+ "/"  +str(ALL)+  ", Threshold = "  +str(threshold_aggr)+ "muV (aggr), "  +str(threshold_cons)+ "muV (cons)")
+    print("\nGENERAL: Eventset =" +str(eventfolder)+ ", Simulation = "  +str(simus)+ ", SINGLE/ALL = "  +str(SINGLE)+ "/"  +str(ALL)+  ", Threshold = "  +str(threshold_aggr)+ "muV (aggr), "  +str(threshold_cons)+ "muV (cons)\n")
+    #----------------------------------------------------------------------   
    
    
     # loop over eventfolder
@@ -74,6 +105,7 @@ if __name__ == '__main__':
    
         showerID=str(path).split("/")[-2] # should be equivalent to folder name
         print(" --- Event : ", showerID, ", in ", path)
+        logger.debug(" --- Event : "+ str(showerID)+ ", in "+ str(path) )
         
         task=None
         core=None    
@@ -88,11 +120,17 @@ if __name__ == '__main__':
             ####################################### NOTE zhaires
             # Get the antenna positions from file
             positions = np.loadtxt(path+"antpos.dat")
+            ID_ant = []
+            slopes = []
+            # TODO adopt reading in positions, ID_ant and slopes to coreas style - read in from SIM*info    
+            #posfile = path +'SIM'+str(showerID)+'.info'
+            #positions, ID_ant, slopes = _get_positions_coreas(posfile)
+            ##print(positions, ID_ant, slopes)
                 
             # Get shower info
             inputfile = path+showerID+'.inp'
             #inputfile = path+"/inp/"+showerID+'.inp'
-            print("Check inputfile path: ", inputfile)
+            #print("Check inputfile path: ", inputfile)
             try:
                 zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
             except:
@@ -108,7 +146,7 @@ if __name__ == '__main__':
 
         if  simus == 'coreas':
             #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
-            posfile = path +'SIM'+str(showerID)+'.info'
+            posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
             positions, ID_ant, slopes = _get_positions_coreas(posfile)
             #print(positions, ID_ant, slopes)
             
@@ -127,7 +165,6 @@ if __name__ == '__main__':
         #----------------------------------------------------------------------   
 
     
-        from astropy import units as u    
         ########################
         # load shower info from inp file via dictionary
         ########################
@@ -144,20 +181,13 @@ if __name__ == '__main__':
                 }
         ####################################
         print("shower", shower)
+        logger.info("Shower summary: " + str(shower))
         
         
         #shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
         #positions.write(name_all, path='positions', format="hdf5", append=True,  compression=True,serialize_meta=True) 
         #slopes.write(name_all, path='slopes', format="hdf5", append=True,  compression=True,serialize_meta=True) 
         #ID_ant.write(name_all, path='IDs', format="hdf5", append=True,  compression=True,serialize_meta=True)
-
-        
-        import astropy
-        from astropy.table import Table
-        from astropy.table import hstack
-        import h5py
-        
-
         
         if ALL:
             name_all = path+'/event_'+showerID+'.hdf5'
@@ -170,7 +200,6 @@ if __name__ == '__main__':
             ##dset = hf.create_dataset("shower", shower) 
             #hf.close()
     
-            from astropy.table import Table, Column
             a1 = Column(data=np.array(ID_ant), name='ant_ID')
 
             b1 = Column(data=positions.T[0], unit=u.m, name='pos_x')
@@ -183,31 +212,37 @@ if __name__ == '__main__':
 
 
 
-        for ant in glob.glob(path+ending_e):
-            print("\n Read in data from ", ant)
+        for ant in tqdm.tqdm(glob.glob(path+ending_e)):
+            #print("\n Read in data from ", ant)
             
             name = None
             if simus == 'zhaires':
-                ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
+                ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1]) # index in selected antenna list
+                ID = ant_number # original ant ID
+                # TODO adopt to read in SIM*info file, reprocude ant ID in orginal list
+                #ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
+                # ID = ID_ant.index(ant_number) # index of antenna in positions
                 # define path for storage of hdf5 files
                 if SINGLE:
-                    name = path+'/table_a'+str(ant_number)+'.hdf5' # to adopt to coreas style for now 
-                    print("Table saved as: ", name)
+                    name = path+'/table_'+str(ID)+'.hdf5' # to adopt to coreas style for now 
+                    #print("-- ant_ID: "+ str(ID) + "-- Table saved as: " +str(name))
+                    logger.debug("-- ant_ID: "+ str(ID) + "-- Table saved as: " +str(name))
 
             if  simus == 'coreas':
                 base=os.path.basename(ant)
-                # coreas
-                ID=(os.path.splitext(base)[0]).split("_a")[1] # remove raw 
-                ant_number = ID_ant.index(ID) # index of antenna in positions
-                print("--- ant_ID: ", ID)
+                #coreas
+                #ID == ant_number for coreas
+                ID=(os.path.splitext(base)[0]).split("_a")[1] # remove raw , original ant ID
+                ant_number = ID_ant.index(ID) # index of antenna in positions list
                 # define path for storage of hdf5 files
                 if SINGLE:
                     name = path+'/../table_'+str(ID)+'.hdf5'
-                    print("Table saved as: ", name)
+                    #print("-- ant_ID: "+ str(ID) + "-- Table saved as: " +str(name))
+                    logger.debug("-- ant_ID: "+ str(ID) + "-- Table saved as: " +str(name))
                     
             ##### read-in output of simulations        
             if SINGLE:
-                # read in trace from file and store as astropy table, saved as hdf5 file (optional)
+                # read in trace from file and store as astropy table, saved as hdf5 file (optional), conversion of units done internally
                 # a is a astropy table, saved as <name> as hdf5-file
                 a= load_trace_to_table(path=ant, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist(),  info=shower, content="e", simus=simus, save=name) 
                 
@@ -273,6 +308,7 @@ if __name__ == '__main__':
                 
                 ### ATTENTION currently electric field added - adjust <ant=path+ending_e>
                 print("WARNING: adopt path to voltage trace")
+                logger.warning("Read in voltage trace from file : adopt path to voltage trace")
                 
                 if SINGLE:
                     # read in trace from file and store as astropy table - can be substituted by computevoltage operation
@@ -292,12 +328,8 @@ if __name__ == '__main__':
                     #g1.create_dataset('voltages', data = b,compression="gzip", compression_opts=9)
             
             ########### example VOLTAGE COMPUTATION and add to same hdf5 file
-            voltage_compute=True
+            #voltage_compute=True
             if voltage_compute:
-                from radio_simus.computevoltage import get_voltage, compute_antennaresponse
-                from radio_simus.signal_processing import run
-                from radio_simus.in_out import _table_voltage
-                
                 
                 ##load info from hdf5 file
                 #path_hdf5=name
@@ -310,7 +342,7 @@ if __name__ == '__main__':
                     ## apply only antenna response
                     voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
                     
-                    ## apply full chain
+                    ## NOTE apply full chain, not only antenna resonse: add noise, filter, digitise
                     #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False) # alpha = 0, beta = 0
                     
                     ### add some info on P2P and  TRIGGER if wanted: trigger on any component, or x-y combined
@@ -319,9 +351,9 @@ if __name__ == '__main__':
                     p2p_values = p2p(voltage)
                     # trigger info: trigger = [any_aggr, xz_aggr, thr_aggr, any_cons, xy_cons, thr_cons]
                     trigger =  [threshold_aggr, _trigger(p2p_values, 'any', threshold_aggr), _trigger(p2p_values, 'xy', threshold_aggr), threshold_cons, _trigger(p2p_values, 'any', threshold_cons), _trigger(p2p_values, 'xy', threshold_cons)]
-                    
+
                     # Update info
-                    shower.update({'voltage': 'antennaresponse', 'trigger': trigger, 'p2p': p2p_values })
+                    shower.update({'voltage': 'antennaresponse', 'trigger': trigger, 'p2p': list(p2p_values) })
                     #shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
                                     
                     if SINGLE:   
@@ -340,8 +372,9 @@ if __name__ == '__main__':
 
                         volt_table.write(name_all, path="/"+str(ID)+"/"+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) 
                         
-                except : 
-                        print("====== ATTENTION: ValueError --- check computevoltage =======")
+                except: 
+                        print("====== ATTENTION: ValueError raised for a"+str(ant_number) + " --- check computevoltage =======")
+                        logger.error("ValueError raised for a"+str(ant_number) + "--- check computevoltage")
 
 
 
