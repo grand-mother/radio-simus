@@ -65,16 +65,16 @@ run='test'
 wkdir="./"+run
 
 
-# TODO: read from general config-file
-# Simulation specifics: path for storage on cluster, simulation program, executable, thinninlevel, timebinning
-simus = "zhaires"
-executable = 'zhaires_go'
-simpath = 'cca_at_lyon'
+## TODO: read from general config-file
+## Simulation specifics: path for storage on cluster, simulation program, executable, thinninlevel, timebinning
+#simus = "zhaires"
+#executable = 'zhaires_go'
+#simpath = 'cca_at_lyon'
 
 
-#simus="coreas"
-#executable = 'corsika76400Linux_SIBYLL_gheisha_thin_coreas'
-#simpath = '/home/fh1-project-huepra/xb6511/coreas/simulations'
+simus="coreas"
+executable = 'corsika76400Linux_SIBYLL_gheisha_thin_coreas'
+simpath = '/home/fh1-project-huepra/xb6511/coreas/simulations'
 # fixed values
 
 
