@@ -3,12 +3,17 @@ Collection of example scripts using the python radio-simus library
 A list of not-fully-ready, but somehow usable scripts:
     * example_simtohdf5.py: Script loops over event folders and produces hdf5 files per antenna, containing efield and voltage trace (only tested with coreas   
       simulation so far)
+        -- There are several options to choose in the script -> please see the comments in the script
       Usage: python example_simtohdf5.py <path to event folders> <zhaires/coreas>
-      
     * example_usingclass.py:  Example on how to use classes shower and detector, read-in only hdf5 format, single antenna files so far
         -- Analysis trigger for events, create a list of events (class objects) and  trigger 1/0 to class attributes
         -- create a png with statistic for triggering
       Usage: python3 example_usingclass.py <folder event set>
+    * example_plot_2D.py: Example on how to do a 2D plot, show the radio footprint in the array
+        -- read in original array list (from config-file)
+        -- plots the p2p distribution componentwise
+        -- reads in single antenna hdf5 files
+        Usage: python3 example_plot_2D.py <path to event folder> <e/v>(efield or voltages to plot)
    
    
 ## to example_simtohdf5.py:
