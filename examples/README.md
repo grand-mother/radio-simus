@@ -1,13 +1,21 @@
 # Information on scripts
 Collection of example scripts using the python radio-simus library 
-   
+A list of not-fully-ready, but somehow usable scripts:
+    * example_simtohdf5.py: Script loops over event folders and produces hdf5 files per antenna, containing efield and voltage trace (only tested with coreas   
+      simulation so far)
+      Usage: python example_simtohdf5.py <path to event folders> <zhaires/coreas>
+      
+    * example_usingclass.py:  Example on how to use classes shower and detector, read-in only hdf5 format, single antenna files so far
+        -- Analysis trigger for events, create a list of events (class objects) and  trigger 1/0 to class attributes
+        -- create a png with statistic for triggering
+      Usage: python3 example_usingclass.py <folder event set>
    
    
 ## to example_simtohdf5.py:
-Currently, the script can produce one single hdf5-file per event, for ALL=True. 
+Currently, the script can produce one single hdf5-file per antenna, for SINGLE=True. 
 The data structure for the produced hdf5-file is:
 
- **Structure of hdf5 files, containing all antennas of event [event*.hdf5]:**
+ **EXAMPLE ALL=True: Structure of hdf5 files, containing all antennas of event [event*.hdf5]:**
  
     /event: stores ID, position and slopes of antennas in event
     /event _meta: example:
@@ -28,6 +36,7 @@ The data structure for the produced hdf5-file is:
         simulation: coreas, 
         task: 36.E.4e17_Z.97_A.7_La.39_Lo.92_H.3078_D.0, 
         zenith: 96.65, 
+        
     
     /event/<ant_ID>
     
@@ -43,7 +52,7 @@ The data structure for the produced hdf5-file is:
         slopes: [0.0, 0.0], 
         
     /event/<ant_ID>/voltages: stores Time, Vx, Vy, Vz as astropy table
-    /eventt/<ant_ID>/efield _meta: example:
+    /event/<ant_ID>/efield _meta: example:
         datatype:, 
         - {name: Time, unit: ns, datatype: float64}, 
         - {name: Vx, unit: u V, datatype: float64}, 
@@ -53,10 +62,16 @@ The data structure for the produced hdf5-file is:
         position: [999.9973888519853, -2499.964022173601, 2734.0], 
         slopes: [0.0, 0.0], 
         voltage: antennaresponse, 
+        trigger: [threshold(aggr) in muV, 1/0 in any, 1/0 in xy, threshold(cons) in muV, 1/0 in any, 1/0 in xy] # 1 = triggered
+        p2p: [Ex, Ey, Ez, Exy, Exz] #p2p-value in muV
+        
+ **For SINGLE=True: One hdf5 file per antenna in ecah event - internal structure of information identical (skip /event/)**
+    File naming table_*.hdf5 includes the antenna ID of the original antenna array (not necessarily equivalent to antenna number in simulation)
+ 
         
 ToDo: add units in meta info (python dict)) for the event. Currently, the units are set via the read-in from the raw simulation files.
 Units:
-* ID: - (ID of the event)
+* ID: '-' (ID of the event)
 * azimuth: GRAND deg (azimuth of shower)
 * zenith: GRAND deg (zenith of shower)
 * core: m (shower core position wrt to array center)
@@ -65,6 +80,8 @@ Units:
 * primary: string (primary nature)
 * simulation: string (coreas/zhaires/RM,...)
 * task: string (task ID, eg from DANTON or RETRO output)
+* trigger threshold: muV
+* p2p values: muV
 
 
 
@@ -87,11 +104,11 @@ The config files contains all information needed to run simulations as well as f
     THETAGEO  147.43  deg
     PHIGEO  0.72  deg
     B_COREAS  28.17  28.17  # Bx  Bz  uT 
-    B_ZHAIRES  54.021  57.43  0.72  #54.021 uT 57.43 deg 0.72 deg
+    B_ZHAIRES  54.021  57.43  0.72  ## strengh F in uT, inclination I in deg, declination D in deg
 
     # definition sigma in muV (50-200MHz)
     VRMS  15
-    VRMS2  28  # before filtering
+    VRMS2  28  # before filtering, approximated
     TSAMPLING  2  ns  # for digitisation
 
     #antenna responses
