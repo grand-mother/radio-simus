@@ -195,7 +195,7 @@ def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         -- 4. FILTER THE TRACE TO THE 50-200MHz WINDOW
         -- 5. DIGITIZATION -- 2ns 
         
-        TODO: make it modular so that people can pick the steps they need
+        NOTE: make it modular so that people can pick the steps they need --> load simple single function
     
         
         Arguments:
