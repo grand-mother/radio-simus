@@ -136,10 +136,10 @@ if __name__ == '__main__':
                     #print("\n simulated position ", f.meta["position"])
                     
                     # create shower object and set attributes
-                    testshower = sim_shower()
+                    testshower = SimulatedShower()
                     loadInfo_toShower(testshower, f.meta)
-                    param = testshower.get_all() # get all parameters, all call them separately
-                    logger.info("   SUMMARY EVENT: ShowerID = "+  str(param[0])+ " primary = "+ str(param[1])+ " energy/eV = "+ str(param[2]) + " zenith/deg = "+ str(param[3])+ " azimuth/deg = "+ str(param[4])+ " injectionheight/m = "+ str(param[5]) )
+                    param = testshower# get all parameters, all call them separately
+                    logger.info("   SUMMARY EVENT: ShowerID = "+  str(param.showerID)+ " primary = "+ str(param.primary)+ " energy/eV = "+ str(param.energy) + " zenith/deg = "+ str(param.zenith)+ " azimuth/deg = "+ str(param.azimuth)+ " injectionheight/m = "+ str(param.injectionheight) )
                         
                     event.append(testshower)
                 i+=1
@@ -149,7 +149,7 @@ if __name__ == '__main__':
                 try:
                     g = Table.read(file, path='voltages') 
                     
-                    # info: trigger = [any_aggr, xz_aggr, thr_aggr, any_cons, xy_cons, thr_cons]
+                    # info: trigger = [thr_aggr, any_aggr, xz_aggr, thr_cons, any_cons, xy_cons]
                     # Here: only ask for aggressive value for triggering
                     if g.meta["trigger"][1] ==1:
                         trigger_any.append(ID)
@@ -168,9 +168,9 @@ if __name__ == '__main__':
             if len(trigger_any)>5 or len(trigger_xy)>5:
                 logger.info("   => shower triggers (aggr): any =" + str(len(trigger_any)) + " xy = " + str(len(trigger_xy)))
                 # add trigger info to class
-                event[-1].add_trigger(1)
+                event[-1].trigger=1
             else:
-                testshower.add_trigger(0)
+                event[-1].trigger=0
                 
                     
             # plot full array (gray), simulated position with voltages and mark triggers (red) for each event, save as png
@@ -183,10 +183,10 @@ if __name__ == '__main__':
     ###### START ANALYSIS ################### 
     print("\nStart an analysis ...")    
     #print(event[0].showerID, event[0].trigger)
-    Event_ID=map(lambda i: i.showerID, event)
+    Event_ID=list(map(lambda i: i.showerID, event))
 
     ### Calculate Ratio of detected events
-    trigger=list(map(lambda i: i.get_trigger(), event))
+    trigger=list(map(lambda i: i.trigger, event))
     print("\n"+str(sum(trigger))+" out of "+str(len(trigger))+" events detected --> "+str(100.* sum(trigger)/len(trigger))+"% detection rate"+"\n")    
 
     ### find triggered events
@@ -194,10 +194,10 @@ if __name__ == '__main__':
     index = np.where(trigger==1)[0]
 
     # parameters
-    energy=np.asarray(list(map(lambda i: i.get_energy(), event)))
-    zenith=np.asarray(list(map(lambda i: i.get_zenith(), event)))
-    azimuth=np.asarray(list(map(lambda i: i.get_azimuth(), event)))
-    primary=np.asarray(list(map(lambda i: i.get_primary(), event)))
+    energy=np.asarray(list(map(lambda i: i.energy/u.eV, event)))
+    zenith=np.asarray(list(map(lambda i: i.zenith/u.deg, event)))
+    azimuth=np.asarray(list(map(lambda i: i.azimuth/u.deg, event)))
+    primary=np.asarray(list(map(lambda i: i.primary, event)))
 
     # Plot
     plt.rcParams.update({'figure.figsize':(12,5)})
