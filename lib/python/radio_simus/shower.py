@@ -1,15 +1,25 @@
-"""
-My first try to write a python class
-
-Shower class: shall contain all infos on the shower
-"""
+import astropy.units as u
+from typing import Optional, List, Union
 
 import numpy as np
 
 import logging
 logger = logging.getLogger("Shower")
 
-class shower(object):
+gcm2= u.gram /(u.cm**2)
+
+''' NOTE:
+* from typing_extension import Final, mypy would would raise bad usage
+* numpy arrays: myarra.flags.writeable = False
+'''
+
+class AlreadySet(Exception):
+    """Raised when attempting to re-set an already set attribute"""
+    logger.debug('Already set')
+    pass
+
+
+class Shower():
     ''' info on shower parameter 
         
         showerID: str
@@ -19,343 +29,370 @@ class shower(object):
         azmiuth: float in deg, GRAND
         
         simulations: str
+        Xmax: float in g/cm2
         
         recoXmax: float in g/cm2
         recoenergy: float in eV
         recozenith: float in deg, GRAND
         recoazimuth: float in deg, GRAND
         
-        #TODO: how to use astropy units
         
+        TODO: 
+        * How do I prevent that attributes can overwritten
+        * How do I delete already set values
+               
     '''
-    # list of class attributes: Storing constants or default values
     
+    _attributes = ("showerID", "primary", "energy", "zenith",
+                            "azimuth", "injectionheight", "trigger")
     
-    def __init__(self): # Constructor
+    def __init__(self, **kwargs):
         # list of instance attributes
-        self.max_length = 1 # prevents overwritting etc, limits to one number per list
+        self.__showerID: Optional[str] = None
+        self.__primary: Optional[str] = None
+        self.__energy: Optional[u.Quantity] = None
+        self.__zenith: Optional[u.Quantity] = None
+        self.__azimuth: Optional[u.Quantity] = None
+        self.__injectionheight: Optional[u.Quantity] = None
         
-        self.showerID = [] # attribute references
-        self.primary = []
-        self.energy = []
-        self.zenith = []    
-        self.azimuth = [] #instantiation
-        self.injectionheight = []
+        self.__trigger: List[Union[int, str]] = None
         
-        # simulated shower
-        self.simulation = []
-        
-        # reconstructed shower
-        self.recoXmax = []
-        self.recoenergy = []
-        self.recozenith = []
-        self.recoazimuth = []
-        
-        self.trigger = []
-    
-    def add_showerID(self, showerID):
-        if len(self.showerID)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add showerID=", str(showerID)," -- already set to: ", self.showerID[0])
-        elif showerID is None:
-            print("Warning: Primary not given")
-        else:
-            self.showerID.append(showerID)
-        
-    def get_showerID(self):
-        if len(self.showerID)==0:
-            print("Warning: no showerID set")
-        else:
-            return self.showerID[0] # str
-        
-    
-    def add_primary(self, primary):
-        if len(self.primary)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add primary=", str(primary)," -- already set to: ", self.primary[0])
-        elif primary is None:
-            print("Warning: Primary not given")
-        else:
-            self.primary.append(primary)
-        
-    def get_primary(self):
-        if len(self.primary)==0:
-            print("Warning for shower ", str(self.showerID),": No primary set")
-        else:
-            return self.primary[0] # str
-        
-    def add_energy(self, energy):
-        if len(self.energy)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add energy=", str(energy)," -- already set to: ", self.energy[0])
-        elif energy is None:
-            print("Warning for shower ", str(self.showerID),": Energy not given")
-        else:
-            self.energy.append(energy)
-        
-    def get_energy(self):
-        if len(self.energy)==0:
-            print("Warning for shower ", str(self.showerID),": No energy set")
-        else:
-            return self.energy[0]  
-        
-    def add_zenith(self, zenith):
-        if len(self.zenith)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add zenith=", str(zenith)," -- already set to: ", self.zenith[0])
-        elif zenith is None:
-            print("Warning for shower ", str(self.showerID),": Zenith not given")
-        else:
-            self.zenith.append(zenith)
 
-    def get_zenith(self):
-        if len(self.zenith)==0:
-            print("Warning for shower ", str(self.showerID),": No zenith set")
-        else:
-            return self.zenith[0]
+        for attr, value in kwargs.items():
+            if attr not in self._attributes:
+                raise ValueError(f"Invalid attribute {attr}")
+            setattr(self, attr, value)
+
+
+    def __str__(self) -> str:
+        attributes = ", ".join([attr + "=" + repr(getattr(self, attr))
+                                for attr in self._attributes])
+        #return f"Shower({attributes})"
+        return f"{self.__class__.__name__}({attributes})"
+
+
+    @staticmethod
+    def _assert_not_set(attr):
+        if attr is not None:
+            raise AlreadySet()
+
+
+    @property
+    def showerID(self) -> str:
+        """The very unique ID of a shower"""
+        return self.__showerID
+
+    @showerID.setter
+    def showerID(self, value: str):
+        self._assert_not_set(self.__showerID)
+        self.__showerID = value
         
-    def add_azimuth(self, azimuth):
-        if len(self.azimuth)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add azimuth=", str(azimuth)," -- already set to: ", self.azimuth[0])
-        elif azimuth is None:
-            print("Warning for shower ", str(self.showerID),": Azimuth not given")
-        else:
-            self.azimuth.append(azimuth)
+    @showerID.deleter
+    def showerID(self):
+        self.__showerID = None
+
+
+    @property
+    def primary(self) -> str:
+        """The primary particle initiating the shower"""
+        return self.__primary
+
+    @primary.setter
+    def primary(self, value: str):
+        self._assert_not_set(self.__primary)
+        self.__primary = value
         
-    def get_azimuth(self):
-        if len(self.azimuth)==0:
-            print("Warning for shower ", str(self.showerID),": No azimuth set")
-        else:
-            return self.azimuth[0]
+    @primary.deleter
+    def primary(self):
+        self.primary = None
+
+
+    @property
+    def energy(self) -> u.Quantity:
+        """The total energy contained in the shower"""
+        return self.__energy
+
+    @energy.setter
+    def energy(self, value: u.Quantity):
+        self._assert_not_set(self.__energy)
+        self.__energy = value.to(u.eV)
         
-    def add_injectionheight(self, injectionheight):
-        if len(self.injectionheight)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add injectionheight=", str(injectionheight)," -- already set to: ", self.injectionheight[0])
-        elif injectionheight is None:
-            print("Warning for shower ", str(self.showerID),": injectionheight not given")
-        else:
-            self.injectionheight.append(injectionheight)
+    @energy.deleter
+    def energy(self):
+        self.__energy = None
+
+
+    @property
+    def zenith(self) -> u.Quantity:
+        """The zenith angle of the shower axis"""
+        return self.__zenith
+
+    @zenith.setter
+    def zenith(self, value: u.Quantity):
+        self._assert_not_set(self.__zenith)
+        self.__zenith = value.to(u.deg)
         
-    def get_injectionheight(self):
-        if len(self.injectionheight)==0:
-            print("Warning for shower ", str(self.showerID),": No injectionheight set")
-        else:
-            return self.injectionheight[0]
+    @zenith.deleter
+    def zenith(self):
+        self.__zenith = None
+
+
+    @property
+    def azimuth(self) -> u.Quantity:
+        """The azimuth angle of the shower axis"""
+        return self.__azimuth
+
+    @azimuth.setter
+    def azimuth(self, value: u.Quantity):
+        self._assert_not_set(self.__azimuth)
+        self.__azimuth = value.to(u.deg)
         
+    @azimuth.deleter
+    def azimuth(self):
+        self.__azimuth = None
+
+
+    @property
+    def injectionheight(self) -> u.Quantity:
+        """The injectionheight of the shower"""
+        return self.__injectionheight
+
+    @injectionheight.setter
+    def injectionheight(self, value: u.Quantity):
+        self._assert_not_set(self.__injectionheight)
+        self.__injectionheight = value.to(u.m)
         
-    def add_all(self,showerID, primary, energy, zenith, azimuth, injectionheight):
-        self.add_showerID(showerID)
-        self.add_primary(primary)
-        self.add_energy(energy)
-        self.add_zenith(zenith)
-        self.add_azimuth(azimuth)
-        self.add_injectionheight(injectionheight)
+    @injectionheight.deleter
+    def injectionheight(self):
+        self.__injectionheight = None
+
+
+    @property
+    def trigger(self) -> List[Union[str,int]]:
+        """The trigger of the shower
+           could be a value or a list of values or strings"""
+        return self.__trigger
+
+    @trigger.setter
+    def trigger(self, value: List[Union[str,int]] ):
+        self._assert_not_set(self.__trigger)
+        self.__trigger = value
         
-    def get_all(self):
-        return self.get_showerID(), self.get_primary(), self.get_energy(), self.get_zenith(), self.get_azimuth(), self.get_injectionheight()
+    @trigger.deleter
+    def trigger(self):
+        self.__trigger = None
         
-        
-        
-    def add_trigger(self, trigger):
-        if len(self.trigger)==self.max_length:
-            print("Warning for shower ", str(self.trigger),": Can't add trigger=", str(trigger)," -- already set to: ", self.trigger[0])
-        elif trigger is None:
-            print("Warning: Primary not given")
-        else:
-            self.trigger.append(trigger)
-        
-    def get_trigger(self):
-        if len(self.trigger)==0:
-            print("Warning: no trigger set")
-        else:
-            return self.trigger[0] # str    
-        
-        
-    ### TODO:    
-    #def get_Xmax(self):
-        ##computes Xmax for shower or read in from simulation file
-        
-    #def get_direction(self):
-    ## agree on a definition of direction
-    #np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)])
     
-    #def add_impulsion(): vector type, calculate energy, azimuth and zenith and add those
-    #def get_impulsion(): 
- 
-#=================================================        
- 
+    def direction(self): 
+        """The shower direction (numpy array) -- cross-check definition: np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)]) """
+        try:
+            return np.array([np.cos(self.azimuth.to(u.rad))*np.sin(self.zenith.to(u.rad)),
+                             np.sin(self.azimuth.to(u.rad))*np.sin(self.zenith.to(u.rad)),
+                             np.cos(self.zenith.to(u.rad))])
+        except:
+            print("Direction cannot be calculated")
+
+    ## missing
+    # * impulse: vector type, calculate energy, azimuth and zenith and add those
+    
+    
+#=============================================  
+
 ### simulated shower 
-class sim_shower(shower):
-    ''' info on simulations '''
-    def add_simulation(self, simulation):
-        self.simulation.append(simulation)
+class SimulatedShower(Shower):  
+    ''' info on simulations; Additional attributes: simulation, Xmax'''
         
-    def get_simulation(self):
-        return self.simulation
+    _attributes = Shower._attributes + ("simulation", "Xmax")
+    
+    def __init__(self, **kwargs):
+        self.__simulation: Optional[str] = None
+        self.__Xmax: Optional[u.Quantity] = None
+        
+        super().__init__(**kwargs)
+    
+    @property
+    def simulation(self) -> u.Quantity:
+        """name of simulation program"""
+        return self.__simulation
+
+    @simulation.setter
+    def simulation(self, value: u.Quantity):
+        self._assert_not_set(self.__simulation)
+        self.__simulation = value
+        
+        
+    @simulation.deleter
+    def simulation(self):
+        self.__simulation = None
+    
+    @property
+    def Xmax(self) -> u.Quantity:
+        """The simulated/ calculated Xmax value"""
+        return self.__Xmax
+
+    @Xmax.setter
+    def Xmax(self, value: u.Quantity):
+        self._assert_not_set(self.__Xmax)
+        self.__Xmax = value.to(gcm2)
+
+    @Xmax.deleter
+    def Xmax(self):
+        self.__Xmax = None
+
+        
         
 #=================================================        
 
 ### reconstructed event
-class reco_shower(shower):
-    ''' info on reconstructed values '''
-    # missing reco injectionheight
-   
-    def add_recoenergy(self, recoenergy):
-        if len(self.recoenergy)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add recoenergy=", str(recoenergy)," -- already set to: ", self.recoenergy[0])
-        elif recoenergy is None:
-            print("Warning for shower ", str(self.showerID),": recoenergy not given")
-        else:
-            self.recoenergy.append(recoenergy)
+class ReconstructedShower(Shower):
+    ''' info on reconstructed values; Additional attributes: recoenergy, recoXmax, recozenith, recoazimuth '''
+    # missing reco injectionheight       
         
-    def get_recoenergy(self):
-        if len(self.recoenergy)==0:
-            print("Warning for shower ", str(self.showerID),": No recoenergy set")
-        else:
-            return self.recoenergy[0]  
+    _attributes = Shower._attributes + ("recoenergy", "recoXmax", "recozenith", "recoazimuth",)
+    
+    def __init__(self, **kwargs):
+        self.__recoenergy: Optional[u.Quantity] = None
+        self.__recozenith: Optional[u.Quantity] = None
+        self.__recoazimuth: Optional[u.Quantity] = None
+        self.__recoXmax: Optional[u.Quantity] = None
         
-    def add_recoXmax(self, recoXmax):
-        if len(self.recoXmax)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add recoXmax=", str(recoXmax)," -- already set to: ", self.recoXmax[0])
-        elif recoXmax is None:
-            print("Warning for shower ", str(self.showerID),": recoXmax not given")
-        else:
-            self.recoXmax.append(recoXmax)
-        
-    def get_recoXmax(self):
-        if len(self.recoXmax)==0:
-            print("Warning for shower ", str(self.showerID),": No recoXmax set")
-        else:
-            return self.recoXmax[0]  
-        
-    def add_recozenith(self, recozenith):
-        if len(self.recozenith)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add recozenith=", str(recozenith)," -- already set to: ", self.recozenith[0])
-        elif recozenith is None:
-            print("Warning for shower ", str(self.showerID),": recozenith not given")
-        else:
-            self.recozenith.append(recozenith)
-        
-    def get_recozenith(self):
-        if len(self.recozenith)==0:
-            print("Warning for shower ", str(self.showerID),": No recozenith set")
-        else:
-            return self.recozenith[0]  
-        
-    def add_recoazimuth(self, recoazimuth):
-        if len(self.recoazimuth)==self.max_length:
-            print("Warning for shower ", str(self.showerID),": Can't add recoazimuth=", str(recoazimuth)," -- already set to: ", self.recoazimuth[0])
-        elif recoazimuth is None:
-            print("Warning for shower ", str(self.showerID),": recoazimuth not given")
-        else:
-            self.recoazimuth.append(recoazimuth)
-        
-    def get_recoazimuth(self):
-        if len(self.recoazimuth)==0:
-            print("Warning for shower ", str(self.showerID),": No recoazimuth set")
-        else:
-            return self.recoazimuth[0]  
-       
-       
-    def add_recoall(self, recoXmax, energy, zenith, azimuth):
-        self.add_recoXmax(recoXmax)
-        self.add_recoenergy(energy)
-        self.add_recozenith(zenith)
-        self.add_recoazimuth(azimuth)
-        
-    def get_recoall(self):
-        return self.get_recoXmax(), self.get_recoenergy(), self.get_recozenith(), self.get_recoazimuth()
+        super().__init__(**kwargs)
+    
+    @property
+    def recoenergy(self) -> u.Quantity:
+        """value of reconstructed energy"""
+        return self.__recoenergy
+
+    @recoenergy.setter
+    def recoenergy(self, value: u.Quantity):
+        self._assert_not_set(self.__recoenergy)
+        self.__recoenergy = value.to(u.eV)
+
+    @recoenergy.deleter
+    def recoenergy(self):
+        self.__recoenergy = None
+
+
+    @property
+    def recozenith(self) -> u.Quantity:
+        """value of reconstructed zenith"""
+        return self.__recozenith
+
+    @recozenith.setter
+    def recozenith(self, value: u.Quantity):
+        self._assert_not_set(self.__recozenith)
+        self.__recozenith = value.to(u.deg)
+
+    @recozenith.deleter
+    def recozenith(self):
+        self.__recozenith = None
+    
+    
+    @property
+    def recoazimuth(self) -> u.Quantity:
+        """value of reconstructed azimuth"""
+        return self.__recoazimuth
+
+    @recoazimuth.setter
+    def recoazimuth(self, value: u.Quantity):
+        self._assert_not_set(self.__recoazimuth)
+        self.__recoazimuth = value.to(u.deg)
+
+    @recoazimuth.deleter
+    def recoazimuth(self):
+        self.__recoazimuth = None
         
         
+    @property
+    def recoXmax(self) -> u.Quantity:
+        """value of reconstructed energy"""
+        return self.__recoXmax
+
+    @recoXmax.setter
+    def recoXmax(self, value: u.Quantity):
+        self._assert_not_set(self.__recoXmax)
+        self.__recoXmax = value.to(gcm2) 
+    
+    @recoXmax.deleter
+    def recoXmax(self):
+        self.__recoXmax = None
+    
+
+    def recodirection(self): 
+        """The reconstructed shower direction (numpy array) -- cross-check definition: np.array([np.cos(az_rad)*np.sin(zen_rad),np.sin(az_rad)*np.sin(zen_rad),np.cos(zen_rad)]) """
+        try:
+            return np.array([np.cos(self.recoazimuth.to(u.rad))*np.sin(self.recozenith.to(u.rad)),
+                             np.sin(self.recoazimuth.to(u.rad))*np.sin(self.recozenith.to(u.rad)),
+                             np.cos(self.recozenith.to(u.rad))])
+        except:
+            print("Direction cannot be reconstructed")
+    
+    
 #=================================================        
 
 
 def loadInfo_toShower(name, info=None):
-    #load meta info from hdf5 file to class
+    '''load meta info from hdf5 file to classes, object initiated beforehand
+    
+    example:        testshower = SimulatedShower()
+                    loadInfo_toShower(testshower, f.meta)
+    
+    TODO: add missing attributes
+    '''
     try:
         showerID = info["ID"]
+        name.showerID = str(showerID)
     except IOError:
         showerID = None
     
     try:
         primary = info["primary"]
+        name.primary = str(primary)
     except IOError:
         primary = None
         
     try:
         energy = info["energy"]
+        name.energy = float(energy)* u.eV
     except IOError:
         energy = None
     
     try:
         zenith = info["zenith"]
+        name.zenith = float(zenith)* u.deg
     except IOError:
         zenith = None
     
     try:
         azimuth = info["azimuth"]
+        name.azimuth = float(azimuth)* u.deg
     except IOError:
         azimuth = None
     
     try:
         injectionheight = info["injection_height"]
+        name.injectionheight =  float(injectionheight)* u.m
     except IOError:
         injectionheight = None
 
+
+    ## for simulations
     try:
         simulation = info["simulation"]
+        name.simulation = str(simulation)
+        #try: ## TODO it does not raise an error if attribute does not exist
+            #name.simulation = str(simulation)
+        #except: # what kind of exception
+            #logger.debug("for "+str(name)+" info on simulation could not be set")
     except IOError:
         simulation = None
+        
+    try:
+        Xmax = info["Xmax"]
+        name.Xmax = float(Xmax)*gcm2
+        #try: ## TODO it does not raise an error if attribute does not exist -- logger
+    except (IOError, KeyError):
+        Xmax = None
     
-    name.add_all(showerID, primary, energy, zenith, azimuth, injectionheight)
-    name.add_simulation(simulation)
 
-
-
-
-#############
-## TESTING ##
-#############
-    
-#print("\n shower 1")
-#sh1 = shower()
-#sh1.add_showerID("1")
-#sh1.get_zenith()
-#print(type(sh1.get_showerID()), sh1.get_showerID())
-
-#sh1.add_all("1", 'electron', 1e17, 93., 187, 2800)
-#print(sh1.get_zenith())
-#sh1.add_zenith(65)
-
-#sh1.add_azimuth(180)
-#print(sh1.get_azimuth())
-
-#print("\n shower 2")
-#sh2 = sim_shower()
-#sh2.add_all("2", "pion", 3e17, 85., 10, None)
-#sh2.add_simulation("coreas")
-#sh2.get_simulation()
-#sh2.get_all()
-
-#print("\n shower 3")
-#sh3 = reco_shower()
-#sh3.add_recoall(865, 5e19, 85., 100, )
-#sh3.get_recoall()
-
-#import os
-#from os.path import split, join, realpath
-#import sys
-#from in_out import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
-
-#from astropy.table import Table
-
-#f = Table.read('/home/laval1NS/zilles/CoREAS/GP300-v3/000002/table_a92.hdf5', path="efield") #txt.T[0]:time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all electric field in muV/m
-#trace = np.array([f['Time'], f['Ex'], f['Ey'], f['Ez']]).T
-#unit='muV/m'
-
-#print(f.meta)
-#testshower = sim_shower()
-#loadInfo_toShower(testshower, f.meta)
-#testshower.get_all()
-
-#g = Table.read('/home/laval1NS/zilles/CoREAS/GP300-v3/000002/table_a236.hdf5', path="efield")
-
-#shbla = sim_shower()
-#loadInfo_toShower(shbla, g.meta)
-
+        
