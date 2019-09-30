@@ -349,7 +349,7 @@ if __name__ == '__main__':
                     from radio_simus.signal_treatment import p2p, _trigger
                     # peak-to-peak values: x, y, z, xy-, all-combined
                     p2p_values = p2p(voltage)
-                    # trigger info: trigger = [any_aggr, xz_aggr, thr_aggr, any_cons, xy_cons, thr_cons]
+                    # trigger info: trigger = [thr_aggr, any_aggr, xz_aggr, thr_cons, any_cons, xy_cons]
                     trigger =  [threshold_aggr, _trigger(p2p_values, 'any', threshold_aggr), _trigger(p2p_values, 'xy', threshold_aggr), threshold_cons, _trigger(p2p_values, 'any', threshold_cons), _trigger(p2p_values, 'xy', threshold_cons)]
 
                     # Update info
