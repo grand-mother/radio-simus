@@ -20,7 +20,12 @@ class AlreadySet(Exception):
 
 
 class Shower():
-    ''' info on shower parameter 
+    ''' info on shower 
+    
+        Immutable container with both static and runtime checks, The fields can be accessed as attributes/
+        
+        1. A static analyses can be done with mypy. It will ensure that the proper types are used as arguments when setting the shower attributes. Special unit  can not be checked (eg energy given in meters...)
+        2. In addition using the @property class decorator we can perform runtime checks when an instance attribute is modified.
         
         showerID: str
         primary: str
@@ -39,7 +44,7 @@ class Shower():
         
         TODO: 
         * How do I prevent that attributes can overwritten
-        * How do I delete already set values
+        * misiing impulse function: vector type, calculate energy, azimuth and zenith and add those
                
     '''
     
@@ -192,8 +197,7 @@ class Shower():
         except:
             print("Direction cannot be calculated")
 
-    ## missing
-    # * impulse: vector type, calculate energy, azimuth and zenith and add those
+
     
     
 #=============================================  
@@ -245,9 +249,13 @@ class SimulatedShower(Shower):
 
 ### reconstructed event
 class ReconstructedShower(Shower):
-    ''' info on reconstructed values; Additional attributes: recoenergy, recoXmax, recozenith, recoazimuth '''
-    # missing reco injectionheight       
-        
+    ''' info on reconstructed values; 
+    Additional attributes: recoenergy, recoXmax, recozenith, recoazimuth
+    
+    TODO:
+        *missing reco injectionheight       
+    '''
+    
     _attributes = Shower._attributes + ("recoenergy", "recoXmax", "recozenith", "recoazimuth",)
     
     def __init__(self, **kwargs):
@@ -332,12 +340,13 @@ class ReconstructedShower(Shower):
 
 
 def loadInfo_toShower(name, info=None):
-    '''load meta info from hdf5 file to classes, object initiated beforehand
+    '''load meta info from hdf5 file to object attributes, object initiated beforehand
     
     example:        testshower = SimulatedShower()
                     loadInfo_toShower(testshower, f.meta)
     
-    TODO: add missing attributes
+    TODO: 
+        *add missing attributes
     '''
     try:
         showerID = info["ID"]
