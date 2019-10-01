@@ -14,10 +14,6 @@ import time
 import numpy as np
 from numpy import *
 
-#### Astropy logger
-#from astropy import log
-#log.setLevel("INFO")
-#log.info("...")
 
 import logging
 logging.basicConfig(filename="example_usingclass.log", level=logging.INFO)
@@ -106,12 +102,12 @@ if __name__ == '__main__':
     ## get only position info
     #positions = array[:,1:4] 
 
-    event = [] # python list
 
-
-    #with logger.log_to_file(eventfolder +'/ana_trigger.log', filter_level='INFO'):
 
     print("\nScan of events ...")
+    
+    event = [] # python list
+        
     # loop over all folder
     for path in tqdm.tqdm(glob.glob(eventfolder+"/*/")):
         if os.path.isdir(path): # only pick event folders
@@ -138,8 +134,10 @@ if __name__ == '__main__':
                     # create shower object and set attributes
                     testshower = SimulatedShower()
                     loadInfo_toShower(testshower, f.meta)
-                    param = testshower# get all parameters, all call them separately
-                    logger.info("   SUMMARY EVENT: ShowerID = "+  str(param.showerID)+ " primary = "+ str(param.primary)+ " energy/eV = "+ str(param.energy) + " zenith/deg = "+ str(param.zenith)+ " azimuth/deg = "+ str(param.azimuth)+ " injectionheight/m = "+ str(param.injectionheight) )
+                    logger.info("   SUMMARY EVENT: ShowerID = "+  str(testshower.showerID)
+                                + " primary = "+ str(testshower.primary)+ " energy/eV = "+ str(testshower.energy) 
+                                + " zenith/deg = "+ str(testshower.zenith)+ " azimuth/deg = "+ str(testshower.azimuth)
+                                + " injectionheight/m = "+ str(testshower.injectionheight) )
                         
                     event.append(testshower)
                 i+=1
@@ -178,11 +176,15 @@ if __name__ == '__main__':
             
         else: 
             continue
-    
-    
+
+
     ###### START ANALYSIS ################### 
     print("\nStart an analysis ...")    
-    #print(event[0].showerID, event[0].trigger)
+
+    # print attributes - define by object class, does not mean that they are !=None
+    print("\nAvailable attributes: ", testshower._attributes ) # refers to last event
+    # --> Available attributes:  ('showerID', 'primary', 'energy', 'zenith', 'azimuth', 'injectionheight', 'trigger', 'simulation', 'Xmax')
+
     Event_ID=list(map(lambda i: i.showerID, event))
 
     ### Calculate Ratio of detected events
@@ -199,6 +201,11 @@ if __name__ == '__main__':
     azimuth=np.asarray(list(map(lambda i: i.azimuth/u.deg, event)))
     primary=np.asarray(list(map(lambda i: i.primary, event)))
 
+
+
+
+
+    ##### PLOTTING
     # Plot
     plt.rcParams.update({'figure.figsize':(12,5)})
 
@@ -218,9 +225,11 @@ if __name__ == '__main__':
     ax4.set_title('primary')
 
     fig.tight_layout()
+    
     plt.savefig(eventfolder+"/trigger_stats.png")
     print("PNG saved:" + eventfolder+"/trigger_stats.png")
     logger.info("PNG saved:" + eventfolder+"/trigger_stats.png")
+   
     plt.show()    
 
 
