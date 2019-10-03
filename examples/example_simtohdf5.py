@@ -1,5 +1,11 @@
 ################################
-#### by A. Zilles
+#### by A. Zilles:
+
+### As soon as we have decided on 
+#           * whether we want to have single file for eachh antenna or one for each event
+#           * whether we want to use astropy table or data groups
+#   this script can be extremely cleaned-up.
+
 ################################
 #!/usr/bin/env python
 
@@ -22,8 +28,8 @@ from astropy.table import hstack
 from astropy import units as u  
 import h5py
 
-#from in_out import _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
-# Expand the PYTHONPATH and import the radiomorphing package #NOTE: this would be on the shared disc
+
+# Expand the PYTHONPATH
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 #import radio_simus 
