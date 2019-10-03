@@ -2,10 +2,8 @@
 """
 Unit tests for the radio_simus.shower module
 
-Usage: python3.7 container_examples/test_shower.py
+Usage: python3.7 tests/test_shower.py
 
-
-To be moved in tests folder
 """
 
 import unittest

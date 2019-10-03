@@ -45,6 +45,7 @@ class Shower():
         TODO: 
         * How do I prevent that attributes can overwritten
         * misiing impulse function: vector type, calculate energy, azimuth and zenith and add those
+        * does not get write info into logger
                
     '''
     
