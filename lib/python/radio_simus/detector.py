@@ -1,4 +1,4 @@
-'''
+'''ONGOING WORK
 
 Start to rewrite detectro class with containers, still ongoing
 At the bottom you find some line giving examples how to use the function of the class
@@ -142,8 +142,8 @@ class Detector:
 
     @property
     def ID(self) -> Union[list, str, int]:
-        """ID of array"""
-        return np.asarray(self.__ID)
+        """IDs of array, accepts only lists"""
+        return np.asarray(self.__ID)[0]
 
     @ID.setter
     def ID(self, value: Union[int, str]):
@@ -152,8 +152,8 @@ class Detector:
   
     @property
     def position(self) -> Union[list, str]:
-        """position of array"""
-        return np.asarray(self.__position)
+        """position of array, accepts only lists"""
+        return np.asarray(self.__position)[0]
 
     @position.setter
     def position(self, value: Union[list, str]):
@@ -162,7 +162,7 @@ class Detector:
        
     @property
     def slope(self) -> Union[list, str]:
-        """slope of array"""
+        """slope of array, accepts only lists"""
         return np.asarray(self.__slope)
 
     @slope.setter
@@ -172,8 +172,8 @@ class Detector:
         
     @property
     def type(self) -> Union[list, str, int]:
-        """type of array"""
-        return np.asarray(self.__type)
+        """type of array, accepts only lists"""
+        return np.asarray(self.__type)[0]
 
     @type.setter
     def type(self, value: Union[int, str]):
@@ -228,7 +228,9 @@ class Detector:
 
  
     def create_from_file(self, array_file): 
-        ''' reading in whole antenna array as file: antID, position and slope
+        ''' reading in whole antenna array as file: antID, position 
+            and slope, type (sets default values or to be  caluclated
+            
         Arguments:
         ----------
         self
@@ -241,9 +243,9 @@ class Detector:
         '''
         logger.info("Creating array from: " + str(array_file))
         ant_array = np.loadtxt(array_file,  comments="#")
+        self.ID = ant_array[:, 0].tolist()
+        self.position = ant_array[:, 1:4].tolist()
         for i in range(0,len(ant_array.T[0])):
-            self.ID = int(ant_array[i,0])
-            self.position = ant_array[i, 1:4].tolist()
             try:
                 self.slope = ant_array[i, 4:6].tolist()
             except: #add exception
