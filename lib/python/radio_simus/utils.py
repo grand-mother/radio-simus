@@ -4,38 +4,41 @@ import logging
 logger = logging.getLogger("Utils")
 
 #===========================================================================================================
-def load_trace(directory, index, suffix=".trace"):
-    """Load data from a trace file (ascii file)
+#def load_trace(directory, index, suffix=".trace"):
+    #"""Load data from a trace file (ascii file)
     
-    Arguments:
-    ----------
-    directory: str
-        path to folder
-    index: int
-        antenna ID
-    suffix: str
-        file ending
+    #Arguments:
+    #----------
+    #directory: str
+        #path to folder
+    #index: int
+        #antenna ID
+    #suffix: str
+        #file ending
         
-    Returns:
-    --------
-    numpy array
-        field trace
+    #Returns:
+    #--------
+    #numpy array
+        #field trace
         
-    Raises:
-    --------
-    IOError:
-        adopt to ID naming
+    #Raises:
+    #--------
+    #IOError:
+        #adopt to ID naming
         
-    Note: currently only usable for Zhaires simulations    
-    """
-    try:
-        path = "{:}/a{:}{:}".format(directory, index, suffix)
-        with open(path, "r") as f:
-            return np.array([map(float, line.split()) for line in f])
-    except IOError:
-        path = "{0}/a{1:04d}{2}".format(directory, index+1, suffix)
-        with open(path, "r") as f:
-            return np.array([map(float, line.split()) for line in f])
+    #Note: currently only usable for Zhaires simulations    
+    
+    #TODO: readin- hdf5 files and return numpy array
+    #"""
+    #try:
+        #path = "{:}/a{:}{:}".format(directory, index, suffix)
+        #return np.loadtxt(path)
+        ##with open(path, "r") as f:
+            ##return np.array([*map(float, line.split()) for line in f])
+    #except IOError:
+        #path = "{0}/a{1:04d}{2}".format(directory, index+1, suffix)
+        #with open(path, "r") as f:
+            #return np.array([map(float, line.split()) for line in f])
         
 #===========================================================================================================
 
@@ -188,3 +191,67 @@ def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.
     ant_angle = np.arccos(np.matmul(u_ant, u_sh))
 
     return np.rad2deg(ant_angle)
+
+#===========================================================================================================
+
+#def rfftfreq(n, d=1.0, nyquist_domain=1):
+	#'''calcs frequencies for rfft, exactly as numpy.fft.rfftfreq, lacking that function in my old numpy version.
+	#Arguments:
+	#---------
+		#n: int 
+			#Number of points.
+		#d: float
+			#Sampler:spacing, default isr:set to 1.0 to return in units ofr:sampling freq. 
+		
+	#Returns:
+	#-------
+		#f: array of floats
+			#frequencies of rfft, length is n/2 + 1
+	#'''
+	#if n % 2 == 0:
+		#f = array([n/2 - i for i in range(n/2,-1,-1)]) / (d*n)
+	#else:
+		#f = array([(n-1)/2 + 1 - i for i in range(n/2,-1,-1)]) / (d*n)
+	## if nyquist_domain is 1 you're done and return directly
+	#if nyquist_domain != 1:
+		## if nyquist_domain even, mirror frequencies
+		#if (nyquist_domain % 2) == 0: f = f[::-1]
+		#sampling_freq = 1./d
+		#fmax = 0.5*sampling_freq 
+		#f += (nyquist_domain-1)*fmax
+	#return f
+
+#"""
+#A wrapper around the numpy fft routines to achive a coherent normalization of the fft
+#As we have real valued data in the time domain, we use the 'real ffts' that omit the negative frequencies in Fourier 
+#space. To account for the missing power in the frequency domain, we multiply the frequency spectrum by sqrt(2), 
+#and divide the iFFT with 1/sqrt(2) accordingly. Then, a calculation of the power leads the same result in 
+#the time and frequency domain, i.e.
+#np.sum(trace**2) * dt = np.sum(spec**2) * df
+#"""
+
+
+#def time2freq(trace):
+    #'''
+    #forward FFT with corrected normalization to conserve power.
+    #-- additional sqrt(2) needed to account for omitted negative frequencies 
+    #Arguments:
+    #----------
+    
+    #'''
+    #return np.fft.rfft(trace, axis=-1) * 2 ** 0.5 
+
+
+#def freq2time(spectrum, n=None):
+    #"""
+    #performs backward FFT with correct normalization that conserves the power
+    
+    #Parameters
+    #----------
+    #spectrum: complex np array
+        #the frequency spectrum
+    #n: int
+        #the number of sample in the time domain (relevant if time trace has an odd number of samples)
+    #"""
+    #return np.fft.irfft(spectrum, axis=-1, n=n) / 2 ** 0.5
+

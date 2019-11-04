@@ -343,11 +343,13 @@ def load_trace(directory, index, suffix=".trace"):
    Returns
    ---------
         numpy array
+        
+    TODO: read-in hdf5 files and return numpy array
     """
 
     path = "{:}/a{:}{:}".format(directory, index, suffix)
     with open(path, "r") as f:
-        return numpy.array([list(map(float, line.split())) for line in f])
+        return np.array([list(map(float, line.split())) for line in f])
     
 #===========================================================================================================
     

@@ -93,7 +93,7 @@ def _dist_decay_Xmax(zen, injh2, Xmax_primary):
     Arguments:
     ----------
     zen: float
-        GRAND zenith in deg
+        GRAND zenith in deg, for CR shower use _get_CRzenith()
     injh2: float
         injectionheight above sealevel in m
     Xmax_primary: float
@@ -138,17 +138,18 @@ def _dist_decay_Xmax(zen, injh2, Xmax_primary):
     return h, ai # Xmax_height in m, Xmax_distance in m
 #============================================================================
 
-def _get_XmaxPosition(primary, energy, zen, azim, injh):
+def _get_XmaxPosition(primary, energy, zen, azim, injh=0):
     ''' Calculates vector to Xmax position
     
     Arguments:
     ----------
     primary: str
-        primary type, electron or pion
+        primary type, electron or pion (neutrino shower, fixed injection height)
+                      or proton and iron (CR shower) 
     energy: float
         primary energy in eV
     zen: float
-        GRAND zenith in deg
+        GRAND zenith in deg, for CR shower use _get_CRzenith()
     azim: float
         GRAND azimuth in deg
     injh: float
@@ -159,7 +160,10 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh):
     new: numpy array
         position of Xmax in m
         
-    Note: Only working for neutrinos so far
+    Note: *For neutrinos: the algorithm builds on the injection at (0,0,injh), accepts electron and pion primaries
+          *For CR: it calculates the distance between origin at athomphere top along shower axis to get the Xmax position 
+            -- origin defined at (0,0,0)m at the moment
+           accepts only proton and iron primaries currently
     '''
     print("ATTENTION: works currently only for neutrinos")
     Xmax_primary = _getXmax(primary, energy)
@@ -170,13 +174,34 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh):
     u_sh = np.array([np.cos(azimr)*np.sin(zenr), np.sin(azimr)*np.sin(zenr), np.cos(zenr)])
     if primary=="electron" or primary == "pion":
        new = float(ai)*u_sh + np.array([0.,0.,injh ])
-    return new
-
+    if primary=="proton" or primary == "iron":
+        Re = 6370949 # m, Earth radius
+        Ra = 100000 # m, 100km layer for atmopshere
+        
+        # use some trigonmetrie, currently assuming ***(0,0,0) as origin***, Groundaltitude = 0m
+        a = Re
+        c = Re + Ra
+        gamma = zenr # counterpart to angle between shower direction and vertical == GRAND conv
+        
+        # law of sines
+        alpha = np.arcsin(np.sin(gamma) * a/c)
+        # Sum of angles
+        beta = np.pi -alpha -gamme
+        # law of sines ---> distance between set origin and athmosphere top along shower axis
+        b = c *np.sin(beta)/np.sin(gamma)
+        
+        # calculate position of Xmax (by length to reach Xmax - full distance, starting at the origin) 
+        new = float(ai -b) *u_sh 
+    
+    try:
+        return new
+    except:
+        logger.error("Xmax position not calculated")
 #============================================================================
 
 def _get_CRzenith(zen,injh,GdAlt):
     ''' Corrects the zenith angle for CR respecting Earth curvature, zenith seen by observer
-        ---fix for CR (zenith computed @ shower core position
+        ---fix for CR (zenith computed @ shower core positionk
     
     Arguments:
     ----------
