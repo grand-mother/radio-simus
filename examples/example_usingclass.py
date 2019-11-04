@@ -38,30 +38,12 @@ sys.path.append(join(root_dir, "lib", "python"))
 #import radio_simus 
 from radio_simus.signal_treatment import p2p
 from radio_simus.shower import *
-from radio_simus.detector import detector, create_from_file, get_array, get_slopes, find_antennaposition, find_antennaslope
+#from radio_simus.detector import detector, create_from_file, get_array, get_slopes, find_antennaposition, find_antennaslope
+from radio_simus.detector import Detector
 from radio_simus.__init__ import arrayfile 
 
 
 
-###############################
-#### WORK in PROGRESS: define new functions and test
-
-##def find_antennaposition(positions, antIDs, ID):
-    ##index = np.where(antIDs == int(ID))[0][0]
-    ###print(index)
-    ##return positions[index]
-
-#def find_antennaID(positions, antIDs, pos):
-    #pos=np.around(pos)
-    #print(type(positions), type(pos))
-    #print(positions[0], pos)
-    #index = np.where((positions[:]== pos).all())
-    #print('indexx', index, positions[index,0])
-    #return antIDs[index]
-### not yet working
-##pos_ID = find_antennaID(positions, antIDs, np.asarray(f.meta["position"]))
-##print("----", f.meta["position"], pos_ID, "original", ID)
-#################################
 
 if __name__ == '__main__':
     
@@ -88,9 +70,10 @@ if __name__ == '__main__':
     eventfolder = sys.argv[1]
 
     #create  "empty detector"
-    det = detector()
+    #det = detector()
+    det = Detector()
     #create detector=antenna array from file defined in config file
-    create_from_file(det, arrayfile)
+    det.create_from_file(arrayfile)
 
     ## get all antennas positions
     #array = get_array(det)
