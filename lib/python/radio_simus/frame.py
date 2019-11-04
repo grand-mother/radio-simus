@@ -235,7 +235,7 @@ def _project_starshape(azimuth, zenith, dist_fromxmax, n, core=np.array([0.,0.,0
 def _project_onshowerplane(positions, azimuth, zenith, d = None, core=np.array([0.,0.,0.])):
     ''' 
     This function projects the positions on a given plane back onto shower plane, 
-    using line-plane intersection
+    using line-plane intersection, coordinates still in XYZ, not shower coordinates
     
     Arguments:
     ----------
