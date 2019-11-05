@@ -1,4 +1,5 @@
 '''Script to perform an interpolation between to electric field traces at a desired position
+TODO: read-in magnetic field values and shower core from config-file
 '''
 
 
@@ -399,7 +400,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
     NOTE: The selection of the neigbours is sufficiently stable, but does not alwazs pick the "best" neigbour, still looking for an idea
     TODO: Read-in and save only hdf5 files
     '''
-
+    print(shower_core)
 
     # DESIRED
     # Hand over a list file including the antenna positions you would like to have.
@@ -484,7 +485,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
     
 
     ### START: ROTATE INTO SHOWER COORDINATES, and core for offset by core position, alreadz corrected in projection
-    GetUVW = UVWGetter(shower_core[0], shower_core[1], shower_core[2], zenith, azimuth, phigeo, thetageo)
+    #GetUVW = UVWGetter(shower_core[0], shower_core[1], shower_core[2], zenith, azimuth, phigeo, thetageo)
     GetUVW = UVWGetter(0., 0., 0., zenith, azimuth, phigeo, thetageo)
 
 
@@ -510,7 +511,8 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
         
         #ax2.scatter(pos_sims[:,0], pos_sims[:,1], pos_sims[:,2], label = "simulated")
         #ax2.scatter(pos[:,0], pos[:,1], pos[:,2], label = "desired")
-        
+        for j in range(0,len(pos[:,1])):
+                ax2.annotate(str(j), ((pos[j,1], pos[j,2])))
         ## x component should be 0
         ax2.scatter(pos_sims[:,1], pos_sims[:,2], label = "simulated")
         ax2.scatter(pos[:,1], pos[:,2], label = "desired")
@@ -589,8 +591,9 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
         points_IV = np.sort(points_IV, order=['distance', 'delta_phi', 'delta_r']) 
         #indizes of 4 closest neigbours: points_I[0][0], points_II[0][0], points_III[0][0], points_IV[0][0]
         
+        # try to combine the one with roughly the same radius first and then the ones in phi
         point_online1=_ProjectPointOnLine(pos_sims[points_I[0][0]], pos_sims[points_IV[0][0]], pos[i])# Project Point on line 1 - I-IV
-        point_online2=_ProjectPointOnLine(pos_sims[points_II[0][0]], pos_sims[points_IV[0][0]], pos[i])# Project Point on line 2 - II-III
+        point_online2=_ProjectPointOnLine(pos_sims[points_II[0][0]], pos_sims[points_III[0][0]], pos[i])# Project Point on line 2 - II-III
 
         # ------------------
         if DISPLAY:
@@ -634,9 +637,9 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
         
         txt2 = load_trace(directory, points_II[0][0], suffix=".trace")
         txt3 = load_trace(directory, points_III[0][0], suffix=".trace")
-        xnew2, tracedes2x = interpolate_trace(txt2.T[0], txt2.T[1], positions_sims[points_I[0][0]] , txt3.T[0], txt3.T[1], positions_sims[points_IV[0][0]], point_online2 ,upsampling=None, zeroadding=None) 
-        xnew2, tracedes2y = interpolate_trace(txt2.T[0], txt2.T[2], positions_sims[points_I[0][0]] , txt3.T[0], txt3.T[2], positions_sims[points_IV[0][0]], point_online2 ,upsampling=None, zeroadding=None) 
-        xnew2, tracedes2z = interpolate_trace(txt2.T[0], txt2.T[3], positions_sims[points_I[0][0]] , txt3.T[0], txt3.T[3], positions_sims[points_IV[0][0]], point_online2 ,upsampling=None, zeroadding=None)         
+        xnew2, tracedes2x = interpolate_trace(txt2.T[0], txt2.T[1], positions_sims[points_II[0][0]] , txt3.T[0], txt3.T[1], positions_sims[points_III[0][0]], point_online2 ,upsampling=None, zeroadding=None) 
+        xnew2, tracedes2y = interpolate_trace(txt2.T[0], txt2.T[2], positions_sims[points_II[0][0]] , txt3.T[0], txt3.T[2], positions_sims[points_III[0][0]], point_online2 ,upsampling=None, zeroadding=None) 
+        xnew2, tracedes2z = interpolate_trace(txt2.T[0], txt2.T[3], positions_sims[points_II[0][0]] , txt3.T[0], txt3.T[3], positions_sims[points_III[0][0]], point_online2 ,upsampling=None, zeroadding=None)         
         
         ###### Get the pulse shape of the desired position from projection on line1 and 2
         xnew_desiredx, tracedes_desiredx =interpolate_trace(xnew1, tracedes1x, point_online1, xnew2, tracedes2x, point_online2, positions[ind[i]], zeroadding=None)      
@@ -679,16 +682,24 @@ def main():
         
     # path to list of desied antenna positions, traces will be stored in that corresponding folder
     #desired  = sys.argv[1]
-    desired = "/home/laval1NS/zilles/Test_inter/desired.list"
+    #desired = "/home/laval1NS/zilles/Test_inter/desired.list"
+    desired="/home/laval1NS/zilles/Test_inter/ForKumiko/Stshp_XmaxLibrary_0.1995_66.422_0_Gamma_17/Test/desired.dat"
     # Antenna positions of already finished simulation which acts as basis- traces shall be in this folder as well
-    array = "/home/laval1NS/zilles/Claire_simus/CR190_77deg_flat/CR190_77deg_flat_0/antpos.dat"
+    #array = "/home/laval1NS/zilles/Claire_simus/CR190_77deg_flat/CR190_77deg_flat_0/antpos.dat"
     #array = "/home/laval1NS/zilles/Claire_simus/GRAND_antenna.list"
+    array = "/home/laval1NS/zilles/Test_inter/ForKumiko/Stshp_XmaxLibrary_0.1995_66.422_0_Gamma_17/antpos.dat"
     # Shower directions in deg and GRAND convention
-    zenith = (180-77.) # GRAND deg
-    azimuth = 180+40 # GRAND deg
-
+    #zenith = (180-77.) # GRAND deg
+    #azimuth = 180+40 # GRAND deg 
+    #phigeo=0., thetageo=152.95,
+    
+    zenith = (180-66.4) # GRAND deg
+    azimuth = 180+0 # GRAND deg
+    #7.43 deg 0.72 deg
+    
+    
     # call the interpolation: Angles of magnetic field and shower core information needed, but set to default values
-    do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95, shower_core=np.array([0,0,0]), DISPLAY=False)
+    do_interpolation(desired, array, zenith, azimuth, phigeo=0.72, thetageo=147.3, shower_core=np.array([0,0,2900]), DISPLAY=True)
 
 
 if __name__== "__main__":
