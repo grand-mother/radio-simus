@@ -29,6 +29,9 @@ except ImportError:
 import logging
 logger = logging.getLogger("__init__")
 
+import astropy.units as u
+import numpy as np
+
 # Initialise the package below
 
 ### NOTE: I am not sure that I have to import all of those... _function should be private, but still ongoing work
@@ -47,7 +50,7 @@ __all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "
 
 
 global site
-global location, longitude, latitude, obs_height
+global location, longitude, latitude, obs_height, origin
 global arrayfile
 global thetageo, phigeo, Bcoreas, Bzhaires
 global Vrms, Vrms2, tsampling
@@ -61,31 +64,35 @@ for line in configfile:
     if 'SITE' in line:
         site=str(line.split('  ',-1)[1])
     if 'LONG' in line:
-        longitude=float(line.split('  ',-1)[1]) # deg ->astropy.units
+        longitude=float(line.split('  ',-1)[1])*u.deg # deg ->astropy.units
     if 'LAT' in line:
-        latitude=float(line.split('  ',-1)[1]) # deg ->astropy.units
+        latitude=float(line.split('  ',-1)[1])*u.deg # deg ->astropy.units
     if 'OBSHEIGHT' in line:
-        obs_height=float(line.split('  ',-1)[1]) # m ->astropy.units        
+        obs_height=float(line.split('  ',-1)[1])*u.m # m ->astropy.units    
+    if 'ORIGIN' in line:
+        tmp = list(line.split('  ',-1))
+        origin=np.array([float(tmp[1]),float(tmp[2]), float(tmp[3])])* u.m  # m ->astropy.units    
               
     if 'ARRAY' in line:
         arrayfile=str(line.split('  ',-1)[1])
         
     if 'THETAGEO' in line:
-        thetageo=float(line.split('  ',-1)[1]) # deg, GRAND ->astropy.units
+        thetageo=float(line.split('  ',-1)[1])*u.deg # deg, GRAND ->astropy.units
     if 'PHIGEO' in line:
-        phigeo=float(line.split('  ',-1)[1]) # deg, GRAND ->astropy.units
+        phigeo=float(line.split('  ',-1)[1])*u.deg  # deg, GRAND ->astropy.units
     if 'B_COREAS' in line: # B_COREAS  19.71  -14.18
-        Bcoreas=list(line.split('  ',-1)) # deg, deg  ->astropy.units 
+        tmp=list(line.split('  ',-1)) #  Bx  Bz  uT ->astropy.units 
+        Bcoreas=np.array([tmp[0], tmp[1]*u.u*u.T, tmp[2]*u.u*u.T])
     if 'B_ZHAIRES' in line: # B_COREAS  19.71  -14.18
-        Bzhaires=list(line.split('  ',-1)) # deg, deg  ->astropy.units      
-    
+        tmp=list(line.split('  ',-1)) # F in muT, I in deg, D in deg  ->astropy.units   
+        Bzhaires=np.array([tmp[0], tmp[1]*u.u*u.T, tmp[2]*u.deg, tmp[3]*u.deg])
         
     if 'VRMS1' in line:
-        Vrms=float(line.split('  ',-1)[1]) # muV  ->astropy.units  
+        Vrms=float(line.split('  ',-1)[1])*u.u*u.V # muV  ->astropy.units  
     if 'VRMS2' in line:
-        Vrms2=float(line.split('  ',-1)[1]) # muV  ->astropy.units        
+        Vrms2=float(line.split('  ',-1)[1])*u.u*u.V # muV  ->astropy.units        
     if 'TSAMPLING' in line:
-        tsampling=float(line.split('  ',-1)[1]) # ns  ->astropy.units 
+        tsampling=float(line.split('  ',-1)[1])*u.ns # ns  ->astropy.units 
         
     if 'ANTX' in line:
         antx=str(line.split('  ',-1)[1])
@@ -110,6 +117,11 @@ try:
     obs_height
 except NameError:
     print("Warning: obs_height not defined")    
+try:
+    origin
+except NameError:
+    print("Warning: origin not defined -- default value set")        
+    
     
 try:
     arrayfile
