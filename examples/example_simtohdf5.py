@@ -91,7 +91,7 @@ if __name__ == '__main__':
     voltage_compute=True
     if voltage_compute:
         from radio_simus.computevoltage import get_voltage, compute_antennaresponse
-        from radio_simus.signal_processing import run
+        from radio_simus.signal_processing import standard_processing
         from radio_simus.in_out import _table_voltage
         
         
@@ -349,7 +349,7 @@ if __name__ == '__main__':
                     voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
 
                     ## NOTE apply full chain, not only antenna resonse: add noise, filter, digitise
-                    #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False) # alpha = 0, beta = 0
+                    #voltage = standard_processing(efield1, shower['zenith'], shower['azimuth'], 0, 0, False) # alpha = 0, beta = 0
                     
                     ### add some info on P2P and  TRIGGER if wanted: trigger on any component, or x-y combined
                     #NOTE: need to cross-check that trace is also in muV, but should be by definition
