@@ -186,17 +186,17 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     for line in datafile:
         # NOTE: CORSIKA/CoREAS angle = direction of propgation == GRAND conventions
         if 'THETAP' in line:
-            zen=float(line.split('    ',-1)[1]) # propagation direction
-            zen=180-zen # to GRAND
+            zen=float(line.split('    ',-1)[1]) *u.deg# propagation direction
+            zen=180*u.deg-zen # to GRAND
         if 'PHIP' in line:
-            azim = float(line.split('    ',-1)[1]) # propagation direction, already in GRAND
+            azim = float(line.split('    ',-1)[1])*u.deg # propagation direction, already in GRAND
         #if 'RASPASSHeight' in line:
-            #injh = float(line.split(' ',-1)[2])
+            #injh = float(line.split(' ',-1)[2])*u.m
         if 'ERANGE' in line:
             energy = line.split('    ',-1)[1] # GeV by default
             if energy[-1]=='\n':
                 energy=energy[0:-1]
-            energy = float(energy) *1e9 # GeV to eV
+            energy = float(energy) *1e9 *u.eV# GeV to eV
         if 'PRMPAR' in line:
             primarytype = str(line.split('    ',-1)[1])
             if primarytype[-1]=='\n':
@@ -219,7 +219,7 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
     try:
         injh
     except NameError:
-        injh = 100000.e2 #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km in cm
+        injh = 100000.e2*u.m #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km in cm
             
     # Get reas file
     path, reas = os.path.split(input_file_path)
@@ -240,9 +240,8 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
         if 'CORE' in line:
             #print(line)
             offset = line.split('  ',-1)
-            if offset[-1]=='\n':
-                offset=offset[0:-1]
-            core = np.array([float(offset[1]), float(offset[2]), float(offset[3])]) # in cm to m 
+            offset[-1]=offset[-1].rstrip()
+            core = list([float(offset[1]), float(offset[2]), float(offset[3])])*u.m # in cm to m 
     try:
         task
     except NameError:
@@ -254,10 +253,10 @@ def inputfromtxt_coreas(input_file_path): # still ongoing work
         
         
     if task:
-        if core.all()!=None:
+        if core is not None:
             return zen,azim,energy,injh,primarytype,core,task
-    if task:
-        return zen,azim,energy,injh,primarytype,task
+        else:
+            return zen,azim,energy,injh,primarytype,task
     else:
         return zen,azim,energy,injh,primarytype
 #===========================================================================================================
@@ -275,6 +274,9 @@ def _get_positions_coreas(path):
         x,y,z component of antenna positions in meters
     ID_ant: list
         corresponding antenna ID for identification !- [0,1,2,....]
+        
+        
+    TODO: assign units properly....    
     '''
     datafile = open(path, 'r') 
     x_pos1=[]
@@ -495,16 +497,16 @@ def _load_to_array(path_hdf5, content="efield"):
 
    Returns
    ---------
-        voltage1: numpy array
-            containing the electric field trace: time, Ex, Ey, Ez
-        voltage['Time'].unit
+        efield1 or voltage1: numpy array
+            containing the electric field or voltage trace trace: time, Ex, Ey, Ez or time, Vx, Vy, Vz
+        efield['Time'] or voltage['Time'].unit: str
             unit of time column
-        voltage['Ex'].unit
-            unit of electric field
+        efield['Ex'] or voltage['Vx'].unit: str
+            unit of efield or voltage field
         shower: list
             shower parameters etc
-        position: numpy array
-        slopes: numpy array
+        position: numpy array in m (cross-check)
+        slopes: numpy array in deg
     """   
     from astropy.table import Table
     
@@ -575,7 +577,7 @@ def _load_to_array(path_hdf5, content="efield"):
         except IOError:
             slopes=None
         
-        return voltage1, voltage['Time'].unit, voltage['Ex'].unit, shower, position, slopes
+        return voltage1, voltage['Time'].unit, voltage['Vx'].unit, shower, position, slopes
 
     
 
