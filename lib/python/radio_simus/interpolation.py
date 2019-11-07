@@ -379,6 +379,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
         path to list of desired antenna positions (x,y,y info)
     array: str
         path to antenna list, already simulated -- base
+        The script accepts starshape as well as grid arrays
     zenith: float
         GRAND zenith in deg
     azimuth: float
@@ -460,8 +461,8 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
         #plt.show()
     #------------------------
 
-
-
+        
+    ##--##--##--##--##--##--##--##--##-##--##--##-##--##--## START: WRAP UP AS FUNCTION (PROJECTION AND ROTATION)
     #### START: UNDO projection
     #define shower vector
     az_rad=np.deg2rad(180.+azimuth)#Note ZHAIRES units used
@@ -501,8 +502,8 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
     pos_sims= np.zeros([len(positions_sims[:,1]),3])
     for i in np.arange(0,len(positions_sims[:,1])):
         pos_sims[i,:] = GetUVW(positions_sims[i,:], )
-
-
+    ##--##--##--##--##--##--##--##--##-##--##--##-##--##--## END: WRAP UP AS FUNCTION (PROJECTION AND ROTATION)
+    
     # ------------------
     if DISPLAY:
         fig2 = plt.figure()
