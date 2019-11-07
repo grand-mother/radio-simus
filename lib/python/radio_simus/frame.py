@@ -1,9 +1,8 @@
 # Local frame transforms for pulse shape computations.
 import numpy as np
 
+from __init__ import phigeo, thetageo
 #from .__init__ import phigeo, thetageo
-phigeo =0*np.pi/180.
-thetageo = (180.-27.05)*np.pi/180.
 
 import logging
 logger = logging.getLogger("Frame")
@@ -234,8 +233,9 @@ def _project_starshape(azimuth, zenith, dist_fromxmax, n, core=np.array([0.,0.,0
        
 def _project_onshowerplane(positions, azimuth, zenith, d = None, core=np.array([0.,0.,0.])):
     ''' 
-    This function projects the positions on a given plane back onto shower plane, 
+    This function projects the positions on a given plane back onto shower plane (vertical to shower propagation), 
     using line-plane intersection, coordinates still in XYZ, not shower coordinates
+    Use UVWGetter() to  calculate positions in shower coordinates
     
     Arguments:
     ----------
