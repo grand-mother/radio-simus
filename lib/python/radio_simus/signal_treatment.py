@@ -1,3 +1,8 @@
+"""
+Astropy units missing
+"""
+
+
 import numpy as np
 
 import logging
@@ -15,7 +20,8 @@ def p2p(trace):
     --------
     list: floats
         peak-to-peak values
-    '''
+    '''        
+    
     if trace.ndim==2: # simply assume np.array([t, x, y, z])
         xy = np.sqrt(trace.T[1]**2 + trace.T[2]**2)
         combined = np.sqrt(trace.T[1]**2 + trace.T[2]**2 + trace.T[3]**2) 
@@ -28,7 +34,7 @@ def p2p(trace):
 #===========================================================================================================
 def hilbert_env(signal):
     ''' 
-    Hilbert envelope - abs(analyticcal signal)
+    Hilbert envelope - abs(analytical signal)
     Arguments:
     ----------
     signal: np.array
@@ -57,14 +63,14 @@ def hilbert_peak(time, signal):
         
     Returns:
     --------
-    maximum of Hilbert envelope in muV or muV/m: float
     time of maximum in ns : float
+    maximum of Hilbert envelope in muV or muV/m: float
 
     '''
     envelope=hilbert_env(signal)
     #Get time and amp
     
-    return max(envelope), time[np.where(signal == signal.max())][0]
+    return time[np.where(signal == signal.max())][0],max(envelope)
 
 
 #===========================================================================================================
@@ -88,7 +94,7 @@ def _trigger(p2p, mode, thrs):
     trig: int
         0 or 1
     '''
-    
+
     if mode == 'any': #there are three modes: any, xy and all
         if p2p[0] >= thrs:
            return  1
@@ -120,7 +126,7 @@ def _trigger(p2p, mode, thrs):
            return 0
     else:
        print("this mode doesn't exist")
-    return trig
+    #return trig
 
 #===========================================================================================================
 
