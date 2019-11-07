@@ -20,7 +20,7 @@ __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_creat
 #def include_shadowing(Xmax_pos=None):
     #print("TODO: include mountain shadowing for antennas")
     ## TODO: check line of sight between antenna and shower to calculate mountain shadowing by realistic topography - TURTLE
-    ## Could be a module for creation of simulation inp files as well
+    ## Could be a module for creation of simulation inp files as well --> Matias has this kind of script already ready
     
     #return 0
 
@@ -180,7 +180,7 @@ def _create_emptytrace(nbins=599, tstep=1):
 ##########################################################################
 
 #===========================================================================================================
-def run(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
+def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
         ''' 
         Do the full chain once:
         1. READ IN THE SIMULATED ELECTRIC FIELD TRACE (at higher level) at hand over as parameter
