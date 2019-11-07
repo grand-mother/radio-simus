@@ -69,21 +69,30 @@ if __name__ == '__main__':
     # path to folder containing the inp-file, trace files and antpos.dat 
     eventfolder = sys.argv[1]
 
-    #create  "empty detector"
-    #det = detector()
+
+    ### FANCY THINGS YOU CAN DO WITH THE DETECTOR CLASS
+    ### but not needed for this short study
+    ##create  "empty detector"
     det = Detector()
     #create detector=antenna array from file defined in config file
     det.create_from_file(arrayfile)
 
     ## get all antennas positions
-    #array = get_array(det)
+    #array = det.position
     ## get all slopes
-    #slopes = get_slopes(det)
-
+    #slopes = det.slope
     ## antenna IDs
-    #antIDs = array.T[0]
-    ## get only position info
-    #positions = array[:,1:4] 
+    #antIDs = det.ID
+
+    #print(det.position)
+    #print(det._attributes, det.origin, det.location)
+    #print(det.position.T, det.ID)
+    #print(det.find_position(1), det.find_slope(1))
+    #print(det.find_antenna(1))
+            
+    #ant=det.find_antenna(1)
+    #print(ant.position)
+
 
 
 
