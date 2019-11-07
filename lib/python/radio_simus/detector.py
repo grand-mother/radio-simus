@@ -17,12 +17,10 @@ Use: python3.7 detectors.py
 #* antennas positions are stored in a single numpy.array, idealy a grand.coordinates.ECEF object.
 ## * numpy arrays: myarra.flags.writeable = False
 ##* implement an AntennaArray object with attributes: type:str, position:grand.coordinates.ECEF, orientation:grand.coordinates.Horizontal, etc.
-# * implement default origin coorectly, import site as default
 # * add function if slope not given, calculate it
 
-# ADD UNITS
+# IMPORTANT: ADD UNITS
 
-# set up unit tests
 
 '''
 
@@ -37,8 +35,8 @@ import numpy as np
 from typing import Optional, List, Union
 
 
-#from .__init__ import site, latitude, longitude  ## not yet needed
-site="not here"
+from .__init__ import site, latitude, longitude, origin  ## not yet needed
+
 
 
 #from astropy import log
@@ -46,10 +44,14 @@ import logging
 logger = logging.getLogger("Detector")
 #logger.info("================   Detector set up at: " +site +"    ================")
 
-
-#DEFAULT
+## grand package does not want to work for me, sorry
+#DEFAULT: add this info to confog file, != shower core
 #origin_default = grand.ECEF(x = 0 * u.m, y = 0 * u.m, z = 0 * u.m)
-origin_default = ( 0 * u.m, 0 * u.m, 0 * u.m)
+try:
+    print("Detector origin =", str(origin) )
+    origin_default = origin
+except:
+    origin_default = np.array([ 0 * u.m, 0 * u.m, 0 * u.m])
 
 
 
@@ -158,7 +160,7 @@ class Detector:
     @position.setter
     def position(self, value: Union[list, str]):
         self.__position.append(value)
-       
+
        
     @property
     def slope(self) -> Union[list, str]:
@@ -239,7 +241,10 @@ class Detector:
         
         Returns:
         -------
-        -        
+        -  
+        
+        TODO: add calculation of slope from Turtle
+        
         '''
         logger.info("Creating array from: " + str(array_file))
         ant_array = np.loadtxt(array_file,  comments="#")
@@ -265,7 +270,7 @@ class Detector:
 
 
 #### namedtuples -- cannot use keys from tuples...        
-#det = Detector(origin = ( 0 *u.m,  0 *u.m ,  0* u.m))
+#det = Detector(origin = np.array([ 0 *u.m,  0 *u.m ,  0* u.m]))
 ##det.origin = ( 0 *u.m,  0 *u.m ,  0* u.m)
 #det.location = "Lenghu" #site
 #det.create_from_file("/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt")
