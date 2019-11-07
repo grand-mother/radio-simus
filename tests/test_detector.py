@@ -21,7 +21,11 @@ from radio_simus.detector import Detector
 
 
 class DetectorTest(unittest.TestCase):
-    """Unit tests for the detector module"""
+    """Unit tests for the detector module
+    
+    TODO: add tests for missing modules
+    
+    """
     
     
     
