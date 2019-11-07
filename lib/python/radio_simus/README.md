@@ -27,25 +27,28 @@
     It returns  the voltage traces as a numpy.array with time in **ns, Vx,Vy,Vz in muV**
 
 * module **storing traces in hdf5 format** (using astropy.unit to be implemented):
-    From now on we only use hdf5 file for further processing of the simulated traces (using astropy.Table). That means one has to first convert the ascii files of the simulation output to hdf5 format. The script makes use of the following modules so that in the hdf5 file the information are stored in a coherent way. 
-    * module reading in CoREAS shower parameters (using astropy.unit to be implemented) - meta info
-    * module reading in CoREAS antenna list (using astropy.unit to be implemented)  - meta info
-    * module reading in ZHAireS shower parameters (using astropy.unit to be implemented)  - meta info
-    * module reading in ZHAireS antenna list (using astropy.unit to be implemented)  - meta info
+    From now on we only use hdf5 file for further processing of the simulated traces (using astropy.Table). That means one has to first convert the ascii files of the simulation output to hdf5 format. The script makes use of the following modules so that in the hdf5 file the information are stored in a coherent way. We assume that the inputs have their standard units used.
+    * module reading in CoREAS shower parameters (using astropy.unit implemented) -> meta info of hdf5 file
+    * module reading in CoREAS antenna list (using astropy.unit to be implemented)  - meta info of hdf5 file
+    * module reading in ZHAireS shower parameters (using astropy.unit to be implemented)  - meta info of hdf5 file
+    * module reading in ZHAireS antenna list (using astropy.unit to be implemented)  - meta info of hdf5 file
     
 * **hardcoded values now stored in config file** (eg. test.config read-in by __init__)
     see examples
 
     
 ## ToDos:
-* how to store shower parameters? -> no framework
-* how to store antenna informations? -> no framework
+* how to store shower parameters? -> is the header now fine?
+* how to store antenna informations? -> is the header now fine?
 
-* add astropy logger
-* add unit tests
+* add astropy logger (done for all modules?)
+* add unit tests (complete detector class tests)
+
+
+* include grand package and its referential coordinates system etc
 
 ## Open questions
-* how to use astropy units for numpy arrays?
+* how to use astropy units for numpy arrays? eg in detector etc
 
 
 ## NOTE:
