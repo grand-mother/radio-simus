@@ -5,6 +5,7 @@
     TODO:
         - problem with shape of A and B in computevoltage for time traces with odd number of lines
         - handle neutrinos and in general upward going showers
+        - IMPORTANT: how to handle astropy units for electric field and voltage numpy arrays...
         
     ATTENTION:
     ----- computevoltage : stacking changed,  voltage time now in ns
@@ -32,6 +33,7 @@ from .__init__ import antx, anty, antz
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
 from scipy.interpolate import interp1d
+#import astropy.units as u
 
 
 PRINT_ON=False
@@ -435,10 +437,10 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     #print("after : ", np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1), len(timeNS), timeNS[1]*1e9 -timeNS[0]*1e9)
     
     # ATTENTION EW AND NS WERE SWITCHED 
-    # ATTENTION voltage now in ns 
+    # ATTENTION voltage time now in ns 
     #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
     return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)
-    
+
 
 ##===========================================================================================================
 #def inputfromtxt(input_file_path):
