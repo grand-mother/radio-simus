@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import logging
 logger = logging.getLogger("Modules")
 
-from .__init__ import phigeo, thetageo
+
+from __init__ import phigeo, thetageo
+#from .__init__ import phigeo, thetageo
 
 #__all__ = ["compute_ZL", "TopoToAntenna", "_getXmax", "_dist_decay_Xmax"]
 
@@ -37,7 +39,6 @@ def _geomagnetic_angle(zen,az):
 
     # Direction where Earth mag field points to at Ulastai
     # North + Magnetic North, pointing towards East in this case 
-    print("ATTENTION: theta and phi geo hardcoded: (",thetageo, phigeo ,") deg")
     az_B = np.deg2rad(phigeo)
     # Direction where we point to . Inclination=63.05deg
     zen_B = np.deg2rad(thetageo)
@@ -76,11 +77,11 @@ def _getXmax(primarytype, energy):
     if primarytype=='proton'or primarytype=='Proton': # pion, kaon .... approximated by proton
         a=62.5 # g/cm2
         c=357.5 #g/cm2 
-        print("ATTENTION: zenith to be corrected for CR")
+        #print("ATTENTION: zenith to be corrected for CR in following use")
     if primarytype=='iron' or primarytype=='Iron': # aprroximated by proton
         a=60 # g/cm2 # just approximated 
         c=177.5 #g/cm2
-        print("ATTENTION: zenith to be corrected for CR")
+        #print("ATTENTION: zenith to be corrected for CR in following use")
     
     Xmax= a*np.log10(energy*10**-12.)+c # eV* 10**-12. to be in TeV
 
@@ -138,7 +139,7 @@ def _dist_decay_Xmax(zen, injh2, Xmax_primary):
     return h, ai # Xmax_height in m, Xmax_distance in m
 #============================================================================
 
-def _get_XmaxPosition(primary, energy, zen, azim, injh=0):
+def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0):
     ''' Calculates vector to Xmax position
     
     Arguments:
@@ -152,8 +153,10 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0):
         GRAND zenith in deg, for CR shower use _get_CRzenith()
     azim: float
         GRAND azimuth in deg
-    injh: float
+    injh: float (default set), for CR = 100000m (100km)
         injection height wrt sealevel in m
+    GdAlt: float (default set)
+        ground altitude of array/observer in m (should be substituted)
         
     Returns:
     ---------
@@ -164,9 +167,14 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0):
           *For CR: it calculates the distance between origin at athomphere top along shower axis to get the Xmax position 
             -- origin defined at (0,0,0)m at the moment
            accepts only proton and iron primaries currently
+    TODO: *add the option for a shower_core != (0,0,0)
+          * cross check the output with matias simulations
+        
     '''
-    print("ATTENTION: works currently only for neutrinos")
     Xmax_primary = _getXmax(primary, energy)
+    if primary=="proton" or primary == "iron": # CORRECT ZENITH
+        zen = _get_CRzenith(zen,injh,GdAlt) 
+    
     # height of xmax, distance decay to xmax
     h, ai = _dist_decay_Xmax(zen, injh, Xmax_primary)
     zenr = np.deg2rad(zen)
@@ -175,24 +183,27 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0):
     if primary=="electron" or primary == "pion":
        new = float(ai)*u_sh + np.array([0.,0.,injh ])
     if primary=="proton" or primary == "iron":
-        Re = 6370949 # m, Earth radius
-        Ra = 100000 # m, 100km layer for atmopshere
+        #Re = 6370949 # m, Earth radius
+        #Ra = 100000 # m, 100km layer for atmopshere
         
-        # use some trigonmetrie, currently assuming ***(0,0,0) as origin***, Groundaltitude = 0m
-        a = Re
-        c = Re + Ra
-        gamma = zenr # counterpart to angle between shower direction and vertical == GRAND conv
+        ## use some trigonmetrie, currently assuming ***(0,0,0) as origin***, Groundaltitude = 0m
+        #a = Re
+        #c = Re + Ra
+        #gamma = zenr # counterpart to angle between shower direction and vertical == GRAND conv
         
-        # law of sines
-        alpha = np.arcsin(np.sin(gamma) * a/c)
-        # Sum of angles
-        beta = np.pi -alpha -gamme
-        # law of sines ---> distance between set origin and athmosphere top along shower axis
-        b = c *np.sin(beta)/np.sin(gamma)
+        ## law of sines
+        #alpha = np.arcsin(np.sin(gamma) * a/c)
+        ## Sum of angles
+        #beta = np.pi -alpha -gamma
+        ## law of sines ---> distance between set origin and athmosphere top along shower axis
+        #b = c *np.sin(beta)/np.sin(gamma)
         
-        # calculate position of Xmax (by length to reach Xmax - full distance, starting at the origin) 
-        new = float(ai -b) *u_sh 
-    
+        ## calculate position of Xmax (by length to reach Xmax - full distance, starting at the origin) 
+        #new = float(ai -b) *u_sh 
+        
+        # Assume that position vector == shower core at (0,0,0) and flip direction of shower
+        # TODO: allow a shower_core != (0,0,0)
+        new = float(ai) *-u_sh 
     try:
         return new
     except:
@@ -227,3 +238,33 @@ def _get_CRzenith(zen,injh,GdAlt):
     zen_inj = np.rad2deg(np.pi-np.arccos((a**2 +(Re+injh)**2 -Re**2)/(2*a*(Re+injh))))
     
     return zen_inj
+
+
+#-------------------------------------------------------------------
+
+
+
+def main():
+    if ( len(sys.argv)>1 ):
+        print("""
+            
+            Usage: python3 modules.py 
+            Example: python3 modules.py 
+
+        """)
+        sys.exit(0)
+
+
+    primary = "proton"
+    energy = 63e15
+    zen = 180.-70.50
+    azim = 180.-0.
+    
+    pos= _get_XmaxPosition(primary, energy, zen, azim, injh=100000)
+    print(pos)
+    
+
+if __name__== "__main__":
+  main()
+
+
