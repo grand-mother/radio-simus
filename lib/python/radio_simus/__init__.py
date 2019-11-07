@@ -45,7 +45,7 @@ import numpy as np
 #from .shower import shower, sim_shower, reco_shower, loadInfo_toShower
 
 # Register all modules
-__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower", "detector", "frame", "signal_processing"]
+__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower", "detector", "frame", "signal_processing", "interpolation"]
 
 
 
