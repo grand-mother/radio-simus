@@ -25,13 +25,19 @@ class Shower():
         Immutable container with both static and runtime checks, The fields can be accessed as attributes/
         
         1. A static analyses can be done with mypy. It will ensure that the proper types are used as arguments when setting the shower attributes. Special unit  can not be checked (eg energy given in meters...)
-        2. In addition using the @property class decorator we can perform runtime checks when an instance attribute is modified.
+        2. In addition using the @property class decorator we can perform runtime checks when an instance attribute is modified. (not yet done, do we need that...)
+        
+        NOTE: In principle all kind of information can be added, e.g. shower core info, injectionheight etc if available
+              Do we want to have a calculated Xmax position, or shall we load it from a calculation or simulation if available...
         
         showerID: str
         primary: str
         energy: float in eV
         zenith: float in deg, GRAND
-        azmiuth: float in deg, GRAND
+        azimuth: float in deg, GRAND
+        direction: numpy vector
+        injectionheight: float in m
+        trigger:  list, int
         
         simulations: str
         Xmax: float in g/cm2
@@ -44,8 +50,7 @@ class Shower():
         
         TODO: 
         * How do I prevent that attributes can overwritten
-        * misiing impulse function: vector type, calculate energy, azimuth and zenith and add those
-        * does not get write info into logger
+        * missing impulse function: vector type, calculate impulse vector
                
     '''
     
@@ -196,8 +201,10 @@ class Shower():
                              np.sin(self.azimuth.to(u.rad))*np.sin(self.zenith.to(u.rad)),
                              np.cos(self.zenith.to(u.rad))])
         except:
-            print("Direction cannot be calculated")
+            logger.error("Direction cannot be calculated")
 
+    #def Xmax_position(self): 
+        #""" calculated Xmax Xmax_position"""
 
     
     
@@ -314,7 +321,7 @@ class ReconstructedShower(Shower):
         
     @property
     def recoXmax(self) -> u.Quantity:
-        """value of reconstructed energy"""
+        """value of reconstructed Xmax"""
         return self.__recoXmax
 
     @recoXmax.setter
@@ -334,7 +341,7 @@ class ReconstructedShower(Shower):
                              np.sin(self.recoazimuth.to(u.rad))*np.sin(self.recozenith.to(u.rad)),
                              np.cos(self.recozenith.to(u.rad))])
         except:
-            print("Direction cannot be reconstructed")
+            logger.error("Direction cannot be reconstructed")
     
     
 #=================================================        
@@ -363,25 +370,37 @@ def loadInfo_toShower(name, info=None):
         
     try:
         energy = info["energy"]
-        name.energy = float(energy)* u.eV
+        if hasattr(energy, 'unit'):
+            name.energy = energy
+        else:
+            name.energy = float(energy)* u.eV
     except IOError:
         energy = None
     
     try:
         zenith = info["zenith"]
-        name.zenith = float(zenith)* u.deg
+        if hasattr(zenith, 'unit'):
+            name.zenith = zenith
+        else:
+            name.zenith = float(zenith)* u.deg
     except IOError:
         zenith = None
     
     try:
         azimuth = info["azimuth"]
-        name.azimuth = float(azimuth)* u.deg
+        if hasattr(azimuth, 'unit'):
+            name.azimuth = azimuth
+        else:
+            name.azimuth = float(azimuth)* u.deg
     except IOError:
         azimuth = None
     
     try:
         injectionheight = info["injection_height"]
-        name.injectionheight =  float(injectionheight)* u.m
+        if hasattr(injectionheight, 'unit'):
+            name.injectionheight =  injectionheight
+        else:
+            name.injectionheight =  float(injectionheight)* u.m
     except IOError:
         injectionheight = None
 
@@ -394,14 +413,19 @@ def loadInfo_toShower(name, info=None):
             #name.simulation = str(simulation)
         #except: # what kind of exception
             #logger.debug("for "+str(name)+" info on simulation could not be set")
-    except IOError:
+    except (IOError, KeyError):
+        logger.error("No simulation info provided")
         simulation = None
         
     try:
         Xmax = info["Xmax"]
-        name.Xmax = float(Xmax)*gcm2
+        if hasattr(Xmax, 'unit'):
+            name.Xmax = Xmax
+        else:
+            name.Xmax = float(Xmax)*gcm2
         #try: ## TODO it does not raise an error if attribute does not exist -- logger
     except (IOError, KeyError):
+        logger.error("No XMax value provided")
         Xmax = None
     
 
