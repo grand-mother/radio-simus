@@ -98,8 +98,8 @@ if __name__ == '__main__':
         
     #----------------------------------------------------------------------   
     # General info statement for later identification
-    logger.info("general: Eventset =" +str(eventfolder)+ ", Simulation = "  +str(simus)+ ", SINGLE/ALL = "  +str(SINGLE)+ "/"  +str(ALL)+  ", Threshold = "  +str(threshold_aggr)+ "muV (aggr), "  +str(threshold_cons)+ "muV (cons)")
-    print("\nGENERAL: Eventset =" +str(eventfolder)+ ", Simulation = "  +str(simus)+ ", SINGLE/ALL = "  +str(SINGLE)+ "/"  +str(ALL)+  ", Threshold = "  +str(threshold_aggr)+ "muV (aggr), "  +str(threshold_cons)+ "muV (cons)\n")
+    logger.info("general: Eventset =" +str(eventfolder)+ ", Simulation = "  +str(simus)+ ", SINGLE/ALL = "  +str(SINGLE)+ "/"  +str(ALL)+  ", Threshold = "  +str(threshold_aggr)+ "(aggr), "  +str(threshold_cons)+ "(cons)")
+    print("\nGENERAL: Eventset =" +str(eventfolder)+ ", Simulation = "  +str(simus)+ ", SINGLE/ALL = "  +str(SINGLE)+ "/"  +str(ALL)+  ", Threshold = "  +str(threshold_aggr)+ " (aggr), "  +str(threshold_cons)+ " (cons)\n")
     #----------------------------------------------------------------------   
    
    
@@ -160,7 +160,7 @@ if __name__ == '__main__':
             zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
             
             # correction of shower core
-            positions = positions + np.array([core[0], core[1], 0.])
+            positions = positions + np.array([core[0]/u.m, core[1]/u.m, 0.*u.m/u.m])
 
             #redefinition of path to traces
             path=path+'/SIM'+showerID+'_coreas/'
@@ -182,7 +182,7 @@ if __name__ == '__main__':
                 "azimuth" : azim,                # deg (GRAND frame)
                 "injection_height" : injh,    # m (injection height in the local coordinate system)
                 "task" : task,    # Identification
-                "core" : core.tolist(),    # m, numpy array, core position
+                "core" : core,    # m, numpy array, core position
                 "simulation" : simus # coreas or zhaires
                 }
         ####################################
@@ -347,21 +347,22 @@ if __name__ == '__main__':
                 try:
                     ## apply only antenna response
                     voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[ant_number,0], beta=slopes[ant_number,1] )
-                    
+
                     ## NOTE apply full chain, not only antenna resonse: add noise, filter, digitise
                     #voltage = run(efield1, shower['zenith'], shower['azimuth'], 0, 0, False) # alpha = 0, beta = 0
                     
                     ### add some info on P2P and  TRIGGER if wanted: trigger on any component, or x-y combined
+                    #NOTE: need to cross-check that trace is also in muV, but should be by definition
                     from radio_simus.signal_treatment import p2p, _trigger
                     # peak-to-peak values: x, y, z, xy-, all-combined
                     p2p_values = p2p(voltage)
                     # trigger info: trigger = [thr_aggr, any_aggr, xz_aggr, thr_cons, any_cons, xy_cons]
-                    trigger =  [threshold_aggr, _trigger(p2p_values, 'any', threshold_aggr), _trigger(p2p_values, 'xy', threshold_aggr), threshold_cons, _trigger(p2p_values, 'any', threshold_cons), _trigger(p2p_values, 'xy', threshold_cons)]
-
+                    trigger =  [threshold_aggr, _trigger(p2p_values, 'any', threshold_aggr/(u.u*u.V)), _trigger(p2p_values, 'xy', threshold_aggr/(u.u*u.V)), threshold_cons, _trigger(p2p_values, 'any', threshold_cons/(u.u*u.V)), _trigger(p2p_values, 'xy', threshold_cons/(u.u*u.V))]
+                    
                     # Update info
                     shower.update({'voltage': 'antennaresponse', 'trigger': trigger, 'p2p': list(p2p_values) })
                     #shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
-                                    
+
                     if SINGLE:   
                         # load voltage array to table and store in same hdf5 file
                         volt_table = _table_voltage(voltage, pos=positions[ant_number].tolist(), slopes=slopes[ant_number].tolist() ,info=shower )
