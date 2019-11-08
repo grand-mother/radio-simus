@@ -11,16 +11,13 @@ Use: python3.7 detectors.py
 #* use Final decorator (typing_extension)
 
 
-#ToDo
+#ToDo after adding grand 
 #* add positions of a whole array, in ECEF and m
 #* ...
 #* antennas positions are stored in a single numpy.array, idealy a grand.coordinates.ECEF object.
 ## * numpy arrays: myarra.flags.writeable = False
 ##* implement an AntennaArray object with attributes: type:str, position:grand.coordinates.ECEF, orientation:grand.coordinates.Horizontal, etc.
 # * add function if slope not given, calculate it
-
-# IMPORTANT: ADD UNITS
-
 
 '''
 
@@ -35,7 +32,7 @@ import numpy as np
 from typing import Optional, List, Union
 
 
-from .__init__ import site, latitude, longitude, origin  ## not yet needed
+from .__init__ import site, origin #, latitude, longitude # not yet needed
 
 
 
@@ -70,8 +67,6 @@ class Detector:
         
         1. A static analyses can be done with mypy. It will ensure that the proper types are used as arguments when setting the shower attributes. Special unit  can not be checked (eg energy given in meters...)
         2. In addition using the @property class decorator we can perform runtime checks when an instance attribute is modified.
-        
-        Attributes: decription missing
         
         ToDo:
             a long list -- see the comments above
@@ -114,8 +109,13 @@ class Detector:
     
     @property
     def origin(self) -> Union[list, str]:
-        """origin of array"""
-        return self.__origin
+        """origin of array, in m """
+        #return self.__origin
+        if hasattr(self.__origin, 'unit'):
+            print("Unit of origin: ",self.__origin.unit)
+            return self.__origin
+        else:
+            return self.__origin*u.m
 
     @origin.setter
     def origin(self, value: Union[list, str]):
@@ -129,7 +129,7 @@ class Detector:
         
     @property
     def location(self) -> Union[list, str]:
-        """location of array"""
+        """location/site of array"""
         return self.__location
 
     @location.setter
@@ -144,7 +144,7 @@ class Detector:
 
     @property
     def ID(self) -> Union[list, str, int]:
-        """IDs of array, accepts only lists"""
+        """IDs of antennas in array, accepts only lists"""
         return np.asarray(self.__ID)[0]
 
     @ID.setter
@@ -154,8 +154,13 @@ class Detector:
   
     @property
     def position(self) -> Union[list, str]:
-        """position of array, accepts only lists"""
-        return np.asarray(self.__position)[0]
+        """position of antennas array, in m, accepts only lists"""
+        #return np.asarray(self.__position)[0]*u.m
+        if hasattr(self.__position, 'unit'):
+            print("Unit of antenna positions: ",self.__position.unit)
+            return np.asarray(self.__position)[0]
+        else:
+            return np.asarray(self.__position)[0]*u.m
 
     @position.setter
     def position(self, value: Union[list, str]):
@@ -164,8 +169,8 @@ class Detector:
        
     @property
     def slope(self) -> Union[list, str]:
-        """slope of array, accepts only lists"""
-        return np.asarray(self.__slope)
+        """local slopes (alpha,beta) of antennas in array, in deg, accepts only lists"""
+        return np.asarray(self.__slope)*u.deg
 
     @slope.setter
     def slope(self, value: Union[list, str]):
@@ -174,7 +179,7 @@ class Detector:
         
     @property
     def type(self) -> Union[list, str, int]:
-        """type of array, accepts only lists"""
+        """type of antennas in array, strings, accepts only lists"""
         return np.asarray(self.__type)[0]
 
     @type.setter
@@ -206,7 +211,7 @@ class Detector:
         Arguments:
         ----------
         det: object
-        ID: int
+        antID: int
             desired antenna ID
             
         Returns:
@@ -219,7 +224,16 @@ class Detector:
 
 
     def find_antenna(self, antID):
-        ''' return antenna with ID as namedtuple'''
+        ''' return antenna with ID as namedtuple
+        Arguments:
+        ----------
+        antID: int
+            desired antenna ID
+            
+        Returns:
+        --------
+            named tuple Antenna(ID, psoition, slope, type)
+        '''
         index = np.where(self.ID == int(antID))[0][0]
         Antenna = collections.namedtuple('Antenna', 'ID position slope type')
         return Antenna(ID=antID, 
@@ -230,8 +244,8 @@ class Detector:
 
  
     def create_from_file(self, array_file): 
-        ''' reading in whole antenna array as file: antID, position 
-            and slope, type (sets default values or to be  caluclated
+        ''' reading in whole antenna array as file: antID, positions in m
+            and slope wrt horizontal in deg(sets default values or to be caluclated), antenna type (or default)
             
         Arguments:
         ----------
@@ -259,7 +273,7 @@ class Detector:
             try:
                 self.type = str(ant_array[i,6])
             except: #add exception
-                logger.debug("Type needs to be caluclated")
+                logger.debug("Type needs to be defined")
                 self.type = "HorizonAntenna" # default type
  
  
