@@ -139,7 +139,7 @@ def _dist_decay_Xmax(zen, injh2, Xmax_primary):
     return h, ai # Xmax_height in m, Xmax_distance in m
 #============================================================================
 
-def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0):
+def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0, core=np.array([0.,0.,0.])):
     ''' Calculates vector to Xmax position
     
     Arguments:
@@ -157,6 +157,8 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0):
         injection height wrt sealevel in m
     GdAlt: float (default set)
         ground altitude of array/observer in m (should be substituted)
+    core: numpy array (default set)
+        shower core position, not yet needed
         
     Returns:
     ---------
@@ -239,7 +241,108 @@ def _get_CRzenith(zen,injh,GdAlt):
     
     return zen_inj
 
+#============================================================================
 
+def _project_onShoweraxis(p,v,core=np.array([0.,0.,0.])):
+    ''' calculates the orthogonal projection of a position onto the shower axis
+    
+    Arguments:
+    ----------
+    p: numpy array
+        position 
+    v: numpy array
+        shower direction
+    core: numpy array (default set)
+        core position
+        
+    Returns:
+    --------
+    numpy array
+        projected position on shower axis
+    '''
+    
+    
+    v = v/np.linalg.norm(v)
+    #tarnslate to local frame
+    local_p = p - core
+    #project on v == shower axis
+    proj = np.dot(local_p, v)#/np.dot(v,v)
+    
+    #print(core,local_p  ,proj, v)
+    return core + proj*v
+#============================================================================
+    
+def _distance_toShoweraxis(p,v,core=np.array([0.,0.,0.])):
+    '''calculates orthogonal distance of position to the shower axis, 
+    calls _project_onShoweraxis()
+    
+    Arguments:
+    ----------
+    p: numpy array
+        position 
+    v: numpy array
+        shower direction
+    core: numpy array (default set)
+        core position
+        
+    Returns:
+    --------
+    float
+        distance to shower axis
+    '''
+
+    return np.linalg.norm(p - _project_onShoweraxis(p,v,core))
+
+
+#============================================================================
+    
+def get_LDF(trace,p,v,core=np.array([0.,0.,0.])):
+    #from signal_treatment import p2p
+    #loop over all antenna position and traces ...
+    #p2p(trace) or hilbert
+    
+    #return distance to axis, Amplitude # in shower plane
+    return 0
+    
+    
+def correction()
+    ''' returns correction factor for early late effect '''
+    
+    
+    
+#============================================================================
+
+
+def correct_EarlyLate(trace):
+    ''' correct for earlz late effect, following the approch given arxiv:1808.00729 in for the energy fluence
+    
+        energy fluence [corrected in shower plane] = energy fluence [ sim. at ground] *factor**2
+        -> for amplitude only: amp [corrected] = amp. [sim.] * factor ... 
+    '''
+    
+    # simply assume trace = np.array([t, x, y, z])
+    
+    #Needed input: 
+        #* trace to scale
+        #* position p
+        #* shower direction v
+        #* shower core
+        #* maybe Xmax position
+        
+    #Xmax position: calculated or simulated as input ...
+    #x: distance along axis from projected antenna position to shower core
+    #R: distance along axis from Xmax position to shower core
+    
+    #R0 = R + x
+    #factor = R/R0
+    
+    return 0
+    
+    
+def correct_chargeexcess():
+    ''' following soon'''
+    return 0
+    
 #-------------------------------------------------------------------
 
 
@@ -260,8 +363,14 @@ def main():
     zen = 180.-70.50
     azim = 180.-0.
     
-    pos= _get_XmaxPosition(primary, energy, zen, azim, injh=100000)
-    print(pos)
+    p = np.array([1,1,0])
+    v = np.array([1,2,0])
+    core = np.array([0.,0.,0.])
+    
+    #pos= _get_XmaxPosition(primary, energy, zen, azim, injh=100000)
+    pos = _project_onShoweraxis(p,v, core)
+    print(np.linalg.norm(p)**2.-np.linalg.norm( pos)**2.)
+    print(pos,_distance_toShoweraxis(p,v,core)**2.)
     
 
 if __name__== "__main__":
