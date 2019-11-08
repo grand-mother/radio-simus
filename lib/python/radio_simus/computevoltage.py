@@ -401,7 +401,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     voltage = vp + vt
     timet     = np.arange(0, len(vt))/Fs
     timep     = np.arange(0, len(vp))/Fs
-
+    
     return(voltage, timet+timeoff)
 
 
@@ -428,14 +428,10 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
         voltage traces, Time in ns, Vx,Vy,Vz in muV
     '''
     
-    #print("before : ", signal, len(signal.T[0]), signal[1,0] -signal[0,0])
-
     voltage_NS, timeNS = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="X")
     voltage_EW, timeEW = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
     voltage_vert, timevert = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
-    
-    #print("after : ", np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1), len(timeNS), timeNS[1]*1e9 -timeNS[0]*1e9)
-    
+        
     # ATTENTION EW AND NS WERE SWITCHED 
     # ATTENTION voltage time now in ns 
     #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
