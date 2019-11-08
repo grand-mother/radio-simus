@@ -17,6 +17,7 @@ from numpy import *
 
 import logging
 logging.basicConfig(filename="example_usingclass.log", level=logging.INFO)
+print("Log-file produced: ", "example_usingclass.log")
 logger = logging.getLogger('Main')
 
 import tqdm
@@ -86,7 +87,7 @@ if __name__ == '__main__':
 
     #print(det.position)
     #print(det._attributes, det.origin, det.location)
-    #print(det.position.T, det.ID)
+    ##print(det.position.T, det.ID)
     #print(det.find_position(1), det.find_slope(1))
     #print(det.find_antenna(1))
             
