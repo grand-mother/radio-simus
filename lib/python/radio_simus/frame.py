@@ -8,6 +8,23 @@ import logging
 logger = logging.getLogger("Frame")
 
 
+        #showeraxis = -1 * hp.spherical_to_cartesian(zenith, azimuth)  # -1 is because shower is propagating towards us
+        #if(magnetic_field_vector is None):
+            #magnetic_field_vector = hp.get_magnetic_field_vector(site=site)
+        #magnetic_field_normalized = magnetic_field_vector / linalg.norm(magnetic_field_vector)
+        #vxB = np.cross(showeraxis, magnetic_field_normalized)
+        #e1 = vxB
+        #e2 = np.cross(showeraxis, vxB)
+        #e3 = np.cross(e1, e2)
+        #e1 /= linalg.norm(e1)
+        #e2 /= linalg.norm(e2)
+        #e3 /= linalg.norm(e3)
+        #self.__transformation_matrix_vBvvB = copy.copy(np.matrix([e1, e2, e3]))
+        #self.__inverse_transformation_matrix_vBvvB = np.linalg.inv(self.__transformation_matrix_vBvvB)
+
+
+
+
 
 def get_rotation(zen, az, phigeo=phigeo, thetageo=thetageo):
     """Utility function for getting the rotation matrix between frames
