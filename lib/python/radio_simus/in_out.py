@@ -276,7 +276,7 @@ def _get_positions_coreas(path):
         corresponding antenna ID for identification !- [0,1,2,....]
         
         
-    TODO: assign units properly....    
+    NOTE: units assign to positions and slope assuming meters and degree 
     '''
     datafile = open(path, 'r') 
     x_pos1=[]
@@ -309,8 +309,8 @@ def _get_positions_coreas(path):
     x_pos1=np.asarray(x_pos1)
     y_pos1=np.asarray(y_pos1)
     z_pos1=np.asarray(z_pos1)
-    positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )
-    slopes=np.stack((alpha, beta), axis=-1 )    
+    positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )*u.m
+    slopes=np.stack((alpha, beta), axis=-1 )*u.deg
     #print(ID_ant)    
     
     return positions, ID_ant, slopes
@@ -540,6 +540,7 @@ def _load_to_array(path_hdf5, content="efield"):
         except IOError:
             slopes=None
 
+        # TODO do we one to return atsropy units...
         return efield1, efield['Time'].unit, efield['Ex'].unit, shower, position, slopes
     
     if content=="voltages" or content=="v":
@@ -577,6 +578,8 @@ def _load_to_array(path_hdf5, content="efield"):
         except IOError:
             slopes=None
         
+        
+        # TODO do we one to return atsropy units...
         return voltage1, voltage['Time'].unit, voltage['Vx'].unit, shower, position, slopes
 
     
