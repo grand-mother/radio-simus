@@ -45,11 +45,11 @@ The data structure for the produced hdf5-file is:
         task: 36.E.4e17_Z.97_A.7_La.39_Lo.92_H.3078_D.0, 
         zenith: 96.65, 
         
-    
+        
     /event/<ant_ID>
     
     /event/<ant_ID>/efield : stores Time, Ex, Ey, Ez as astropy table
-    /eventt/<ant_ID>/efield _meta: example:
+    /event/<ant_ID>/efield _meta: example:
         datatype:, 
         - {name: Time, unit: ns, datatype: float64}, 
         - {name: Ex, unit: u V / m, datatype: float64}, 
@@ -60,7 +60,7 @@ The data structure for the produced hdf5-file is:
         slopes: [0.0, 0.0], 
         
     /event/<ant_ID>/voltages: stores Time, Vx, Vy, Vz as astropy table
-    /event/<ant_ID>/efield _meta: example:
+    /event/<ant_ID>/voltage _meta: example:
         datatype:, 
         - {name: Time, unit: ns, datatype: float64}, 
         - {name: Vx, unit: u V, datatype: float64}, 
@@ -70,8 +70,70 @@ The data structure for the produced hdf5-file is:
         position: [999.9973888519853, -2499.964022173601, 2734.0], 
         slopes: [0.0, 0.0], 
         voltage: antennaresponse, 
-        trigger: [threshold(aggr) in muV, 1/0 in any, 1/0 in xy, threshold(cons) in muV, 1/0 in any, 1/0 in xy] # 1 = triggered
+        
+        
+    /analysis:
+            trigger: [threshold(aggr) in muV, 1/0 in any, 1/0 in xy, threshold(cons) in muV, 1/0 in any, 1/0 in xy] # 1 = triggered
         p2p: [Ex, Ey, Ez, Exy, Exz] #p2p-value in muV
+        
+    
+## Access to data ( ID == antenna ID ):
+    from astropy.table import Table
+    f=Table.read(pathtohdf, path="/"+str(ID)+"/efield") 
+    
+    f.meta :
+    f.info :
+    
+## Access event data -- example:
+ 
+    g=Table.read("data.hdf5", path="/event")
+    
+    >>> print(g.meta)
+    {'ID': '000001', 'azimuth': <Quantity 136.38 deg>, 'core': <Quantity [   0.,    0., 2734.] m>, 'energy': <Quantity 2.88e+17 eV>, 'injection_height': <Quantity 10000000. m>, 'primary': 'proton', 'simulation': 'coreas', 'task': '7.E.3e17_Z.96_A.136_La.39_Lo.92_H.3320_D.0', 'zenith': <Quantity 96.26 deg>}
+    
+    >>> print(g.meta["primary"])
+    proton
+
+    
+    >>> print(g.info)
+    <Table length=128>
+    name   dtype  unit
+    ------ ------- ----
+    ant_ID  bytes3     
+    pos_x float64    m
+    pos_y float64    m
+    pos_z float64    m
+    alpha float64  deg
+    beta float64  deg
+
+    >>> print(g["alpha"])
+    alpha
+    deg 
+    -----
+    0.0
+    ...
+    0.0
+    0.0
+    0.0
+    Length = 128 rows
+    
+    >>> print(g["alpha"].unit)
+    deg
+    
+    >>> print(g.meta["energy"])
+    2.88e+17 eV
+    >>> print(g.meta["energy"].unit)
+    eV
+
+
+
+
+
+        
+        
+        
+<!--        trigger: [threshold(aggr) in muV, 1/0 in any, 1/0 in xy, threshold(cons) in muV, 1/0 in any, 1/0 in xy] # 1 = triggered
+        p2p: [Ex, Ey, Ez, Exy, Exz] #p2p-value in muV-->
         
  **For SINGLE=True: One hdf5 file per antenna in ecah event - internal structure of information identical (skip /event/)**
     File naming table_*.hdf5 includes the antenna ID of the original antenna array (not necessarily equivalent to antenna number in simulation)
