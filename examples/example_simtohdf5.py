@@ -38,6 +38,120 @@ from radio_simus.io_utils import inputfromtxt, _get_positions_coreas, inputfromt
 from radio_simus.__init__ import Vrms
 
 
+
+
+
+
+
+
+
+def load_event_info(path, showerID, simus, name_all=None):
+
+        if simus == 'zhaires':
+            ####################################### NOTE zhaires --- THOSE HAS TO BE UPDATED
+            # Get the antenna positions from file
+            positions = np.loadtxt(path+"antpos.dat")
+            ID_ant = []
+            slopes = []
+            # TODO adopt reading in positions, ID_ant and slopes to coreas style - read in from SIM*info    
+            #posfile = path +'SIM'+str(showerID)+'.info'
+            #positions, ID_ant, slopes = _get_positions_coreas(posfile)
+            ##print(positions, ID_ant, slopes)
+                
+            # Get shower info
+            inputfile = path+showerID+'.inp'
+            #inputfile = path+"/inp/"+showerID+'.inp'
+            #print("Check inputfile path: ", inputfile)
+            try:
+                zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
+            except:
+                print("no TASK, no CORE")
+                inputfile = path+showerID+'.inp'
+                zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
+                task=None
+                core=None 
+            
+            # correction of shower core
+            try:
+                positions = positions + np.array([core[0], core[1], 0.])
+            except:
+                print("positions not corrected for core")
+                
+            ending_e = "a*.trace"
+                
+
+        if  simus == 'coreas':
+            #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
+            posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
+            positions, ID_ant, slopes = _get_positions_coreas(posfile)
+            #print(positions, ID_ant, slopes)
+            
+            inputfile = path+'/inp/SIM'+showerID+'.inp'
+            zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
+           
+            # correction of shower core
+            try:
+                positions = positions + np.array([core[0], core[1], 0.*u.m])
+            except:
+                logger.debug("No core position information availble")
+    
+            
+    
+        #----------------------------------------------------------------------   
+    
+        ########################
+        # load and store event info
+        ######################## 
+        
+        # load shower info from inp file via dictionary
+        shower = {
+                "ID" : showerID,               # shower ID, number of simulation
+                "primary" : primarytype,        # primary (electron, pion)
+                "energy" : energy,               # eV
+                "zenith" : zen,               # deg (GRAND frame)
+                "azimuth" : azim,                # deg (GRAND frame)
+                "injection_height" : injh,    # m (injection height in the local coordinate system)
+                "task" : task,    # Identification
+                "core" : core,    # m, numpy array, core position
+                "simulation" : simus # coreas or zhaires
+                }
+        ####################################
+        print("shower", shower)
+        logger.info("Shower summary: " + str(shower))
+        
+        #shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+        #positions.write(name_all, path='positions', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+        #slopes.write(name_all, path='slopes', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+        #ID_ant.write(name_all, path='IDs', format="hdf5", append=True,  compression=True,serialize_meta=True)
+   
+        ##hf = h5py.File(name_all, 'w')
+        #hf = h5py.File(name_all, 'w')
+        #hf.create_dataset('positions', data=positions)
+        #hf.create_dataset('slopes', data=slopes)
+        ##hf.create_dataset('ID_ant', data=np.asarray(ID_ant))
+        ##hf.create_dataset('shower', data=shower)
+        ##dset = hf.create_dataset("shower", shower) 
+        #hf.close()
+    
+        if name_all is not None:
+            a1 = Column(data=np.array(ID_ant), name='ant_ID')
+            b1 = Column(data=positions.T[0], unit=u.m, name='pos_x')
+            c1 = Column(data=positions.T[1], unit=u.m, name='pos_y')
+            d1 = Column(data=positions.T[2], unit=u.m, name='pos_z')  #u.eV, u.deg
+            e1 = Column(data=slopes.T[0], unit=u.deg, name='alpha')
+            f1 = Column(data=slopes.T[1], unit=u.deg, name='beta') 
+            event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower) 
+            event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
+            print("Event info saved in: ", name_all)
+
+        return shower, ID_ant, positions, slopes
+
+
+
+
+
+
+
 if __name__ == '__main__':
 
     if ( len(sys.argv)<2 ):
@@ -114,119 +228,35 @@ if __name__ == '__main__':
         print(" --- Event : ", showerID, ", in ", path)
         logger.debug(" --- Event : "+ str(showerID)+ ", in "+ str(path) )
            
+        ### Name of hdf5 file for storage
+        name_all = path+'/../event_'+showerID+'.hdf5'
         
+
         
         ##########################
         ### LOADING EVENT INFO ###
         ##########################
 
+        shower, ID_ant, positions, slopes = load_event_info(path, showerID, simus, name_all)
         
-        if simus == 'zhaires':
-            ####################################### NOTE zhaires --- THOSE HAS TO BE UPDATED
-            # Get the antenna positions from file
-            positions = np.loadtxt(path+"antpos.dat")
-            ID_ant = []
-            slopes = []
-            # TODO adopt reading in positions, ID_ant and slopes to coreas style - read in from SIM*info    
-            #posfile = path +'SIM'+str(showerID)+'.info'
-            #positions, ID_ant, slopes = _get_positions_coreas(posfile)
-            ##print(positions, ID_ant, slopes)
-                
-            # Get shower info
-            inputfile = path+showerID+'.inp'
-            #inputfile = path+"/inp/"+showerID+'.inp'
-            #print("Check inputfile path: ", inputfile)
-            try:
-                zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
-            except:
-                print("no TASK, no CORE")
-                inputfile = path+showerID+'.inp'
-                zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
-                task=None
-                core=None 
-            
-            # correction of shower core
-            try:
-                positions = positions + np.array([core[0], core[1], 0.])
-            except:
-                print("positions not corrected for core")
-                
+        if simus == "zhaires":
+            #redefinition of path to traces needed.. depends on folder structure
+            #
+            # trace ending
             ending_e = "a*.trace"
-                
 
         if  simus == 'coreas':
-            #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
-            posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
-            positions, ID_ant, slopes = _get_positions_coreas(posfile)
-            #print(positions, ID_ant, slopes)
-            
-            inputfile = path+'/inp/SIM'+showerID+'.inp'
-            zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
-           
-            # correction of shower core
-            try:
-                positions = positions + np.array([core[0], core[1], 0.*u.m])
-            except:
-                logger.debug("No core position information availble")
-                
             #redefinition of path to traces
             path=path+'/SIM'+showerID+'_coreas/'
-            
+            # trace ending
             ending_e = "raw_a*.dat"
             
-    
-        #----------------------------------------------------------------------   
-        ### Name of hdf5 file
-        name_all = path+'/../event_'+showerID+'.hdf5'
-    
         ########################
-        # load and store event info
-        ######################## 
-        
-        # load shower info from inp file via dictionary
-        shower = {
-                "ID" : showerID,               # shower ID, number of simulation
-                "primary" : primarytype,        # primary (electron, pion)
-                "energy" : energy,               # eV
-                "zenith" : zen,               # deg (GRAND frame)
-                "azimuth" : azim,                # deg (GRAND frame)
-                "injection_height" : injh,    # m (injection height in the local coordinate system)
-                "task" : task,    # Identification
-                "core" : core,    # m, numpy array, core position
-                "simulation" : simus # coreas or zhaires
-                }
-        ####################################
-        print("shower", shower)
-        logger.info("Shower summary: " + str(shower))
-        
-        #shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-        #positions.write(name_all, path='positions', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-        #slopes.write(name_all, path='slopes', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-        #ID_ant.write(name_all, path='IDs', format="hdf5", append=True,  compression=True,serialize_meta=True)
-   
-        ##hf = h5py.File(name_all, 'w')
-        #hf = h5py.File(name_all, 'w')
-        #hf.create_dataset('positions', data=positions)
-        #hf.create_dataset('slopes', data=slopes)
-        ##hf.create_dataset('ID_ant', data=np.asarray(ID_ant))
-        ##hf.create_dataset('shower', data=shower)
-        ##dset = hf.create_dataset("shower", shower) 
-        #hf.close()
-    
-        a1 = Column(data=np.array(ID_ant), name='ant_ID')
-        b1 = Column(data=positions.T[0], unit=u.m, name='pos_x')
-        c1 = Column(data=positions.T[1], unit=u.m, name='pos_y')
-        d1 = Column(data=positions.T[2], unit=u.m, name='pos_z')  #u.eV, u.deg
-        e1 = Column(data=slopes.T[0], unit=u.deg, name='alpha')
-        f1 = Column(data=slopes.T[1], unit=u.deg, name='beta') 
-        event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower) 
-        event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
-        
-        
-        # for example analysis
+        ### EXAMPLE ANALYSIS ###
+        ########################
         p2p_values=[]
-        trigger=[]
-
+        trigger=[]    
+            
         # loop over existing single antenna files as raw output from simulations
         for ant in tqdm.tqdm(glob.glob(path+ending_e)):
             #print("\n Read in data from ", ant)
@@ -269,7 +299,8 @@ if __name__ == '__main__':
                 
                 ##load info from hdf5 file
                 #path_hdf5=name
-                #efield1, time_unit, efield_unit, shower, position = _load_to_array(path_hdf5, content="efield")
+                #efield1, time_unit, efield_unit, shower, position = _load_to_array(path_hdf5, content="efield", ant="/"+str(ID)+"/")
+                
                 # or convert from existing table to numpy array
                 efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
 
