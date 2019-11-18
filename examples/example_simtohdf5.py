@@ -186,19 +186,25 @@ if __name__ == '__main__':
                 efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
 
                 try:
-                    ## apply only antenna response
-                    voltage = compute_antennaresponse(efield1, shower['zenith'].value, shower['azimuth'].value, alpha=slopes[ant_number,0].value, beta=slopes[ant_number,1].value)
+                    ## apply only antenna response -- the standard applying the antenna response
                     processing_info={'voltage': 'antennaresponse'}
+                    voltage = compute_antennaresponse(efield1, shower['zenith'].value, shower['azimuth'].value, 
+                                                      alpha=slopes[ant_number,0].value, beta=slopes[ant_number,1].value)
+                    
 
                     ## NOTE apply full chain, not only antenna resonse: add noise, filter, digitise
-                    #voltage = standard_processing(efield1, shower['zenith'], shower['azimuth'], 0, 0, False) # alpha = 0, beta = 0
                     #processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
-                        
-                    volt_table = _table_voltage(voltage, pos=positions[ant_number].value.tolist(), slopes=slopes[ant_number].value.tolist() ,info=processing_info, save=name_all, ant="/"+str(ID)+"/") #v_info )
+                    #voltage=standard_processing(efield1, shower['zenith'].value, shower['azimuth'].value, 
+                                                #alpha=slopes[ant_number,0].value, beta=slopes[ant_number,1].value,
+                                                #processing=processing_info["voltage"], DISPLAY=0)
+                    
+                    # convert to astropy table and save in hdf5 files
+                    volt_table = _table_voltage(voltage, pos=positions[ant_number].value.tolist(), slopes=slopes[ant_number].value.tolist()     
+                                                ,info=processing_info, save=name_all, ant="/"+str(ID)+"/")
                         
                 except: 
-                        print("====== ATTENTION: ValueError raised for a"+str(ant_number) + " --- check computevoltage =======")
-                        logger.error("ValueError raised for a"+str(ant_number) + "--- check computevoltage")
+                    print("====== ATTENTION: ValueError raised for a"+str(ant_number) + " --- check computevoltage =======")
+                    logger.error("ValueError raised for a"+str(ant_number) + "--- check computevoltage")
                 
                 
                 ##############################
