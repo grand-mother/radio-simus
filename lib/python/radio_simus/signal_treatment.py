@@ -94,6 +94,10 @@ def _trigger(p2p, mode, thrs):
     trig: int
         0 or 1
     '''
+    
+    if type(p2p) is list:
+        p2p = np.array(p2p)
+
 
     if mode == 'any': #there are three modes: any, xy and all
         if p2p[0] >= thrs:
