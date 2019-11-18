@@ -10,7 +10,13 @@ from scipy.fftpack import rfft, irfft, rfftfreq
 import logging
 logger = logging.getLogger("Signal_Processing")
 
+import astropy.units as u
 from .__init__ import Vrms, Vrms2, tsampling
+#assuming units: muV , ns
+Vrms=Vrms.value
+Vrms2=Vrms2.value
+tsampling=tsampling.value
+
 
 __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_create_emptytrace", "run"]
 
@@ -115,13 +121,13 @@ def filters(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
   -----
   At present Butterworth filter only is implemented
   Examples
+  ATTENTION: output traces inversed now
   --------
   ```
   >>> from signal_treatment import _butter_bandpass_filter
   ```
   """
   
-  print("ATTENTION: output traces inversed now")
   t = voltages.T[0]
   # check whether time in s or ns and correct for it
   if t[1]-t[0] > 0.1:
@@ -130,7 +136,7 @@ def filters(voltages, FREQMIN=50.e6, FREQMAX=200.e6):
 
   #fs = 1 / np.mean(np.diff(t))  # Compute frequency step
   fs = round(1 / np.mean(np.diff(t)))  # Compute frequency step
-  print("Trace sampling frequency: ",fs/1e6,"MHz")
+  #print("Trace sampling frequency: ",fs/1e6,"MHz")
   nCh = np.shape(v.T)[1]
   vout = np.zeros(shape=(len(t), nCh))
   res = t
@@ -180,7 +186,9 @@ def _create_emptytrace(nbins=599, tstep=1):
 ##########################################################################
 
 #===========================================================================================================
-def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., DISPLAY=1):
+def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=0., 
+                        processing={'antennaresponse', 'noise', 'filter', 'digitise'},
+                        DISPLAY=1):
         ''' 
         Do the full chain once:
         1. READ IN THE SIMULATED ELECTRIC FIELD TRACE (at higher level) at hand over as parameter
@@ -208,6 +216,8 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
             azimuth of shower in deg (GRAND)
         alpha, beta: float
             antenna angles, optional, in deg
+        processing: list
+            choose the steps: 'antennaresponse', 'noise', 'filter', 'digitise'
         DISPLAY: 0,1
             Plotting option off/on
         
@@ -219,110 +229,110 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
         '''
         import matplotlib.pyplot as plt
         
-        print("TSampling in ns: ", tsampling, " , Vrms in muV: ", Vrms )
+        #print("TSampling in ns: ", tsampling, " , Vrms in muV: ", Vrms )
 
         ### 2. APPLY ANTENNA RESPONSE
-        from radio_simus.computevoltage import get_voltage, compute_antennaresponse
-        trace = compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
-        
-        #### 2b. deconvolve antenna response - still ongoing work
-        #from invert_computevoltage import compute_electicfield
-        #electric = compute_electicfield(trace, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
-        
-        if DISPLAY==1:
-            	    
-            plt.figure(1,  facecolor='w', edgecolor='k')
-            plt.subplot(311)
-            plt.plot(efield.T[0],efield.T[2], label="Ey = EW")
-            plt.plot(efield.T[0],efield.T[1], label="Ex = NS")
-            plt.plot(efield.T[0],efield.T[3], label="Ez = UP")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Electric field (muV/m)')
-            plt.legend(loc='best')
-            plt.subplot(312)
-            plt.plot(trace.T[0],trace.T[2], label="EW")
-            plt.plot(trace.T[0],trace.T[1], label="NS")
-            plt.plot(trace.T[0],trace.T[3], label="Vertical")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Voltage (muV)')
-            plt.legend(loc='best')
-            #plt.subplot(313)
-            #plt.plot(electric[0],electric[2], label="Ey = EW")
-            #plt.plot(electric[0],electric[1], label="Ex = NS")
-            #plt.plot(electric[0],electric[3], label="Ez = UP")
-            #plt.xlabel('Time (nsec)')
-            #plt.ylabel('Electric field (muV/m)')
-            #plt.legend(loc='best')
+        if 'antennaresponse' in processing:
             
-            plt.show()
-            #plt.savefig('voltage_antennaresponse.png', bbox_inches='tight')
+            from radio_simus.computevoltage import  compute_antennaresponse
+            trace = compute_antennaresponse(efield, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
+            
+            #### 2b. deconvolve antenna response - still ongoing work
+            #from invert_computevoltage import compute_electicfield
+            #electric = compute_electicfield(trace, zenith_sim, azimuth_sim, alpha=alpha_sim, beta=beta_sim )
+            
+            if DISPLAY==1:
+                        
+                plt.figure(1,  facecolor='w', edgecolor='k')
+                plt.subplot(311)
+                plt.plot(efield.T[0],efield.T[2], label="Ey = EW")
+                plt.plot(efield.T[0],efield.T[1], label="Ex = NS")
+                plt.plot(efield.T[0],efield.T[3], label="Ez = UP")
+                plt.xlabel('Time (nsec)')
+                plt.ylabel('Electric field (muV/m)')
+                plt.legend(loc='best')
+                plt.subplot(312)
+                plt.plot(trace.T[0],trace.T[2], label="EW")
+                plt.plot(trace.T[0],trace.T[1], label="NS")
+                plt.plot(trace.T[0],trace.T[3], label="Vertical")
+                plt.xlabel('Time (nsec)')
+                plt.ylabel('Voltage (muV)')
+                plt.legend(loc='best')
+                
+                plt.show()
+                #plt.savefig('voltage_antennaresponse.png', bbox_inches='tight')
             
 
         
         ### 3. ADD STATIONARY NOISE (GALACTIC AND GROUND), VRMS(50-200MHz)= 15muV
-        #Vrms = 28 #muV before filtering - NOTE: should be substituted by function returning the value
-        trace = add_noise(trace, vrms=Vrms2) # remove tranposed in signal_treatment
-        
-        if DISPLAY==1:
-            	    
-            plt.figure(2,  facecolor='w', edgecolor='k')
-            plt.plot(trace.T[0],trace.T[1], label="EW")
-            plt.plot(trace.T[0],trace.T[2], label="NS")
-            plt.plot(trace.T[0],trace.T[3], label="Vertical")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Voltage + Noise (muV)')
-            plt.legend(loc='best')
+        if 'noise' in processing:
             
-            plt.show()
-            #plt.savefig('voltage_addnoise.png', bbox_inches='tight')
+            #Vrms = 28 #muV before filtering - NOTE: should be substituted by function returning the value
+            trace = add_noise(trace, vrms=Vrms2) # remove tranposed in signal_treatment
+            
+            if DISPLAY==1:
+                        
+                plt.figure(2,  facecolor='w', edgecolor='k')
+                plt.plot(trace.T[0],trace.T[1], label="EW")
+                plt.plot(trace.T[0],trace.T[2], label="NS")
+                plt.plot(trace.T[0],trace.T[3], label="Vertical")
+                plt.xlabel('Time (nsec)')
+                plt.ylabel('Voltage + Noise (muV)')
+                plt.legend(loc='best')
+                
+                plt.show()
+                #plt.savefig('voltage_addnoise.png', bbox_inches='tight')
 
             
             
         ### 4. FILTER THE TRACE TO THE 50-200MHz WINDOW
-        trace = filters(trace, FREQMIN=50.e6, FREQMAX=200.e6)
-    
-        
-        if DISPLAY==1:
-            	    
-            plt.figure(3,  facecolor='w', edgecolor='k')
-            plt.subplot(211) # time domain
-            plt.plot(trace.T[0],trace.T[1], label="EW")
-            plt.plot(trace.T[0],trace.T[2], label="NS")
-            plt.plot(trace.T[0],trace.T[3], label="Vertical")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Voltage + Noise (muV) - filtered')
-            plt.legend(loc='best')
+        if 'filter' in processing:
             
-            plt.subplot(212) # frequency domain            
-            freqs  = np.fft.rfftfreq(len(trace.T[1]),trace.T[0,1]-trace.T[0,0])
-            plt.plot(freqs,np.abs(np.fft.rfft(trace.T[1])), label="EW")
-            plt.plot(freqs,np.abs(np.fft.rfft(trace.T[2])), label="NS")
-            plt.plot(freqs,np.abs(np.fft.rfft(trace.T[3])), label="Vertical")
-            plt.xlabel('frequency [Hz]')
-            plt.ylabel('Amplitude')
-            plt.legend(loc='best')
+            trace = filters(trace, FREQMIN=50.e6, FREQMAX=200.e6)
+            
+            if DISPLAY==1:
+                        
+                plt.figure(3,  facecolor='w', edgecolor='k')
+                plt.subplot(211) # time domain
+                plt.plot(trace.T[0],trace.T[1], label="EW")
+                plt.plot(trace.T[0],trace.T[2], label="NS")
+                plt.plot(trace.T[0],trace.T[3], label="Vertical")
+                plt.xlabel('Time (nsec)')
+                plt.ylabel('Voltage + Noise (muV) - filtered')
+                plt.legend(loc='best')
+                
+                plt.subplot(212) # frequency domain            
+                freqs  = np.fft.rfftfreq(len(trace.T[1]),trace.T[0,1]-trace.T[0,0])
+                plt.plot(freqs,np.abs(np.fft.rfft(trace.T[1])), label="EW")
+                plt.plot(freqs,np.abs(np.fft.rfft(trace.T[2])), label="NS")
+                plt.plot(freqs,np.abs(np.fft.rfft(trace.T[3])), label="Vertical")
+                plt.xlabel('frequency [Hz]')
+                plt.ylabel('Amplitude')
+                plt.legend(loc='best')
 
-            plt.show()
-            #plt.savefig('voltage_filters.png', bbox_inches='tight')
+                plt.show()
+                #plt.savefig('voltage_filters.png', bbox_inches='tight')
 
 
         ### 5. DIGITIZATION -- 2ns 
-        #trace = digitization(trace,tsampling)
-        trace = Digitization_2(trace,tsampling)
-    
-        if DISPLAY==1:
-            	    
-            plt.figure(4,  facecolor='w', edgecolor='k')
-            plt.plot(trace.T[0],trace.T[1], label="EW")
-            plt.plot(trace.T[0],trace.T[2], label="NS")
-            plt.plot(trace.T[0],trace.T[3], label="Vertical")
-            plt.xlabel('Time (nsec)')
-            plt.ylabel('Voltage + Noise (muV) - digitized')
-            plt.legend(loc='best')
+        if 'digitise' in processing:
             
-            plt.show()
-            #plt.savefig('voltage_digitisation.png', bbox_inches='tight')
-            
+            #trace = digitization(trace,tsampling)
+            trace = Digitization_2(trace,tsampling)
+        
+            if DISPLAY==1:
+                        
+                plt.figure(4,  facecolor='w', edgecolor='k')
+                plt.plot(trace.T[0],trace.T[1], label="EW")
+                plt.plot(trace.T[0],trace.T[2], label="NS")
+                plt.plot(trace.T[0],trace.T[3], label="Vertical")
+                plt.xlabel('Time (nsec)')
+                plt.ylabel('Voltage + Noise (muV) - digitized')
+                plt.legend(loc='best')
+                
+                plt.show()
+                #plt.savefig('voltage_digitisation.png', bbox_inches='tight')
+                
 
         return trace
             
