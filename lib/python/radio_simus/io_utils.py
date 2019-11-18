@@ -415,14 +415,7 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
     '''
     from astropy.table import Table, Column
     
-    #print(voltage.T[0])
-    
     info.update({'position': pos, 'slopes': slopes})
-    #voltage_ant = Table(voltage, names=('Time', 'Vx', 'Vy', 'Vz'), meta=info)
-    #voltage_ant['Time'].unit= 's'
-    #voltage_ant['Vx'].unit= 'muV'
-    #voltage_ant['Vy'].unit= 'muV'
-    #voltage_ant['Vz'].unit= 'muV'
     
     a = Column(data=voltage.T[0],unit=u.ns,name='Time')
     b = Column(data=voltage.T[1],unit=u.u*u.V,name='Vx')
@@ -431,9 +424,21 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
     voltage_ant = Table(data=(a,b,c,d,), meta=info)
     #print(voltage_ant)
     
+    processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
     if save:
-        voltage_ant.write(save, path=ant+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) #
+        if 'antennaresponse' in info['voltage']:
+            path_tmp=ant+'voltages'
+        if 'noise' in info['voltage']:
+            path_tmp=ant+'voltages_noise'
+        if 'filter' in info['voltage']:
+            path_tmp=ant+'filtered'
+        if 'digitise' in info['voltage']:
+            path_tmp=ant+'voltages_digitise'
+        
+        print(save, path_tmp, voltage_ant.meta)
+        voltage_ant.write(save, path=path_tmp, format="hdf5", append=True, compression=True,serialize_meta=True) #
     #if save is None:
+    
     return voltage_ant
 
 #===========================================================================================================
@@ -493,9 +498,143 @@ def load_trace_to_table(path_raw,  pos=None, slopes=None, info={}, content="e", 
         
 #===========================================================================================================
 
-def _load_to_array(path_hdf5, content="efield", ant="/"):
+def _load_eventinfo(path_hdf5):
     """Load data from hdf5 file to numpy array and restore shower info
-       works only with single antenna files -- TODO modification needed
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        shower: list
+            shower parameters etc
+        position: numpy array in m (cross-check)
+            positions of all antennas in array (x,y,z)
+        slopes: numpy array in deg
+            slopes of all antennas in array (alpha, beta)
+
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+           
+    ### Get shower infomation    
+    try:        
+        ID=g.meta['ID'],               # shower ID, number of simulation
+    except:
+        ID=None
+    try:
+        primary=g.meta['primary'],        # primary (electron, pion)
+    except:
+        ID=None
+    try:
+        energy=g.meta['energy'],               # EeV
+    except:
+        energy=None
+    try:
+        zenith=g.meta['zenith'],               # deg (GRAND frame)
+    except:
+        zenith=None
+    try:
+        azimuth=g.meta['azimuth'],                # deg (GRAND frame)
+    except:
+        azimuth=None
+    try:
+        injection_height=g.meta['injection_height'],    # m (injection height in the local coordinate system)
+    except:
+        injection_height=None
+    try:
+        task=g.meta['task'],    # Identification
+    except:
+        task=None
+    try:
+        core=g.meta['core'],    # m, numpy array, core position
+    except:
+        core=None
+    try:
+        simulation=g.meta['simulation'] # coreas or zhaires
+    except:
+        simulation=None
+
+    shower = {
+        "ID" : ID[0],               # shower ID, number of simulation
+        "primary" : primary[0],        # primary (electron, pion)
+        "energy" : energy[0],               # EeV
+        "zenith" : zenith[0],               # deg (GRAND frame)
+        "azimuth" : azimuth[0],                # deg (GRAND frame)
+        "injection_height" : injection_height[0],    # m (injection height in the local coordinate system)
+        "task" : task[0],    # Identification
+        "core" : core[0],    # m, numpy array, core position
+        "simulation" : simulation # coreas or zhaires
+        }
+    
+    try:
+        ant_ID=g["ant_ID"]
+    except:
+        ant_ID=None
+    
+    try:
+        positions=np.array([g["pos_x"], g["pos_y"],g["pos_z"]])*g["pos_x"].T.unit
+    except:
+        positions=None
+    
+    try:
+        slopes=np.array([g["alpha"], g["beta"]]).T*g["alpha"].unit
+    except:
+        slopes=None
+    
+    return shower, positions, slopes
+
+#===========================================================================================================
+
+def _load_path(path_hdf5, path="/analysis"):
+    """Load data from hdf5 file and restores infomation on analysis
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+        path: str (default set)
+            
+            
+   Returns
+   ---------
+        astropy table 
+            returns content of selected path
+        info
+            returns table infomation
+        meta: dict
+            
+    """
+            
+    from astropy.table import Table
+    
+    f=None
+    info=None
+    meta=None
+    try:
+        f=Table.read(path_hdf5, path=path)
+        try:
+            info=f.info
+        except:
+            print("Info on", path," not availble")
+        try:
+            meta=f.meta
+        except:
+            print("Meta on ", path," not availble")
+    except:
+        logger.warning(path_hdf5, " could not be loaded in _load_path")
+    
+    return f, info, meta
+    
+    
+#===========================================================================================================
+
+def _load_to_array(path_hdf5, content="efield", ant="/"):
+    """Load data from hdf5 file to numpy array and restore traces
 
    Parameters
    ---------
@@ -512,33 +651,17 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
             unit of time column
         efield['Ex'] or voltage['Vx'].unit: str
             unit of efield or voltage field
-        shower: list
-            shower parameters etc
         position: numpy array in m (cross-check)
+            position of the antenna
         slopes: numpy array in deg
+            slopes of the antenna
     """   
     from astropy.table import Table
     
     if content=="efield" or content=="e":
-        efield=Table.read(path_hdf5, path=ant+"efield")
-        efield1=np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']])
+        efield=Table.read(path_hdf5, path=ant+"/efield")
+        efield1=np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']]).T
         #print(efield.T[0], efield.T[1])
-    
-        try:
-            shower = {
-                "ID" : efield.meta['ID'],               # shower ID, number of simulation
-                "primary" : efield.meta['primary'],        # primary (electron, pion)
-                "energy" : efield.meta['energy'],               # EeV
-                "zenith" : efield.meta['zenith'],               # deg (GRAND frame)
-                "azimuth" : efield.meta['azimuth'],                # deg (GRAND frame)
-                "injection_height" : efield.meta['injection_height'],    # m (injection height in the local coordinate system)
-                "task" : efield.meta['task'],    # Identification
-                "core" : efield.meta['core'],    # m, numpy array, core position
-                "simulation" : efield.meta['simulation'] # coreas or zhaires
-                }
-        except:
-            print("NOTE: shower info not contained")
-            shower=None
             
         try:
             position=efield.meta['position']
@@ -550,33 +673,17 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
             slopes=None
 
         # TODO do we one to return atsropy units...
-        return efield1, efield['Time'].unit, efield['Ex'].unit, shower, position, slopes
+        return efield1, efield['Time'].unit, efield['Ex'].unit, position, slopes
     
     if content=="voltages" or content=="v":
         try:
-            voltage=Table.read(path_hdf5, path=ant+"voltages")
-            voltage1=np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']])
+            voltage=Table.read(path_hdf5, path=ant+"/voltages")
+            voltage1=np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']]).T
             #print(voltage.T[0], voltage.T[1])
         except:
             print("Voltages not found")
             voltage=None
             voltage1=None
-            
-        try:
-            shower = {
-                "ID" : voltage.meta['ID'],               # shower ID, number of simulation
-                "primary" : voltage.meta['primary'],        # primary (electron, pion)
-                "energy" : voltage.meta['energy'],               # EeV
-                "zenith" : voltage.meta['zenith'],               # deg (GRAND frame)
-                "azimuth" : voltage.meta['azimuth'],                # deg (GRAND frame)
-                "injection_height" : voltage.meta['injection_height'],    # m (injection height in the local coordinate system)
-                "task" : voltage.meta['task'],    # Identification
-                "core" : voltage.meta['core'],    # m, numpy array, core position
-                "simulation" : voltage.meta['simulation'] # coreas or zhaires
-                }
-        except:
-            print("NOTE: shower info not contained")
-            shower=None
         
         try:
             position=voltage.meta['position']
@@ -587,9 +694,108 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
         except IOError:
             slopes=None
         
-        
         # TODO do we one to return atsropy units...
-        return voltage1, voltage['Time'].unit, voltage['Vx'].unit, shower, position, slopes
+        return voltage1, voltage['Time'].unit, voltage['Vx'].unit, position, slopes
+
+
+
+#def _load_to_array(path_hdf5, content="efield", ant="/"):
+    #"""Load data from hdf5 file to numpy array and restore shower info
+       #works only with single antenna files -- TODO modification needed
+
+   #Parameters
+   #---------
+        #path_hdf5: str 
+            #path to hdf5 file 
+        #content: str 
+            #grep efield or voltages traces
+
+   #Returns
+   #---------
+        #efield1 or voltage1: numpy array
+            #containing the electric field or voltage trace trace: time, Ex, Ey, Ez or time, Vx, Vy, Vz
+        #efield['Time'] or voltage['Time'].unit: str
+            #unit of time column
+        #efield['Ex'] or voltage['Vx'].unit: str
+            #unit of efield or voltage field
+        #shower: list
+            #shower parameters etc
+        #position: numpy array in m (cross-check)
+        #slopes: numpy array in deg
+    #"""   
+    #from astropy.table import Table
+    
+    #if content=="efield" or content=="e":
+        #efield=Table.read(path_hdf5, path=ant+"efield")
+        #efield1=np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']])
+        ##print(efield.T[0], efield.T[1])
+    
+        #try:
+            #shower = {
+                #"ID" : efield.meta['ID'],               # shower ID, number of simulation
+                #"primary" : efield.meta['primary'],        # primary (electron, pion)
+                #"energy" : efield.meta['energy'],               # EeV
+                #"zenith" : efield.meta['zenith'],               # deg (GRAND frame)
+                #"azimuth" : efield.meta['azimuth'],                # deg (GRAND frame)
+                #"injection_height" : efield.meta['injection_height'],    # m (injection height in the local coordinate system)
+                #"task" : efield.meta['task'],    # Identification
+                #"core" : efield.meta['core'],    # m, numpy array, core position
+                #"simulation" : efield.meta['simulation'] # coreas or zhaires
+                #}
+        #except:
+            #print("NOTE: shower info not contained")
+            #shower=None
+            
+        #try:
+            #position=efield.meta['position']
+        #except IOError:
+            #position=None
+        #try:
+            #slopes=efield.meta['slopes']
+        #except IOError:
+            #slopes=None
+
+        ## TODO do we one to return atsropy units...
+        #return efield1, efield['Time'].unit, efield['Ex'].unit, shower, position, slopes
+    
+    #if content=="voltages" or content=="v":
+        #try:
+            #voltage=Table.read(path_hdf5, path=ant+"voltages")
+            #voltage1=np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']])
+            ##print(voltage.T[0], voltage.T[1])
+        #except:
+            #print("Voltages not found")
+            #voltage=None
+            #voltage1=None
+            
+        #try:
+            #shower = {
+                #"ID" : voltage.meta['ID'],               # shower ID, number of simulation
+                #"primary" : voltage.meta['primary'],        # primary (electron, pion)
+                #"energy" : voltage.meta['energy'],               # EeV
+                #"zenith" : voltage.meta['zenith'],               # deg (GRAND frame)
+                #"azimuth" : voltage.meta['azimuth'],                # deg (GRAND frame)
+                #"injection_height" : voltage.meta['injection_height'],    # m (injection height in the local coordinate system)
+                #"task" : voltage.meta['task'],    # Identification
+                #"core" : voltage.meta['core'],    # m, numpy array, core position
+                #"simulation" : voltage.meta['simulation'] # coreas or zhaires
+                #}
+        #except:
+            #print("NOTE: shower info not contained")
+            #shower=None
+        
+        #try:
+            #position=voltage.meta['position']
+        #except IOError:
+            #position=None
+        #try:
+            #slopes=voltage.meta['slopes']
+        #except IOError:
+            #slopes=None
+        
+        
+        ## TODO do we one to return atsropy units...
+        #return voltage1, voltage['Time'].unit, voltage['Vx'].unit, shower, position, slopes
 
     
 
@@ -597,7 +803,7 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
 
 
 def load_event_info(path, showerID, simus, name_all=None):
-    """Load data from event to hdf5 file
+    """Load data from simulation to hdf5 file
 
    Parameters
    ---------
@@ -621,102 +827,103 @@ def load_event_info(path, showerID, simus, name_all=None):
         ID_ant: numpy array
             slopes of whole array [alphha,beta]
 
-        save hdf5 file with event table and meta data if name_all !=None
+        saves hdf5 file with event table and meta data if name_all !=None
 
    """     
     
-        if simus == 'zhaires':
-            ####################################### NOTE zhaires --- THOSE HAS TO BE UPDATED
-            # Get the antenna positions from file
-            positions = np.loadtxt(path+"antpos.dat")
-            ID_ant = []
-            slopes = []
-            # TODO adopt reading in positions, ID_ant and slopes to coreas style - read in from SIM*info    
-            #posfile = path +'SIM'+str(showerID)+'.info'
-            #positions, ID_ant, slopes = _get_positions_coreas(posfile)
-            ##print(positions, ID_ant, slopes)
+    if simus == 'zhaires':
+        ####################################### NOTE zhaires --- THOSE HAS TO BE UPDATED
+        # Get the antenna positions from file
+        positions = np.loadtxt(path+"antpos.dat")
+        ID_ant = []
+        slopes = []
+        # TODO adopt reading in positions, ID_ant and slopes to coreas style - read in from SIM*info    
+        #posfile = path +'SIM'+str(showerID)+'.info'
+        #positions, ID_ant, slopes = _get_positions_coreas(posfile)
+        ##print(positions, ID_ant, slopes)
                 
-            # Get shower info
+        # Get shower info
+        inputfile = path+showerID+'.inp'
+        #inputfile = path+"/inp/"+showerID+'.inp'
+        #print("Check inputfile path: ", inputfile)
+        try:
+            zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
+        except:
+            print("no TASK, no CORE")
             inputfile = path+showerID+'.inp'
-            #inputfile = path+"/inp/"+showerID+'.inp'
-            #print("Check inputfile path: ", inputfile)
-            try:
-                zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
-            except:
-                print("no TASK, no CORE")
-                inputfile = path+showerID+'.inp'
-                zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
-                task=None
-                core=None 
+            zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
+            task=None
+            core=None 
             
-            # correction of shower core
-            try:
-                positions = positions + np.array([core[0], core[1], 0.])
-            except:
-                print("positions not corrected for core")
-                
-            ending_e = "a*.trace"
+        # correction of shower core
+        try:
+            positions = positions + np.array([core[0], core[1], 0.])
+        except:
+            print("positions not corrected for core")
+        
+        ending_e = "a*.trace"
                 
 
-        if  simus == 'coreas':
-            #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
-            posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
-            positions, ID_ant, slopes = _get_positions_coreas(posfile)
-            #print(positions, ID_ant, slopes)
+    if  simus == 'coreas':
+        #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
+        posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
+        positions, ID_ant, slopes = _get_positions_coreas(posfile)
+        #print(positions, ID_ant, slopes)
             
-            inputfile = path+'/inp/SIM'+showerID+'.inp'
-            zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
+        inputfile = path+'/inp/SIM'+showerID+'.inp'
+        zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
            
-            # correction of shower core
-            try:
-                positions = positions + np.array([core[0], core[1], 0.*u.m])
-            except:
-                logger.debug("No core position information availble")
+        # correction of shower core
+        try:
+            positions = positions + np.array([core[0], core[1], 0.*u.m])
+        except:
+            logger.debug("No core position information availble")
     
         #----------------------------------------------------------------------   
 
         
-        # load shower info from inp file via dictionary
-        shower = {
-                "ID" : showerID,               # shower ID, number of simulation
-                "primary" : primarytype,        # primary (electron, pion)
-                "energy" : energy,               # eV
-                "zenith" : zen,               # deg (GRAND frame)
-                "azimuth" : azim,                # deg (GRAND frame)
-                "injection_height" : injh,    # m (injection height in the local coordinate system)
-                "task" : task,    # Identification
-                "core" : core,    # m, numpy array, core position
-                "simulation" : simus # coreas or zhaires
-                }
+    # load shower info from inp file via dictionary
+    shower = {
+            "ID" : showerID,               # shower ID, number of simulation
+            "primary" : primarytype,        # primary (electron, pion)
+            "energy" : energy,               # eV
+            "zenith" : zen,               # deg (GRAND frame)
+            "azimuth" : azim,                # deg (GRAND frame)
+            "injection_height" : injh,    # m (injection height in the local coordinate system)
+            "task" : task,    # Identification
+            "core" : core,    # m, numpy array, core position
+            "simulation" : simus # coreas or zhaires
+            }
         ####################################
-        print("shower", shower)
-        logger.info("Shower summary: " + str(shower))
+    print("shower", shower)
+    logger.info("Shower summary: " + str(shower))
         
-        #shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-        #positions.write(name_all, path='positions', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-        #slopes.write(name_all, path='slopes', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-        #ID_ant.write(name_all, path='IDs', format="hdf5", append=True,  compression=True,serialize_meta=True)
+    #shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+    #positions.write(name_all, path='positions', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+    #slopes.write(name_all, path='slopes', format="hdf5", append=True,  compression=True,serialize_meta=True) 
+    #ID_ant.write(name_all, path='IDs', format="hdf5", append=True,  compression=True,serialize_meta=True)
    
-        ##hf = h5py.File(name_all, 'w')
-        #hf = h5py.File(name_all, 'w')
-        #hf.create_dataset('positions', data=positions)
-        #hf.create_dataset('slopes', data=slopes)
-        ##hf.create_dataset('ID_ant', data=np.asarray(ID_ant))
-        ##hf.create_dataset('shower', data=shower)
-        ##dset = hf.create_dataset("shower", shower) 
-        #hf.close()
+    ##hf = h5py.File(name_all, 'w')
+    #hf = h5py.File(name_all, 'w')
+    #hf.create_dataset('positions', data=positions)
+    #hf.create_dataset('slopes', data=slopes)
+    ##hf.create_dataset('ID_ant', data=np.asarray(ID_ant))
+    ##hf.create_dataset('shower', data=shower)
+    ##dset = hf.create_dataset("shower", shower) 
+    #hf.close()
     
-        if name_all is not None:
-            a1 = Column(data=np.array(ID_ant), name='ant_ID')
-            b1 = Column(data=positions.T[0], unit=u.m, name='pos_x')
-            c1 = Column(data=positions.T[1], unit=u.m, name='pos_y')
-            d1 = Column(data=positions.T[2], unit=u.m, name='pos_z')  #u.eV, u.deg
-            e1 = Column(data=slopes.T[0], unit=u.deg, name='alpha')
-            f1 = Column(data=slopes.T[1], unit=u.deg, name='beta') 
-            event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower) 
-            event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
-            print("Event info saved in: ", name_all)
+    if name_all is not None:
+        from astropy.table import Table, Column
+        a1 = Column(data=np.array(ID_ant), name='ant_ID')
+        b1 = Column(data=positions.T[0], unit=u.m, name='pos_x')
+        c1 = Column(data=positions.T[1], unit=u.m, name='pos_y')
+        d1 = Column(data=positions.T[2], unit=u.m, name='pos_z')  #u.eV, u.deg
+        e1 = Column(data=slopes.T[0], unit=u.deg, name='alpha')
+        f1 = Column(data=slopes.T[1], unit=u.deg, name='beta') 
+        event_info = Table(data=(a1,b1,c1,d1,e1,f1,), meta=shower) 
+        event_info.write(name_all, path='event', format="hdf5", append=True,  compression=True, serialize_meta=True)
+        print("Event info saved in: ", name_all)
 
-        return shower, ID_ant, positions, slopes
+    return shower, ID_ant, positions, slopes
 
 
