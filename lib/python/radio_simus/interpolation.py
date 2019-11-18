@@ -683,20 +683,12 @@ def main():
         
     # path to list of desied antenna positions, traces will be stored in that corresponding folder
     #desired  = sys.argv[1]
-    #desired = "/home/laval1NS/zilles/Test_inter/desired.list"
     desired="/home/laval1NS/zilles/Test_inter/ForKumiko/Stshp_XmaxLibrary_0.1995_66.422_0_Gamma_17/Test/desired.dat"
-    # Antenna positions of already finished simulation which acts as basis- traces shall be in this folder as well
-    #array = "/home/laval1NS/zilles/Claire_simus/CR190_77deg_flat/CR190_77deg_flat_0/antpos.dat"
-    #array = "/home/laval1NS/zilles/Claire_simus/GRAND_antenna.list"
+    # underlaying array with simulated positions
     array = "/home/laval1NS/zilles/Test_inter/ForKumiko/Stshp_XmaxLibrary_0.1995_66.422_0_Gamma_17/antpos.dat"
-    # Shower directions in deg and GRAND convention
-    #zenith = (180-77.) # GRAND deg
-    #azimuth = 180+40 # GRAND deg 
-    #phigeo=0., thetageo=152.95,
-    
+    # Shower directions in deg and GRAND convention    
     zenith = (180-66.4) # GRAND deg
     azimuth = 180+0 # GRAND deg
-    #7.43 deg 0.72 deg
     
     
     # call the interpolation: Angles of magnetic field and shower core information needed, but set to default values
