@@ -303,6 +303,7 @@ def get_LDF(trace,p,v,core=np.array([0.,0.,0.])):
     
     #return distance to axis, Amplitude # in shower plane
     return 0
+#============================================================================
     
     
 def correction()
@@ -314,7 +315,7 @@ def correction()
 
 
 def correct_EarlyLate(trace):
-    ''' correct for earlz late effect, following the approch given arxiv:1808.00729 in for the energy fluence
+    ''' correct for early late effect, following the approch given arxiv:1808.00729 in for the energy fluence
     
         energy fluence [corrected in shower plane] = energy fluence [ sim. at ground] *factor**2
         -> for amplitude only: amp [corrected] = amp. [sim.] * factor ... 
@@ -338,9 +339,52 @@ def correct_EarlyLate(trace):
     
     return 0
     
+#============================================================================
     
 def correct_chargeexcess():
-    ''' following soon'''
+    ''' following soon
+    # get the strength of the charge excess wrt to geomagnetic
+    # charge excess fraction is a sin(alpha) |Ec|/|Eg|
+    # alpha=angle between B and v, Ec and Eg field accoridng askaryan and geomagnetic effect
+    # correction done in time and for each position
+    '''
+    return 0
+
+#============================================================================
+
+def get_polarisation_vector(trace, zen, azim, phigeo, thetageo):
+    # rotate electric field trace in shower coordinates, use frame.py for it
+    # get polarisation:
+    # get EvxB as horizontal component along propagtion direction: trace, max()
+    # and EvxvxB as vertical component along propagtion direction: trace, max()
+    # how to handle curvature of wavefront... work with line of sight...
+    
+    #B = np.array([np.cos(phigeo)*np.sin(inc), np.sin(phigeo)*np.sin(inc),np.cos(inc)]) 
+    #B=B/np.linalg.norm(B)
+
+    #v = np.array([np.cos(az)*np.sin(zen),np.sin(az)*np.sin(zen),np.cos(zen)]) 
+    #v=v/np.linalg.norm(v)
+    ##print v
+
+    #vxB = np.cross(v,B)
+    #vxB = vxB/np.linalg.norm(vxB)
+    #vxvxB = np.cross(v,vxB) 
+    #vxvxB = vxvxB/np.linalg.norm(vxvxB)
+    
+    ## rotation to showeframe
+    #Eshower= np.zeros([len(txt1.T[1]),3])
+    #Eshower.T[0]= txt1.T[1]* v[0] +txt1.T[2]*v[1]+ txt1.T[3]*v[2]
+    #Eshower.T[1]= txt1.T[1]* vxB[0] +txt1.T[2]*vxB[1]+ txt1.T[3]*vxB[2]
+    #Eshower.T[2]= txt1.T[1]* vxvxB[0] +txt1.T[2]*vxvxB[1]+ txt1.T[3]*vxvxB[2]
+    
+    from frame import get_rotation
+    # rotation in shower coordinates
+    R = get_rotation(zen, azim, phigeo, thetageo)
+    #Eshower=(Ev, EvxB, EvxvxB)
+    Eshower = np.dot(trace[:,1:], R)
+    
+    
+    
     return 0
     
 #-------------------------------------------------------------------
