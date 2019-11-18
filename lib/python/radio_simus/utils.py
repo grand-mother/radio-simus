@@ -221,37 +221,48 @@ def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.
 		#f += (nyquist_domain-1)*fmax
 	#return f
 
-#"""
-#A wrapper around the numpy fft routines to achive a coherent normalization of the fft
-#As we have real valued data in the time domain, we use the 'real ffts' that omit the negative frequencies in Fourier 
-#space. To account for the missing power in the frequency domain, we multiply the frequency spectrum by sqrt(2), 
-#and divide the iFFT with 1/sqrt(2) accordingly. Then, a calculation of the power leads the same result in 
-#the time and frequency domain, i.e.
-#np.sum(trace**2) * dt = np.sum(spec**2) * df
-#"""
+#===========================================================================================================
 
-
-#def time2freq(trace):
-    #'''
-    #forward FFT with corrected normalization to conserve power.
-    #-- additional sqrt(2) needed to account for omitted negative frequencies 
-    #Arguments:
-    #----------
+def time2freq(trace):
+    '''
+    Conversion time to frequency domain
     
-    #'''
-    #return np.fft.rfft(trace, axis=-1) * 2 ** 0.5 
-
-
-#def freq2time(spectrum, n=None):
-    #"""
-    #performs backward FFT with correct normalization that conserves the power
+    Goal: coherent normalization of the fft: np.sum(trace**2) * dt = np.sum(spectrum**2) * df
+        forward FFT with corrected normalization to conserve power.
+        -- additional sqrt(2) needed to account for omitted negative frequencies when using "real fft"
     
-    #Parameters
-    #----------
-    #spectrum: complex np array
-        #the frequency spectrum
-    #n: int
-        #the number of sample in the time domain (relevant if time trace has an odd number of samples)
-    #"""
-    #return np.fft.irfft(spectrum, axis=-1, n=n) / 2 ** 0.5
+    Arguments:
+    ----------
+    trace: numpy array
+        trace in time domain
+        
+    Returns:
+        numpy array
+        trace in frequency domain
+        
+    ToDO: check units
+    
+    '''
+    return np.fft.rfft(trace, axis=-1) * 2 ** 0.5 
+
+#===========================================================================================================
+
+def freq2time(spectrum, n=None):
+    """
+    Conversion frequency to time domain
+    
+    Goal: coherent normalization of the fft: np.sum(trace**2) * dt = np.sum(spectrum**2) * df
+        performs backward FFT with correct normalization that conserves the power
+        -- addional division 1/sqrt(2) to account for omitted negative frequencies when using "real fft"
+    
+    Arguments
+    ----------
+    spec: complex np array
+        the frequency spectrum
+    n: int
+        the number of sample in the time domain (relevant if time trace has an odd number of samples)
+        
+        
+    """
+    return np.fft.irfft(spectrum, axis=-1, n=n) / 2 ** 0.5
 
