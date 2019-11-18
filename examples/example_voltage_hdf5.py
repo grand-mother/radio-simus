@@ -18,9 +18,9 @@ from os.path import split, join, realpath
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 
-from radio_simus.computevoltage import get_voltage, compute_antennaresponse
-from radio_simus.signal_processing import run
-from radio_simus.in_out import _table_voltage,_load_to_array
+from radio_simus.computevoltage import  compute_antennaresponse
+from radio_simus.signal_processing import standard_processing
+from radio_simus.io_utils import _table_voltage,_load_to_array, _load_eventinfo, _load_path
 #from radio_simus.in_out import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
 
 
@@ -28,11 +28,16 @@ if __name__ == '__main__':
 
     if ( len(sys.argv)<1 ):
         print("""
-        Example how to read in an electric field apply antenna response ("voltages") and/or the full chain ("voltages_full")
+        Example how to read in an electric field from hdf5 
+        apply antenna response ("voltages":'antennaresponse') or the full chain ("voltages": (...) )
+        and store the voltage trace in hdf5 file
         
         Usage for full antenna array:
         usage: python example_voltage_hdf5.py <path to event folder> 
-        example: python eexample_voltage_hdf5.py ./ coreas
+        example: python example_voltage_hdf5.py ./ 
+        
+        Note: signal processing chain hardcoded, see 
+            processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
         
         """)
         sys.exit(0)
@@ -41,29 +46,39 @@ if __name__ == '__main__':
 
     ###########################
 
+    #path to folder with hdf5 event files
     directory = sys.argv[1]
+    
+    #processing_info={'voltage': 'antennaresponse'} # calls only compute_antennaresponse
+    processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
 
-    for file in glob.glob(directory+"*.hdf5"):
+
+    for file in glob.glob(directory+"*.hdf5"): # loop over files in folder
         print("\n")
         print(file)
+
+        # get information on event -- in principle not needed here
+        shower, positions, slopes = _load_eventinfo(file)
+        #print( len(positions[0]) , "antenna positions simulated in Event ", shower["ID"])
+        #print("ANALYSIS: ")
+        #analysis = _load_path(file, path="/analysis")
         
-        ##load info from hdf5 file
-        path_hdf5=file
-        efield1, time_unit, efield_unit, shower, position, slopes = _load_to_array(path_hdf5, content="efield")
-        ## or convert from existing table to numpy array
-        #efield1=np.array([a['Time'], a['Ex'], a['Ey'], a['Ez']]).T
-        efield=efield1.T
+        f = h5py.File(file, 'a') # open event files
+        for ID in f.keys(): #loop over antennas in event
+            try:
+                print(ID)
+                efield, time_unit, efield_unit, ant_position, ant_slopes = _load_to_array(file, content="efield", ant=ID)
                 
-        ## apply only antenna response
-        #voltage = compute_antennaresponse(efield1, shower['zenith'], shower['azimuth'], alpha=slopes[0], beta=slopes[1] )
-        #shower.update({'voltage': 'antennaresponse'})
-        #keyword='voltages'
+                # apply voltage treatment
+                voltage=standard_processing(efield, shower['zenith'], shower['azimuth'], alpha_sim=ant_slopes[0], beta_sim=ant_slopes[1],
+                                    processing=processing_info["voltage"], DISPLAY=0)
+
+                volt_table = _table_voltage(voltage, pos=ant_position, slopes=ant_slopes ,info=processing_info, 
+                                            save=file, ant="/"+str(ID)+"/") #v_info )
                 
-        ## apply full chain  --- ToDo make antennaresponse optional
-        voltage = run(efield, shower['zenith'], shower['azimuth'], slopes[0], slopes[1], False)
-        shower.update({'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')})
-        keyword='voltages_full'
-                            
-        # load voltage array to table and store in same hdf5 file
-        volt_table = _table_voltage(voltage, pos=position, slopes=slopes ,info=shower )
-        volt_table.write(path_hdf5, path=keyword, format="hdf5", append=True, compression=True,serialize_meta=True) #
+                
+            except:
+                continue
+            
+                
+
