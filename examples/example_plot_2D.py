@@ -44,96 +44,93 @@ root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 import radio_simus 
 from radio_simus.signal_treatment import p2p
+from radio_simus.io_utils import _load_path,_load_to_array, _load_eventinfo_fromhdf
 from radio_simus.__init__ import arrayfile 
 
 
 ### path to full antenna array to plot in the background
-#ant_array = np.loadtxt('/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt',comments="#")
-#print("Loading full array: ", '/home/laval1NS/zilles/CoREAS/regular_array_slopes.txt')
 ant_array = np.loadtxt(arrayfile,comments="#")
 print("Loading full array: ", arrayfile)
 
 
 def plot_2D(path1, key, save=None):
-    ''' Creates a 2D plot of the signal distribution in the array
+    ''' Creates a 2D plot of the signal distribution in the array from hdf5 event file
     '''
+    
 
-    if key == "efield":
-        unit=r'$\mu$V/m'
+    ## get information on event from hdf5 file -- in principle not needed here
+    shower, ant_ID,  positions, slopes = _load_eventinfo_fromhdf(path1)
+    #print( len(positions[0]) , "antenna positions simulated in Event ", shower["ID"])
+        
+    ## get information on analysis already performed
+    analysis, ana_info, ana_meta = _load_path(path1, path="/analysis")
+    
+    # short way -- but works only for voltages
     if key == "voltages":
-        unit=r'$\mu$V'
-    
-    
-    # create an array of simulated observer positions
-    p2p_Ex = []
-    p2p_Ey = []
-    p2p_Ez = []
-    p2p_total = []
+        trigger_any=analysis["trigger_aggr_any"]
+        trigger_xy=analysis["trigger_aggr_xy"]
+        p2p_Ex=analysis["p2p_x"]
+        p2p_Ey=analysis["p2p_y"]
+        p2p_Ez=analysis["p2p_z"]
+        p2p_total=analysis["p2p_xy"]
+        x_pos=positions.T[0]
+        y_pos=positions.T[1]
+        z_pos=positions.T[2]
+        unit=str(analysis["p2p_x"].unit)
+        
+    # long way
+    if key == "efield":   
+        # create an array of simulated observer positions
+        p2p_Ex = []
+        p2p_Ey = []
+        p2p_Ez = []
+        p2p_total = []
 
-    x_pos=[]
-    y_pos=[]
-    z_pos=[]
+        x_pos=[]
+        y_pos=[]
+        z_pos=[]
 
-    trigger_any=[]
-    trigger_xy=[]
-
-    for file in glob.glob(path1+"*.hdf5"):   
-        # get ID and antenna position
-        base=os.path.basename(file)
-        # coreas
-        ID=(os.path.splitext(base)[0]).split("_")[1] # remove table_ 
-
-        try: # load corresponding file
-            txt = Table.read(file, path=key)
-            if key == "efield":
-                keywords = [txt['Time'], txt['Ex'], txt['Ey'], txt['Ez']]
-                ## TODO check units - no idea zet to hanlde it properly
-                #print(" Is efield in muV/m: ",txt['Ex'].unit)
-            if key == "voltages":
-                keywords = [txt['Time'], txt['Vx'], txt['Vy'], txt['Vz']]
-                ## TODO check units - no idea zet to hanlde it properly
-                #print(" Is voltages in muV: ",txt['Vx'].unit)
-            
+        trigger_any=[]
+        trigger_xy=[]
+        
+        f = h5py.File(path1, 'r') # open event files
+        for ID in f.keys(): #loop over antennas in event 
             try:
-                if txt.meta["trigger"][0] ==1:
-                    trigger_any.append(ID)
-                if txt.meta["trigger"][1] ==1:
+                # obtain electric field trace from hdf5 file
+                trace, time_unit, unit, ant_position, ant_slopes = _load_to_array(path1, content=key, ant=ID)
+                unit=str(unit)
+                time_unit=str(time_unit)
+                    
+                # Note: Be aware of that trigger was done on voltages
+                if analysis["trigger_aggr_xy"][np.where(ant_ID==ID)]:
                     trigger_xy.append(ID)
-            except KeyError:
-                print()
-            
-            # get antenna position
-            position = txt.meta['position']
-            x_pos.append(position[0])
-            y_pos.append(position[1])
-            z_pos.append(position[2])
+                if analysis["trigger_aggr_any"][np.where(ant_ID==ID)]:
+                    trigger_any.append(ID)
+                
+                # get antenna position
+                #position = positions[np.where(ant_ID==ID)].value[0]
+                position = ant_position
+                x_pos.append(position[0])
+                y_pos.append(position[1])
+                z_pos.append(position[2])   
+                
+                
+                ## convert astropy table to np array
+                #trace=np.array(keywords).T
+                
+                ## call p2p function 
+                ### or mcuh simpler: call p2p from analysis in hdf outside the loop
+                p2ps = p2p(trace)
+                
+                # now it depends of which parameter we need the peak amplitude: here we go for the peak-to-peak amplitude
+                p2p_Ex.append(p2ps[0])
+                p2p_Ey.append(p2ps[1])
+                p2p_Ez.append(p2ps[2]) 
+                p2p_total.append(p2ps[4])
 
-            # convert astropy table to np array
-            trace=np.array(keywords).T
-
-            ### call p2p function
-            p2ps = p2p(trace)
-            
-            # now it depends of which parameter we need the peak amplitude: here we go for the peak-to-peak amplitude
-            p2p_Ex.append(p2ps[0])
-            p2p_Ey.append(p2ps[1])
-            p2p_Ez.append(p2ps[2]) 
-            p2p_total.append(p2ps[4])
-
-        except IOError: # in case file does not exist
-            print("-- File ", base, " does not exist -> set to empty")
-            #p2p_Ex.append(0.)
-            #p2p_Ey.append(0.)
-            #p2p_Ez.append(0.)
-            #p2p_total.append(0.)
-            
-        #print(x_pos[-1].to(u.m))
-
-
-    ### Missing legend containing shower information
-    #print("meta info on shower:", txt.meta)
-    #if len(trigger_any)>5 or len(trigger_xy)>5:
-        #print(" ===> shower would have triggered: any =", len(trigger_any), " xy = ", len(trigger_xy))
+            except: # in case file does not exist
+                continue
+                
 
     #################
     #PLOTTING SECTION
@@ -168,7 +165,7 @@ def plot_2D(path1, key, save=None):
     fig2 = plt.figure(2,figsize=(9,7), dpi=120, facecolor='w', edgecolor='k')
     
     ax1=fig2.add_subplot(221)
-    plt.title("Event: "+ str(txt.meta["ID"])+"\n #triggered: any ="+ str(len(trigger_any)) + " xy = "+ str(len(trigger_xy)), fontsize=10)
+    plt.title("Event: "+ str(shower["ID"])+"\n #triggered: any ="+ str(len(trigger_any)) + " xy = "+ str(len(trigger_xy)), fontsize=10)
     name = 'NS-component ('+unit+')'
     #plt.title(name)
     ax1.set_xlabel('positions along NS (m)')
@@ -261,17 +258,10 @@ def main():
     path = sys.argv[1]
 
     if sys.argv[2] == 'e' or sys.argv[2] == 'efield':
-        #txt.T[0]: time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all electric field in muV/m
         key = "efield" 
-        #unit=r'$\mu$V/m'
-    #if sys.argv[2] == 'f':
-        ##txt.T[0]: time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all voltage in muV
-        #ending = 'out_*.txt'
-        #unit=r'$\mu$V/m (' + str(f1)+'-'+str(f2)+'MHz)'
     if sys.argv[2] == 'v' or sys.argv[2] == 'voltages':
-        #txt.T[0]: time in ns, txt.T[1]: North-South, txt.T[2]: East-West, txt.T[3]: Up , all electric field in muV/m
         key = "voltages" 
-        #unit=r'$\mu$V'
+
         
         
     plot_2D(path, key, save=None)
