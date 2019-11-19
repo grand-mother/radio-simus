@@ -14,7 +14,6 @@ import logging
 logger = logging.getLogger("In_Out")
 
 from astropy import units as u
-#muV_m = u.u * u.V / u.m
 
 #===========================================================================================================
 #===========================================================================================================
@@ -376,11 +375,6 @@ def _table_efield(efield, pos=None, slopes=None, info={}, save=None, ant="/"):
     from astropy.table import Table, Column
     
     info.update({'position': pos, 'slopes': slopes})
-    #efield_ant = Table(efield, names=('Time', 'Ex', 'Ey', 'Ez'), meta=info)
-    #efield_ant['Time'].unit= 'ns'
-    #efield_ant['Ex'].unit= 'muV/m'
-    #efield_ant['Ey'].unit= 'muV/m'
-    #efield_ant['Ez'].unit= 'muV/m'
     
     a = Column(data=efield.T[0],unit=u.ns,name='Time')
     b = Column(data=efield.T[1],unit=u.u*u.V/u.meter,name='Ex')
@@ -425,7 +419,7 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
     #print(voltage_ant)
     
     processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
-    if save:
+    if save is not None:
         if 'antennaresponse' in info['voltage']:
             path_tmp=ant+'voltages'
         if 'noise' in info['voltage']:
@@ -437,7 +431,6 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
         
         print(save, path_tmp, voltage_ant.meta)
         voltage_ant.write(save, path=path_tmp, format="hdf5", append=True, compression=True,serialize_meta=True) #
-    #if save is None:
     
     return voltage_ant
 
@@ -469,9 +462,7 @@ def load_trace_to_table(path_raw,  pos=None, slopes=None, info={}, content="e", 
         astropy table
     """
     
-    #if suffix==".trace":
     if content=="efield" or content=="e":
-        #path = "{:}/a{:}{:}".format(directory, index, suffix)
         efield = np.loadtxt(path_raw)
         #zhaires: time in ns and efield in muV/m
         if simus=="coreas": 
@@ -482,17 +473,11 @@ def load_trace_to_table(path_raw,  pos=None, slopes=None, info={}, content="e", 
             efield.T[3]*=2.99792458e4* 1.e6
             
         efield_ant = _table_efield(efield, pos=pos, slopes=slopes, info=info, save=save, ant=ant)
-    #if suffix==".dat":
     if content=="voltages" or content=="v":
-        #path = "{:}/out_{:}{:}".format(directory, index, suffix)
         voltage = np.loadtxt(path_raw)
-        efield_ant = _table_voltage(voltage, pos)
+        efield_ant = _table_voltage(voltage, pos, slopes=slopes, info=info, save=save, ant=ant)
     
-    #if save:
-        #if content=="efield" or content=="e":
-            #efield_ant.write(save, path=ant+'efield', format="hdf5", append=True,  compression=True,serialize_meta=True) #
-        #if content=="voltages" or content=="v":
-            #efield_ant.write(save, path=ant+'voltages', format="hdf5", append=True, compression=True,serialize_meta=True) #
+
         
     return efield_ant
         
@@ -656,6 +641,7 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
         slopes: numpy array in deg
             slopes of the antenna
     """   
+    
     from astropy.table import Table
     
     if content=="efield" or content=="e":
@@ -898,19 +884,7 @@ def load_event_info(path, showerID, simus, name_all=None):
     print("shower", shower)
     logger.info("Shower summary: " + str(shower))
         
-    #shower.write(name_all, path='event', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-    #positions.write(name_all, path='positions', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-    #slopes.write(name_all, path='slopes', format="hdf5", append=True,  compression=True,serialize_meta=True) 
-    #ID_ant.write(name_all, path='IDs', format="hdf5", append=True,  compression=True,serialize_meta=True)
-   
-    ##hf = h5py.File(name_all, 'w')
-    #hf = h5py.File(name_all, 'w')
-    #hf.create_dataset('positions', data=positions)
-    #hf.create_dataset('slopes', data=slopes)
-    ##hf.create_dataset('ID_ant', data=np.asarray(ID_ant))
-    ##hf.create_dataset('shower', data=shower)
-    ##dset = hf.create_dataset("shower", shower) 
-    #hf.close()
+
     
     if name_all is not None:
         from astropy.table import Table, Column

@@ -21,7 +21,6 @@ sys.path.append(join(root_dir, "lib", "python"))
 from radio_simus.computevoltage import  compute_antennaresponse
 from radio_simus.signal_processing import standard_processing
 from radio_simus.io_utils import _table_voltage,_load_to_array, _load_eventinfo, _load_path
-#from radio_simus.in_out import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table
 
 
 if __name__ == '__main__':
@@ -49,6 +48,7 @@ if __name__ == '__main__':
     #path to folder with hdf5 event files
     directory = sys.argv[1]
     
+    ## choose the steps in processing of electric field
     #processing_info={'voltage': 'antennaresponse'} # calls only compute_antennaresponse
     processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
 
@@ -57,27 +57,29 @@ if __name__ == '__main__':
         print("\n")
         print(file)
 
-        # get information on event -- in principle not needed here
+        ## get information on event from hdf5 file -- in principle not needed here
         shower, positions, slopes = _load_eventinfo(file)
         #print( len(positions[0]) , "antenna positions simulated in Event ", shower["ID"])
-        #print("ANALYSIS: ")
+        
+        ## get information on analysis already performed
         #analysis = _load_path(file, path="/analysis")
         
         f = h5py.File(file, 'a') # open event files
         for ID in f.keys(): #loop over antennas in event
             try:
                 print(ID)
+                # obtain electric field trace from hdf5 file
                 efield, time_unit, efield_unit, ant_position, ant_slopes = _load_to_array(file, content="efield", ant=ID)
                 
                 # apply voltage treatment
                 voltage=standard_processing(efield, shower['zenith'], shower['azimuth'], alpha_sim=ant_slopes[0], beta_sim=ant_slopes[1],
                                     processing=processing_info["voltage"], DISPLAY=0)
-
+                # save trace in hdf5 file
                 volt_table = _table_voltage(voltage, pos=ant_position, slopes=ant_slopes ,info=processing_info, 
-                                            save=file, ant="/"+str(ID)+"/") #v_info )
+                                            save=file, ant="/"+str(ID)+"/") 
                 
                 
-            except:
+            except: # skips all the keys which are not antenna files
                 continue
             
                 
