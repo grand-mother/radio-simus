@@ -8,8 +8,8 @@ import logging
 logger = logging.getLogger("Modules")
 
 
-from __init__ import phigeo, thetageo
-#from .__init__ import phigeo, thetageo
+#from __init__ import phigeo, thetageo
+from .__init__ import phigeo, thetageo
 
 #__all__ = ["compute_ZL", "TopoToAntenna", "_getXmax", "_dist_decay_Xmax"]
 
@@ -141,6 +141,7 @@ def _dist_decay_Xmax(zen, injh2, Xmax_primary):
 
 def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0, core=np.array([0.,0.,0.])):
     ''' Calculates vector to Xmax position
+    ---> this does not yet work correctly dor CR....
     
     Arguments:
     ----------
@@ -170,7 +171,7 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0, core=np.array
             -- origin defined at (0,0,0)m at the moment
            accepts only proton and iron primaries currently
     TODO: *add the option for a shower_core != (0,0,0)
-          * cross check the output with matias simulations
+          *cross check the output with matias simulations
         
     '''
     Xmax_primary = _getXmax(primary, energy)
@@ -205,7 +206,9 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0, core=np.array
         
         # Assume that position vector == shower core at (0,0,0) and flip direction of shower
         # TODO: allow a shower_core != (0,0,0)
+        #new = float(ai -b) *u_sh, # with b as the full slanted distance to top atmosphere at that zenith 
         new = float(ai) *-u_sh 
+        #print(Xmax_primary, h, float(ai), -u_sh)
     try:
         return new
     except:
@@ -214,7 +217,7 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0, core=np.array
 
 def _get_CRzenith(zen,injh,GdAlt):
     ''' Corrects the zenith angle for CR respecting Earth curvature, zenith seen by observer
-        ---fix for CR (zenith computed @ shower core positionk
+        ---fix for CR (zenith computed @ shower core position
     
     Arguments:
     ----------
