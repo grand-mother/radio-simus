@@ -2,21 +2,38 @@
 Collection of example scripts using the python radio-simus library 
 A list of not-fully-ready, but somehow usable scripts:
     
-    example_simtohdf5.py: Script loops over event folders and produces hdf5 files per antenna, containing efield and voltage trace (only tested with coreas   
-    simulation so far)
-        -- There are several options to choose in the script -> please see the comments in the script
+    example_simtohdf5.py: Script loops over event folders and produces hdf5 files per event, containing efield and voltage trace (only tested with coreas simulation so far)
+        -- reads in simulations (only coreas tested), stores event info and efield traces in one hdf5 file
+        -- performs voltage computation and saves trace in hdf5 file (optional)
+        -- performs little analysis on triggering and stores it in hdf5 file (optional)
+        -- coomented: some additional comments to use atsropy tables etc
     Usage: python example_simtohdf5.py <path to event folders> <zhaires/coreas>
     
-    example_usingclass.py:  Example on how to use classes shower and detector, read-in only hdf5 format, single antenna files so far
-        -- Analysis trigger for events, create a list of events (class objects) and  trigger 1/0 to class attributes
+    example_usingclass.py:  Example on how to use classes shower and detector, read-in only hdf5 format, all-antenna files
+        -- reads in analysis trigger for events, create a list of events (class objects) and  trigger 1/0 to class attributes
         -- create a png with statistic for triggering
+        -- Note: a plot of voltage distribution in in 2d would be nice --> TODO list
     Usage: python3 example_usingclass.py <folder event set>
     
     example_plot_2D.py: Example on how to do a 2D plot, show the radio footprint in the array
         -- read in original array list (from config-file)
         -- plots the p2p distribution componentwise
-        -- reads in single antenna hdf5 files
-    Usage: python3 example_plot_2D.py <path to event folder> <e/v>(efield or voltages to plot)
+        -- reads in event hdf5 files
+    Usage: python3 example_plot_2D.py <path to event file> <e/v/efield/voltages>
+    
+    example_plot_trace.py: Script to read in a single antenna trace
+        -- Plot trace (PLOT)
+        -- Plot Hilbert envelope (HILB)
+        -- calculate Angle (ANGLE) -- to be fixed for CR (modules.py)
+    Usage: python3 example_plot_trace.py <path to event> <keyword:efield/voltages/...> <antID>
+    
+    example_voltage_hdf5.py: Example how to read in event info and traces from hdf5 file and run processing of field
+        -- reads event info and traces from all-antenna hdf5 file
+        -- show how to use the list/options of modules in standard_processing
+        -- saves the voltages traces in hdf5 file
+    Usage: python3 example_voltage_hdf5.py <path to event folder> 
+    
+    
    
    
 ## to example_simtohdf5.py:
@@ -79,10 +96,41 @@ The data structure for the produced hdf5-file is:
     
 ## Access to data ( ID == antenna ID ):
     from astropy.table import Table
-    f=Table.read(pathtohdf, path="/"+str(ID)+"/efield") 
+
+    Time           Ex                   Ey                    Ez         
+    ns         u V / m              u V / m               u V / m       
+    ------- -------------------- -------------------- ---------------------
+    10668.0                  0.0                  0.0                   0.0
+    10669.0                  0.0                  0.0                   0.0
+    10670.0                  0.0                  0.0                   0.0
+    10671.0                  0.0                  0.0                   0.0
+    ...
+    11147.0 -0.22002369833168597 -0.28481404837811314  -0.28438298034182286
+    11148.0 -0.21189438651797549 -0.24039673025105382 -0.023664534043256736
+    11149.0 -0.14237827913618956  -0.1427215146215885   0.04836943976456008
+    Length = 482 rows
+
     
-    f.meta :
-    f.info :
+    >>> print(f["Ex"].unit)
+    u V / m
+    
+    >>> print(f.info)
+    <Table length=482>
+    name  dtype    unit 
+    ---- ------- -------
+    Time float64      ns
+    Ex float64 u V / m
+    Ey float64 u V / m
+    Ez float64 u V / m
+
+    >>> print(f.meta)
+    {'position': [-3500.0, 1000.0, 2734.0], 'slopes': [0.0, 0.0]}
+    >>> print(f.meta["position"])
+    [-3500.0, 1000.0, 2734.0]
+
+    
+    
+    
     
 ## Access event data -- example:
  
@@ -135,11 +183,9 @@ The data structure for the produced hdf5-file is:
 <!--        trigger: [threshold(aggr) in muV, 1/0 in any, 1/0 in xy, threshold(cons) in muV, 1/0 in any, 1/0 in xy] # 1 = triggered
         p2p: [Ex, Ey, Ez, Exy, Exz] #p2p-value in muV-->
         
- **For SINGLE=True: One hdf5 file per antenna in ecah event - internal structure of information identical (skip /event/)**
-    File naming table_*.hdf5 includes the antenna ID of the original antenna array (not necessarily equivalent to antenna number in simulation)
  
         
-ToDo: add units in meta info (python dict)) for the event. Currently, the units are set via the read-in from the raw simulation files.
+ToDo: add units in meta info (python dict)) for the event correctly. Currently, the units are set via the read-in from the raw simulation files.
 Units:
 * ID: '-' (ID of the event)
 * azimuth: GRAND deg (azimuth of shower)
