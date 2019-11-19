@@ -61,11 +61,10 @@ if __name__ == '__main__':
         
         ATTENTION: 
         -- adapt the paths given in the config-file so that eg Vrms (for threshold) can be read-in correctly
-        -- To be specified SINGLE/ALL True or False depending on favorite saving mode, same size file in total
-        -- Hardcoded threshold value in muV, read-in from config file
+        -- only all antennas in one hdf5 file possible
+        -- Hardcoded ; in voltage_compute option: list of appllied processing modules: processing_info={..}
         
         Note: 
-        --- ToDo: adopt example to also add voltage traces from txt files
         --- ToDo: save units of parameters, astropy units or unyt
         --- ToDo: implement calculation of alpha and beta, so far read in from file or set to (0,0) [io_utils.py]
         --- ToDo: fix the problem of array size in computevoltage which leads to not-produced traces at the moment
@@ -187,7 +186,7 @@ if __name__ == '__main__':
 
                 try:
                     ## apply only antenna response -- the standard applying the antenna response
-                    processing_info={'voltage': 'antennaresponse'}
+                    processing_info={'voltage': 'antennaresponse'} # HARDCODED
                     voltage = compute_antennaresponse(efield1, shower['zenith'].value, shower['azimuth'].value, 
                                                       alpha=slopes[ant_number,0].value, beta=slopes[ant_number,1].value)
                     
