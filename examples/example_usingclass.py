@@ -56,11 +56,7 @@ if __name__ == '__main__':
         
         Use: python3 example_usingclass.py <folder event set>
         Example: python3 example_usingclass.py ../../CoREAS/GP300_centered/
-        
-        NOTE: still ongoing work, already usable
-        
-        ATTENTION:
-        -- adapt the paths given in the config-file so that eg the antenna reponse can be read-in correctly
+    
         """)
         sys.exit(0)
     
@@ -99,76 +95,47 @@ if __name__ == '__main__':
 
     print("\nScan of events ...")
     
-    event = [] # python list
+    event = [] # python list        
         
     # loop over all folder
-    for path in tqdm.tqdm(glob.glob(eventfolder+"/*/")):
-        if os.path.isdir(path): # only pick event folders
+    #for path in tqdm.tqdm(glob.glob(eventfolder+"/*/")):
+    for path in glob.glob(eventfolder+"*.hdf5"): # loop over files in folder
+        if os.path.isfile(path): # only pick event folders
             logger.debug("... Reading Event from:"+ path)
 
-            
-            # loop over all antenna positions in event
-            i=0
-            trigger_any=[]
-            trigger_xy=[]
-                
 
-            for file in glob.glob(path+"/*.hdf5"):
-                ## find antenna position and its slope per ID - works
-                ID = int(file.split('/')[-1].split('.hdf5')[0].split('table_')[-1])
-                #pos_ant = find_antennaposition(det, ID)
-                #pos_slope = find_antennaslope(det, ID)
-                
-                if i==0: # just get the first antenna to readin meta info            
-                    #### EFIELD just as example how to read in
-                    f = Table.read(file, path='efield') 
-                    #print("\n simulated position ", f.meta["position"])
-                    
-                    # create shower object and set attributes
-                    testshower = SimulatedShower()
-                    loadInfo_toShower(testshower, f.meta)
-                    logger.info("   SUMMARY EVENT: ShowerID = "+  str(testshower.showerID)
-                                + " primary = "+ str(testshower.primary)+ " energy/eV = "+ str(testshower.energy) 
-                                + " zenith/deg = "+ str(testshower.zenith)+ " azimuth/deg = "+ str(testshower.azimuth)
-                                + " injectionheight/m = "+ str(testshower.injectionheight) )
+            # create shower object and set attributes
+            testshower = SimulatedShower()
+            g=Table.read(path, path="/event")
+            loadInfo_toShower(testshower, g.meta)
+            #shower, positions, slopes = _load_eventinfo(file)
+            
+            logger.info("   SUMMARY EVENT: ShowerID = "+  str(testshower.showerID)
+                        + " primary = "+ str(testshower.primary)+ " energy/eV = "+ str(testshower.energy) 
+                        + " zenith/deg = "+ str(testshower.zenith)+ " azimuth/deg = "+ str(testshower.azimuth)
+                        + " injectionheight/m = "+ str(testshower.injectionheight) )
                         
-                    event.append(testshower)
-                i+=1
-                    
-                    
-                #### VOLTAGES - add trigger info to shower object
-                try:
-                    g = Table.read(file, path='voltages') 
-                    
-                    # info: trigger = [thr_aggr, any_aggr, xz_aggr, thr_cons, any_cons, xy_cons]
-                    # Here: only ask for aggressive value for triggering
-                    if g.meta["trigger"][1] ==1:
-                        trigger_any.append(ID)
-                    if g.meta["trigger"][2] ==1:
-                        trigger_xy.append(ID)
-                except IOError:
-                    logger.error("Voltages not computed for antenna: "+ str(ID) +" in "+path)
-                    
-                # check whether voltages exists, if not compute voltage
-                
-                # check whether antenna ID position and slope already exits, otherwise load to detector
-                
-                
-                
+            event.append(testshower)
+
+            
+            analysis=Table.read(path, path="/analysis")
+            #print(analysis["trigger_aggr_xy"], analysis["trigger_aggr_any"], analysis["trigger_cons_xy"],analysis["trigger_cons_any"])
+             
             ## EXAMPLE: Trigger Analysis
-            if len(trigger_any)>5 or len(trigger_xy)>5:
-                logger.info("   => shower triggers (aggr): any =" + str(len(trigger_any)) + " xy = " + str(len(trigger_xy)))
+            if np.sum(analysis["trigger_aggr_xy"])>5 or np.sum(analysis["trigger_aggr_any"])>5:
+                logger.info("   => shower triggers (aggr): any =" + str(np.sum(analysis["trigger_aggr_xy"])) 
+                            + " xy = " + str(np.sum(analysis["trigger_aggr_any"])))
                 # add trigger info to class
                 event[-1].trigger=1
             else:
                 event[-1].trigger=0
                 
                     
-            # plot full array (gray), simulated position with voltages and mark triggers (red) for each event, save as png
-            ## could be similar to example_plot_2D
+            ## TODO plot full array (gray), simulated position with voltages and mark triggers (red) for each event, save as png
+            ### could be similar to example_plot_2D
             
-        else: 
-            continue
+        #else: 
+            #continue
 
 
     ###### START ANALYSIS ################### 
