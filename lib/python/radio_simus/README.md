@@ -36,23 +36,49 @@
 * **hardcoded values now stored in config file** (eg. test.config read-in by __init__)
     see examples
 
-    
-## ToDos:
-* how to store shower parameters? -> is the header now fine?
-* how to store antenna informations? -> is the header now fine?
-
-* add astropy logger (done for all modules?)
-* add unit tests (complete detector class tests)
-
-
-* include grand package and its referential coordinates system etc
-
-## Open questions
-* how to use astropy units for numpy arrays? eg in detector etc
 
 
 ## NOTE:
 Unified units used as Arguments and returns of all the functions: **eV, deg, m, ns, muV, muV/m**
 
 
+------------
+## ToDos:
 
+
+in general:
+* enable coordinate transformation
+* include grand package and its referential coordinates system etc
+* check astropy logger in all modules
+* check astropy units in all modules and functions
+
+
+io_utils.py
+* adopt inputfromtxt for new Zhaires
+* def _get_positions_zhaires missing
+* implement function calling turtle to get slopes
+* find a way to treat Xmax value and position: read-in or calculated
+* in load_event_info: work on the zhaires positions read in part
+* finish _get_Xmax_coreas(path)
+
+utils.py:
+* check units and reliabilty of time2freq and freq2time
+
+modules.py
+* def get_LDF()
+* def correction()
+* def correct_EarlyLate(trace)
+* def correct_chargeexcess()
+* def get_polarisation_vector()
+* --> _get_XmaxPosition: check for CR showers
+
+computevoltage.py:
+* enable again voltage computation for CR and nu: calculation of the corrected viewing angles got deleted
+* fix shape A and B thing
+* invert antenna response
+
+frame.py:
+* TODO projection should not be done along v but along line of sight Xmax - xyz0
+
+signal_processing:
+* function include_shadowing missing
