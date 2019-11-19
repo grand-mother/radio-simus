@@ -306,9 +306,9 @@ def get_LDF(trace,p,v,core=np.array([0.,0.,0.])):
 #============================================================================
     
     
-def correction()
+def correction():
     ''' returns correction factor for early late effect '''
-    
+    return 0
     
     
 #============================================================================
