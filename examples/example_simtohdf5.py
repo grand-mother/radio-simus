@@ -32,7 +32,7 @@ import h5py
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 #import radio_simus 
-from radio_simus.io_utils import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table, load_event_info
+from radio_simus.io_utils import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table, load_eventinfo_tohdf
 from radio_simus.__init__ import Vrms
 
 
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         ### LOADING EVENT INFO ###
         ##########################
 
-        shower, ID_ant, positions, slopes = load_event_info(path, showerID, simus, name_all)
+        shower, ID_ant, positions, slopes = load_eventinfo_tohdf(path, showerID, simus, name_all)
         
         if simus == "zhaires":
             #redefinition of path to traces needed.. depends on folder structure

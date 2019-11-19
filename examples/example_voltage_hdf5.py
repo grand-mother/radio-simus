@@ -20,7 +20,7 @@ sys.path.append(join(root_dir, "lib", "python"))
 
 from radio_simus.computevoltage import  compute_antennaresponse
 from radio_simus.signal_processing import standard_processing
-from radio_simus.io_utils import _table_voltage,_load_to_array, _load_eventinfo, _load_path
+from radio_simus.io_utils import _table_voltage,_load_to_array, _load_eventinfo_fromhdf, _load_path
 
 
 if __name__ == '__main__':
@@ -58,7 +58,7 @@ if __name__ == '__main__':
         print(file)
 
         ## get information on event from hdf5 file -- in principle not needed here
-        shower, positions, slopes = _load_eventinfo(file)
+        shower, ant_ID, positions, slopes = _load_eventinfo_fromhdf(file)
         #print( len(positions[0]) , "antenna positions simulated in Event ", shower["ID"])
         
         ## get information on analysis already performed
