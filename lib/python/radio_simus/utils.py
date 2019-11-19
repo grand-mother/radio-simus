@@ -181,7 +181,7 @@ def _getAngle(refpos=[0.,0.,1e6],theta=None,azim=None,ANTENNAS=None, core=[0.,0.
 
     zenr = np.radians(theta)
     azimr= np.radians(azim)
-    ANTENNAS1 = np.copy(ANTENNAS)
+    ANTENNAS1 = np.copy(ANTENNAS)-core
 
     # Compute angle between shower and decay-point-to-antenna axes
     u_ant = ANTENNAS1-refpos

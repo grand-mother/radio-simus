@@ -429,7 +429,6 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
         if 'digitise' in info['voltage']:
             path_tmp=ant+'voltages_digitise'
         
-        print(save, path_tmp, voltage_ant.meta)
         voltage_ant.write(save, path=path_tmp, format="hdf5", append=True, compression=True,serialize_meta=True) #
     
     return voltage_ant
@@ -483,7 +482,7 @@ def load_trace_to_table(path_raw,  pos=None, slopes=None, info={}, content="e", 
         
 #===========================================================================================================
 
-def _load_eventinfo(path_hdf5):
+def _load_eventinfo_fromhdf(path_hdf5):
     """Load data from hdf5 file to numpy array and restore shower info
 
    Parameters
@@ -562,7 +561,7 @@ def _load_eventinfo(path_hdf5):
         ant_ID=None
     
     try:
-        positions=np.array([g["pos_x"], g["pos_y"],g["pos_z"]])*g["pos_x"].T.unit
+        positions=np.array([g["pos_x"], g["pos_y"],g["pos_z"]]).T*g["pos_x"].unit
     except:
         positions=None
     
@@ -571,18 +570,19 @@ def _load_eventinfo(path_hdf5):
     except:
         slopes=None
     
-    return shower, positions, slopes
+    return shower, ant_ID, positions, slopes
 
 #===========================================================================================================
 
 def _load_path(path_hdf5, path="/analysis"):
-    """Load data from hdf5 file and restores infomation on analysis
+    """Load any data from hdf5 file and restores infomation on analysis
 
    Parameters
    ---------
         path_hdf5: str 
             path to hdf5 file     
         path: str (default set)
+            can be any keyword
             
             
    Returns
@@ -788,7 +788,7 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
 #===========================================================================================================
 
 
-def load_event_info(path, showerID, simus, name_all=None):
+def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
     """Load data from simulation to hdf5 file
 
    Parameters
@@ -881,7 +881,7 @@ def load_event_info(path, showerID, simus, name_all=None):
             "simulation" : simus # coreas or zhaires
             }
         ####################################
-    print("shower", shower)
+    #print("shower", shower)
     logger.info("Shower summary: " + str(shower))
         
 

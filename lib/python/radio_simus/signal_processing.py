@@ -1,6 +1,6 @@
 ###
 ### NOTE: AZ corrected read-in of traces, before sometimes trace.T needed to feed-in
-###       added a new didgitization function (other one didnt work for some reason
+###       added a new didgitization function (other one didnt work for some reason)
 ###
 
 import numpy as np
@@ -203,7 +203,8 @@ def standard_processing(efield, zenith_sim, azimuth_sim, alpha_sim=0., beta_sim=
         -- 4. FILTER THE TRACE TO THE 50-200MHz WINDOW
         -- 5. DIGITIZATION -- 2ns 
         
-        NOTE: make it modular so that people can pick the steps they need --> load simple single function
+        NOTE: can be used modular so that people can pick the steps they need 
+                --> via "processing" parameter
     
         
         Arguments:
