@@ -58,7 +58,7 @@ io_utils.py
 * def _get_positions_zhaires missing
 * implement function calling turtle to get slopes
 * find a way to treat Xmax value and position: read-in or calculated
-* in load_event_info: work on the zhaires positions read in part
+* in load_event_info: work on the zhaires positions read-in part
 * finish _get_Xmax_coreas(path)
 
 utils.py:
@@ -78,7 +78,22 @@ computevoltage.py:
 * invert antenna response
 
 frame.py:
-* TODO projection should not be done along v but along line of sight Xmax - xyz0
+* in _project_onshowerplane: projection should not be done along v but along line of sight Xmax - xyz0
+* in _project_starshape: projection should not be done along v but along line of sight Xmax - xyz0
+---> proper Xmax position needed
+* do we want to have a function get_shower_axis(azimuth, zenith)? In principle function direction exists already in shower class.
 
 signal_processing:
 * function include_shadowing missing
+
+shower.py:
+* which information would we like to store in the shower class?
+* in SimulatedShower: how to feed Xmax() and Xmax_position() if wanted?
+* in loadInfo_toShower: no error raised if parameter does not exist... how to fix
+
+signal_treatment.py:
+* nice to have: implement several SNR definitions
+
+interpolation.py:
+* in do_interpolation: Read-in and save only hdf5 files
+* use magnetic field values and shower core from config-file -- DONE
