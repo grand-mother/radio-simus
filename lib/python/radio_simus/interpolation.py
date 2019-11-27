@@ -1,5 +1,5 @@
 '''Script to perform an interpolation between to electric field traces at a desired position
-TODO: read-in magnetic field values and shower core from config-file
+TODO: use magnetic field values and shower core from config-file
 '''
 
 
@@ -17,7 +17,7 @@ from in_out import load_trace
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 
-
+from .__init__ import phigeo, thetageo
 
 #################################################################
 # Not needed at the moment, removed later
@@ -369,7 +369,7 @@ def _ProjectPointOnLine(a, b, p):
 #################################     
 
         
-def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95, shower_core=np.array([0,0,0]), DISPLAY=False):
+def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo., thetageo=thetageo, shower_core=np.array([0,0,0]), DISPLAY=False):
     '''
     Reads in arrays, looks for neigbours, calls the interpolation and saves the traces
     
@@ -398,7 +398,7 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=0., thetageo=152.95
     Saves traces via index infomation in same folder as desired antenna positions
 
     
-    NOTE: The selection of the neigbours is sufficiently stable, but does not alwazs pick the "best" neigbour, still looking for an idea
+    NOTE: The selection of the neigbours is sufficiently stable, but does not always pick the "best" neigbour, still looking for an idea
     TODO: Read-in and save only hdf5 files
     '''
     print(shower_core)
@@ -692,7 +692,7 @@ def main():
     
     
     # call the interpolation: Angles of magnetic field and shower core information needed, but set to default values
-    do_interpolation(desired, array, zenith, azimuth, phigeo=0.72, thetageo=147.3, shower_core=np.array([0,0,2900]), DISPLAY=True)
+    do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=thetageo, shower_core=np.array([0,0,2900]), DISPLAY=True)
 
 
 if __name__== "__main__":
