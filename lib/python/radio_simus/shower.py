@@ -11,6 +11,12 @@ gcm2= u.gram /(u.cm**2)
 ''' NOTE:
 * from typing_extension import Final, mypy would would raise bad usage
 * numpy arrays: myarra.flags.writeable = False
+
+
+* Usage of @property decorator: in case an attribute is derived from other attributes in the class -> the derived attribute will update whenever the source attributes is changed, 
+attribute becomes a property by defining it as a function and add the @property decorator before the definition.
+* Usage of setter method for the property: to update the source attributes whenever the property is set
+
 '''
 
 class AlreadySet(Exception):
@@ -41,7 +47,8 @@ class Shower():
         
         simulations: str
         Xmax: float in g/cm2
-        
+        # Xmax_position: possible further attribute in class, to be defined
+                
         recoXmax: float in g/cm2
         recoenergy: float in eV
         recozenith: float in deg, GRAND
@@ -203,9 +210,6 @@ class Shower():
         except:
             logger.error("Direction cannot be calculated")
 
-    #def Xmax_position(self): 
-        #""" calculated Xmax Xmax_position"""
-
     
     
 #=============================================  
@@ -251,7 +255,8 @@ class SimulatedShower(Shower):
     def Xmax(self):
         self.__Xmax = None
 
-        
+    #def Xmax_position(self): 
+        #""" calculated/simulated Xmax_position"""
         
 #=================================================        
 
@@ -354,7 +359,7 @@ def loadInfo_toShower(name, info=None):
                     loadInfo_toShower(testshower, f.meta)
     
     TODO: 
-        *add missing attributes
+        *add missing attributes if desired 
     '''
     try:
         showerID = info["ID"]
@@ -405,7 +410,7 @@ def loadInfo_toShower(name, info=None):
         injectionheight = None
 
 
-    ## for simulations
+    ## for simulation input only
     try:
         simulation = info["simulation"]
         name.simulation = str(simulation)

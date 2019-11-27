@@ -316,15 +316,21 @@ def _get_positions_coreas(path):
 
 #===========================================================================================================
 
-#def _get_Xmax_coreas(path):
-
-
-    #for line in glob.glob(path + "*.long"):
-    ## Coreas
-        #if 'PARAMETERS         =' in line: #list file 
-            ##PARAMETERS         =   2.5632E+08 -3.1624E+02  7.2411E+02  3.6003E+01 -9.4986E-03  1.7744E-05
+def _get_Xmax_coreas(path_long):
+    """ read Xmax value from simulations
+        --- work in progress
+    """
+    print(path_long)
+    datafile = open(path_long, 'r') 
+    for line in datafile:
+    # Coreas
+        if 'PARAMETERS         =' in line: #list file 
+            print(line,line.split('  ',-1))
+            Xmax = float(line.split('  ',-1)[6])
+            #PARAMETERS         =   2.5632E+08 -3.1624E+02  7.2411E+02  3.6003E+01 -9.4986E-03  1.7744E-05
             #Xmax = line[3]
-    #return 0
+    print(Xmax)
+    return 0
     
 #===========================================================================================================
 #===========================================================================================================
@@ -374,7 +380,7 @@ def _table_efield(efield, pos=None, slopes=None, info={}, save=None, ant="/"):
     '''
     from astropy.table import Table, Column
     
-    info.update({'position': pos, 'slopes': slopes})
+    info.update({'position': pos*u.m, 'slopes': slopes*u.deg})
     
     a = Column(data=efield.T[0],unit=u.ns,name='Time')
     b = Column(data=efield.T[1],unit=u.u*u.V/u.meter,name='Ex')
@@ -409,7 +415,7 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
     '''
     from astropy.table import Table, Column
     
-    info.update({'position': pos, 'slopes': slopes})
+    info.update({'position': pos*u.m, 'slopes': slopes*u.deg})
     
     a = Column(data=voltage.T[0],unit=u.ns,name='Time')
     b = Column(data=voltage.T[1],unit=u.u*u.V,name='Vx')
