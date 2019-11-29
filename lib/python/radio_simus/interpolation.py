@@ -12,12 +12,12 @@ from os.path import split
 import sys
 
 from frame import get_rotation, UVWGetter
-from in_out import load_trace
+from io_utils import load_trace
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 
-from .__init__ import phigeo, thetageo
+from __init__ import phigeo, thetageo
 
 #################################################################
 # Not needed at the moment, removed later
@@ -369,7 +369,7 @@ def _ProjectPointOnLine(a, b, p):
 #################################     
 
         
-def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo., thetageo=thetageo, shower_core=np.array([0,0,0]), DISPLAY=False):
+def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=thetageo, shower_core=np.array([0,0,0]), DISPLAY=False):
     '''
     Reads in arrays, looks for neigbours, calls the interpolation and saves the traces
     
@@ -451,14 +451,15 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo., thetageo=t
         #ax.scatter(positions_sims[:,0], positions_sims[:,1], positions_sims[:,2], label = "simulated")
         #ax.scatter(positions[:,0], positions[:,1], positions[:,2], label = "desired")
         #ax.scatter(shower_core[0], shower_core[1], shower_core[2], label = "shower core")
-        
+        for j in range(0,len(positions[:,1])):
+                ax.annotate(str(j), ((positions[j,0], positions[j,1])))
         ax.scatter(positions_sims[:,0], positions_sims[:,1], label = "simulated")
         ax.scatter(positions[ind,0], positions[ind,1], label = "desired")
         ax.scatter(shower_core[0], shower_core[1],  label = "shower core")
         
         plt.title("XYZ coordinates")
         plt.legend(loc=2)
-        #plt.show()
+        plt.show()
     #------------------------
 
         
@@ -530,16 +531,20 @@ def do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo., thetageo=t
     points=[]
     for i in np.arange(0,len(pos_sims[:,1])):  # position should be within one plane yz plane, remove x=v component for simplicity
         #points.append([i, pos_sims[i,1], pos_sims[i,2] ])
-        theta = np.arctan2(pos_sims[i,1], pos_sims[i,2])
-        radius = np.sqrt( pos_sims[i,1]**2 + pos_sims[i,2]**2 )
-        points.append([i, theta, radius])
+        theta2 = np.arctan2(pos_sims[i,2], pos_sims[i,1])
+        radius2 = np.sqrt( pos_sims[i,1]**2 + pos_sims[i,2]**2 )
+        if round(theta2,4) == -3.1416:
+            theta2*=-1
+        points.append([i, theta2, radius2])
+        
 
     #loop only over desired in-plane positions, acting as new reference 
     for i in np.arange(0,len(pos[:,1])):  # position should be within one plane yz plane, remove x=v component for simplicity
 
-        theta = np.arctan2(pos[i,1], pos[i,2])
+        theta = np.arctan2(pos[i,2], pos[i,1])
         radius = np.sqrt( pos[i,1]**2 + pos[i,2]**2 )
-        #print("index of desired antenna ", ind[i], theta, radius)
+        #print("index of desired antenna ", ind[i], theta, radius, )
+        
         
         # The 4 quadrants -- in allen 4 Ecken soll Liebe drin stecken
         points_I=[]
@@ -683,16 +688,16 @@ def main():
         
     # path to list of desied antenna positions, traces will be stored in that corresponding folder
     #desired  = sys.argv[1]
-    desired="/home/laval1NS/zilles/Test_inter/ForKumiko/Stshp_XmaxLibrary_0.1995_66.422_0_Gamma_17/Test/desired.dat"
+    desired="/home/laval1NS/zilles/Test_inter/new_antpos_rect.dat"
     # underlaying array with simulated positions
-    array = "/home/laval1NS/zilles/Test_inter/ForKumiko/Stshp_XmaxLibrary_0.1995_66.422_0_Gamma_17/antpos.dat"
+    array = "/home/laval1NS/zilles/Test_inter/Stshp_XmaxLibrary_0.1259_70.529_0_Proton_17/antpos.dat"
     # Shower directions in deg and GRAND convention    
-    zenith = (180-66.4) # GRAND deg
+    zenith = (180-70.5) # GRAND deg
     azimuth = 180+0 # GRAND deg
     
     
     # call the interpolation: Angles of magnetic field and shower core information needed, but set to default values
-    do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=thetageo, shower_core=np.array([0,0,2900]), DISPLAY=True)
+    do_interpolation(desired, array, zenith, azimuth, phigeo=phigeo, thetageo=thetageo, shower_core=np.array([0,0,2900]), DISPLAY=False)
 
 
 if __name__== "__main__":
