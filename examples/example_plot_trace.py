@@ -129,7 +129,7 @@ if ANGLE: # Only for neutrino showers
     print("Angle in deg: ", _getAngle(refpos=Xmaxpos, theta=shower["zenith"].value, azim=shower["azimuth"].value, 
                                       ANTENNAS=positions[np.where(antID==str(i))].value, core=shower["core"].value))
     
-    ## explicit example
+    ### explicit example for testing
     #Xmaxpos =  _get_XmaxPosition('electron', 0.5*1e18, 87., 0., 2800.)
     #print(_getAngle(refpos=Xmaxpos ,theta=87.,azim=0,ANTENNAS=np.array([50051,0., 3272]), core=[67407.46,0.,6332.68]))
     

@@ -91,7 +91,7 @@ if __name__ == '__main__':
     if voltage_compute:
         from radio_simus.computevoltage import get_voltage, compute_antennaresponse
         from radio_simus.signal_processing import standard_processing
-        from radio_simus.io_utils import _table_voltage
+        from radio_simus.io_utils import _table_voltage,_get_Xmax_coreas
         
         
         
@@ -122,8 +122,12 @@ if __name__ == '__main__':
         ##########################
         ### LOADING EVENT INFO ###
         ##########################
-
+        #### ongoing work to obtain Xmax from Coreas
+        #longfile = path+"DAT"+showerID+'.long'
+        #_get_Xmax_coreas(longfile)
+        
         shower, ID_ant, positions, slopes = load_eventinfo_tohdf(path, showerID, simus, name_all)
+
         
         if simus == "zhaires":
             #redefinition of path to traces needed.. depends on folder structure

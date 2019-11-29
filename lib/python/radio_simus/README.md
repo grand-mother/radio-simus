@@ -51,7 +51,7 @@ in general:
 * include grand package and its referential coordinates system etc
 * check astropy logger in all modules
 * check astropy units in all modules and functions
-
+* one error showed up: we have to agree on a format for the antenna positions files! 
 
 io_utils.py
 * adopt inputfromtxt for new Zhaires
@@ -97,3 +97,4 @@ signal_treatment.py:
 interpolation.py:
 * in do_interpolation: Read-in and save only hdf5 files
 * use magnetic field values and shower core from config-file -- DONE
+
