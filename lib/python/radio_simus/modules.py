@@ -11,7 +11,7 @@ logger = logging.getLogger("Modules")
 #from __init__ import phigeo, thetageo
 from .__init__ import phigeo, thetageo
 
-#__all__ = ["compute_ZL", "TopoToAntenna", "_getXmax", "_dist_decay_Xmax"]
+#__all__ = ["compute_ZL", "TopoToAntenna", "_calculateXmax", "_dist_decay_Xmax"]
 
 
 #============================================================================
@@ -49,7 +49,7 @@ def _geomagnetic_angle(zen,az):
 
 #============================================================================
 
-def _getXmax(primarytype, energy):
+def _calculateXmax(primarytype, energy):
     ''' Xmax value in g/cm2
     Arguments:
     ----------
@@ -174,7 +174,7 @@ def _get_XmaxPosition(primary, energy, zen, azim, injh=0, GdAlt=0, core=np.array
           *cross check the output with matias simulations
         
     '''
-    Xmax_primary = _getXmax(primary, energy)
+    Xmax_primary = _calculateXmax(primary, energy)
     if primary=="proton" or primary == "iron": # CORRECT ZENITH
         zen = _get_CRzenith(zen,injh,GdAlt) 
     
@@ -318,7 +318,10 @@ def correction():
 
 
 def correct_EarlyLate(trace):
-    ''' correct for early late effect, following the approch given arxiv:1808.00729 in for the energy fluence
+    ''' Rio guys have already a methods here...
+    
+    
+    correct for early late effect, following the approch given arxiv:1808.00729 in for the energy fluence
     
         energy fluence [corrected in shower plane] = energy fluence [ sim. at ground] *factor**2
         -> for amplitude only: amp [corrected] = amp. [sim.] * factor ... 
@@ -341,6 +344,9 @@ def correct_EarlyLate(trace):
     #factor = R/R0
     
     return 0
+
+
+        
     
 #============================================================================
     

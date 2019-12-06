@@ -19,6 +19,8 @@ Use: python3.7 detectors.py
 ##* implement an AntennaArray object with attributes: type:str, position:grand.coordinates.ECEF, orientation:grand.coordinates.Horizontal, etc.
 # * add function if slope not given, calculate it
 
+
+### NOTE: Anne tried to set up Antenna Class, but was not handy enough in her examples. are the information in Dtector not sufficient enough
 '''
 
 

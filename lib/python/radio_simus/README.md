@@ -54,12 +54,13 @@ in general:
 * one error showed up: we have to agree on a format for the antenna positions files! 
 
 io_utils.py
-* adopt inputfromtxt for new Zhaires
-* def _get_positions_zhaires missing
+* adopt inputfromtxt for new Zhaires --> moved to AiresInfoFunctions
+* def _get_positions_zhaires missing --> moved to AiresInfoFunctions
 * implement function calling turtle to get slopes
-* find a way to treat Xmax value and position: read-in or calculated
-* in load_event_info: work on the zhaires positions read-in part
-* finish _get_Xmax_coreas(path)
+
+AiresInfoFunctions.py:
+* crosscheck functionality
+
 
 utils.py:
 * check units and reliabilty of time2freq and freq2time
@@ -70,7 +71,7 @@ modules.py
 * def correct_EarlyLate(trace)
 * def correct_chargeexcess()
 * def get_polarisation_vector()
-* --> _get_XmaxPosition: check for CR showers
+* --> _get_XmaxPosition: check for CR showers, caluclating Xmax position
 
 computevoltage.py:
 * enable again voltage computation for CR and nu: calculation of the corrected viewing angles got deleted

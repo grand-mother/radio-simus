@@ -686,11 +686,13 @@ def main():
         """)
         sys.exit(0)
         
+        
+    path="/mnt/c/Users/Anne/work/CoREAS/"
     # path to list of desied antenna positions, traces will be stored in that corresponding folder
     #desired  = sys.argv[1]
-    desired="/home/laval1NS/zilles/Test_inter/new_antpos_rect.dat"
+    desired=path+"/Test_inter/new_antpos_rect.dat"
     # underlaying array with simulated positions
-    array = "/home/laval1NS/zilles/Test_inter/Stshp_XmaxLibrary_0.1259_70.529_0_Proton_17/antpos.dat"
+    array = path+"/Test_inter/Stshp_XmaxLibrary_0.1259_70.529_0_Proton_17/antpos.dat"
     # Shower directions in deg and GRAND convention    
     zenith = (180-70.5) # GRAND deg
     azimuth = 180+0 # GRAND deg

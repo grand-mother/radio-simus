@@ -39,14 +39,18 @@ from scipy.interpolate import interp1d
 PRINT_ON=False
 DISPLAY = 0
 
+## Earth radius in m
 EARTH_RADIUS=6370949. #m
-azstep=5 #step in azimuth in npy file
-freqscale=1 #freq*2 if h/2 and sizeant/2
-#loaded=1 #if antenna is loaded or not in npy file --- NOTE: Not needed
+## step in azimuth in npy file in deg
+azstep=5 
+## Multiplication factor: freq*2 if h/2 and sizeant/2
+freqscale=1 
+##if antenna is loaded or not in npy file --- NOTE: Not needed
+#loaded=1 
 
 
 #============================================================================
-def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6): # SI UNits: Ohms, Farrads, Henry
+def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6): 
 #============================================================================
 
   ''' Function to compute impedance from GRAND load    
