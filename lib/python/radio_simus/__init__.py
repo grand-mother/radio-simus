@@ -45,7 +45,7 @@ import numpy as np
 #from .shower import shower, sim_shower, reco_shower, loadInfo_toShower
 
 # Register all modules
-__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower", "detector", "frame", "signal_processing", "interpolation"]
+__all__ = ["computevoltage", "in_out", "modules", "signal_treatment", "utils", "shower", "detector", "frame", "signal_processing", "interpolation", "CoreasInfoFunctions", "AiresInfoFunctions"]
 
 
 
@@ -57,8 +57,11 @@ global Vrms, Vrms2, tsampling
 global antx, anty, antz
 
 ### set global parameters
-configfile = open("/home/laval1NS/zilles/radio-simus/examples/test.config", 'r') 
-print("..... Loading CONFIG FILE .....: "+"/home/laval1NS/zilles/radio-simus/examples/test.config") 
+
+#IMPORTANT: extend it with pa relative path
+
+configfile = open("./test.config", 'r') 
+print("..... Loading CONFIG FILE .....: "+"../../../examples/test.config") 
 for line in configfile:
     line = line.rstrip() 
     if 'SITE' in line:

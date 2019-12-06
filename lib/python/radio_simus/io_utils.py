@@ -11,328 +11,13 @@ import sys
 import glob
 
 import logging
-logger = logging.getLogger("In_Out")
+logger = logging.getLogger("IO_utils")
 
 from astropy import units as u
 
-#===========================================================================================================
-#===========================================================================================================
-def inputfromtxt(input_file_path):
-    # I will move this function as soon as I know to where :)
-#===========================================================================================================
-    '''
-    Get shower parameter from inp file for zhaires simulations
+
+
     
-    Parameters:
-        input_file_path: str
-            path of inp file
-        
-    Returns:
-        zen: float
-            zenith, deg in GRAND conv.
-        azim: float
-            azimuth, deg in GRAND conv.
-        energy: float
-            primary energy in eV
-        injh: float
-            in meters, 100km for CRs
-        primarytype: str
-            'proton' or 'iron'
-        core: numpy array
-            core position in meters
-        task: str
-            ID of shower
-    '''
-    
-    particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
-    ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
-
-
-    if os.path.isfile(input_file_path) ==  False:  # File does not exist 
-        print('--- ATTENTION: inp-file does not exist')
-        #exit()
-        
-    #datafile = file(input_file_path) # why it is not working...
-    datafile = open(input_file_path, 'r') 
-
-    for line in datafile:
-        if 'PrimaryZenAngle' in line:
-            zen=float(line.split(' ',-1)[1])
-            zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-        if 'PrimaryAzimAngle' in line:
-            azim = float(line.split(' ',-1)[1])+180 #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-            if azim>=360:
-                azim= azim-360
-        if 'RASPASSHeight' in line:
-            injh = float(line.split(' ',-1)[2])
-        if 'PrimaryEnergy' in line:
-            energy = float(line.split(' ',-1)[1])
-            unit= str(line.split(' ',-1)[2])
-            if unit == "eV\n":
-                energy = energy
-            if unit == "GeV\n":
-                energy = energy *1e9
-            if unit == "EeV\n":
-                energy = energy *1e18
-        if 'PrimaryParticle' in line:
-            primarytype = str(line.split(' ',-1)[1])
-            if primarytype[-1]=='\n':
-                primarytype=primarytype[0:-1]
-            if primarytype[-1]=='\r':
-                primarytype=primarytype[0:-1]
-        if 'AddSpecialParticle      RASPASSMulti' in line:
-            RASPASSMulti_line = line
-        if 'TaskName' in line:
-            task = str(line.split(' ',-1)[1])
-            if task[-1]=='\n':
-                task=task[0:-1]
-            if task[-1]=='\r':
-                task=task[0:-1]
-        if '#Core Position:' in line:
-            offset = line.split(' ',-1)
-            core = np.array([float(offset[2]), float(offset[3]), float(offset[4])])
-
-    try:
-        injh
-    except NameError:
-        injh = 100000. #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km by ZHAireS
-    try:
-        energy
-    except NameError:
-        print('No primary energy found in the ZHAireS input text file.')
-        exit()
-    try:
-        primarytype
-    except NameError:
-        primarytype = None
-    try:
-        task
-    except NameError:
-        task = None
-    try:
-        core
-    except NameError:
-        core = np.array([0.,0.,0.])
-
-
-    if primarytype=='RASPASSMulti':
-        tmp = RASPASSMulti_line.split(' ',-1)
-        if tmp[-1][-1]=='\n':
-            tmp[-1]=tmp[-1][0:-1]
-        prod = [x for x in particule if x in set(tmp)]
-        ind_prod = np.array([tmp.index(x) for x in prod],dtype=int)
-        Wprod = [float(tmp[ind]) for ind in ind_prod+1]
-        primarytype = prod[np.argmax(Wprod)]
-
-    if primarytype=='Proton' or primarytype=='K+' or primarytype=='K-' or primarytype=='K0L' or primarytype=='K0S' or primarytype=='K*+':
-        primarytype='proton'
-    elif primarytype=='gamma' or primarytype=='Gamma' or primarytype=='Electron':
-        primarytype='electron'
-    elif primarytype=='pi0' or primarytype=='pi-' or primarytype=='pi+':
-        primarytype='pion'
-    
-    # TODO: add observer level -- antenna height to be corrected
-    
-
-    #if task:
-        #if core.all:
-            #return zen,azim,energy,injh,primarytype,core,task
-    #if task:
-        #return zen,azim,energy,injh,primarytype,task
-    #else:
-        #return zen,azim,energy,injh,primarytype
-        
-    return zen,azim,energy,injh,primarytype,core,task
-
-#===========================================================================================================
-#===========================================================================================================
-
-#===========================================================================================================
-def inputfromtxt_coreas(input_file_path): # still ongoing work
-#===========================================================================================================
-    '''
-    Get shower parameter from inp and reas file for coreas simulations
-    
-    Parameters:
-        input_file_path: str
-            path of inp file
-        
-    Returns:
-        zen: float
-            zenith, deg in GRAND conv.
-        azim: float
-            azimuth, deg in GRAND conv.
-        energy: float
-            primary energy in eV
-        injh: not working
-            Coreas can not yet accept an injection height
-        primarytype: str
-            'proton' or 'iron'
-        core: numpy array
-            core position in meters
-        task: str
-            ID of shower
-    '''
-    
-    
-    if os.path.isfile(input_file_path) ==  False:  # File does not exist 
-        print('--- ATTENTION: inp-file does not exist')
-        exit()
-        
-    #datafile = file(input_file_path) # why it is not working...
-    datafile = open(input_file_path, 'r') 
-
-    for line in datafile:
-        # NOTE: CORSIKA/CoREAS angle = direction of propgation == GRAND conventions
-        if 'THETAP' in line:
-            zen=float(line.split('    ',-1)[1]) *u.deg# propagation direction
-            zen=180*u.deg-zen # to GRAND
-        if 'PHIP' in line:
-            azim = float(line.split('    ',-1)[1])*u.deg # propagation direction, already in GRAND
-        #if 'RASPASSHeight' in line:
-            #injh = float(line.split(' ',-1)[2])*u.m
-        if 'ERANGE' in line:
-            energy = line.split('    ',-1)[1] # GeV by default
-            if energy[-1]=='\n':
-                energy=energy[0:-1]
-            energy = float(energy) *1e9 *u.eV# GeV to eV
-        if 'PRMPAR' in line:
-            primarytype = str(line.split('    ',-1)[1])
-            if primarytype[-1]=='\n':
-                primarytype=primarytype[0:-1]
-            if primarytype == str(14):
-                primarytype ='proton'
-            if primarytype == str(5626):
-                primarytype ='iron'
-
-    try:
-        energy
-    except NameError:
-        print('No primary energy found in the ZHAireS input text file.')
-        exit()
-    try:
-        primarytype
-    except NameError:
-        print('ATTENTION: No particle type found')
-        primarytype = None
-    try:
-        injh
-    except NameError:
-        injh = 100000.e2*u.m #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km in cm
-            
-    # Get reas file
-    path, reas = os.path.split(input_file_path)
-    base = os.path.basename(reas)
-    base1 = os.path.splitext(base)
-    file_path= path[0:-4]+'/'+base1[0]+".info"
-    #file_path= path[0:-4]+'/'+base1[0]+".reas"
-
-    datafile = open(file_path, 'r') 
-    for line in datafile:
-        if 'TASK' in line:
-            task = str(line.split('  ',-1)[1])
-            if task[-1]=='\n':
-                task=task[0:-1]
-            if task[-1]=='\r':
-                task=task[0:-1]
-            
-        if 'CORE' in line:
-            #print(line)
-            offset = line.split('  ',-1)
-            offset[-1]=offset[-1].rstrip()
-            core = list([float(offset[1]), float(offset[2]), float(offset[3])])*u.m # in cm to m 
-    try:
-        task
-    except NameError:
-        task = None
-    try:
-        core
-    except NameError:
-        core = None       
-        
-        
-    if task:
-        if core is not None:
-            return zen,azim,energy,injh,primarytype,core,task
-        else:
-            return zen,azim,energy,injh,primarytype,task
-    else:
-        return zen,azim,energy,injh,primarytype
-#===========================================================================================================
-
-def _get_positions_coreas(path):
-    '''
-    read in antenna positions from Coreas simulations, wrt to sealevel
-    
-    Parameters:
-    datafile: str
-        path to folder of run
-    
-    Returns:
-    positions: numpy array
-        x,y,z component of antenna positions in meters
-    ID_ant: list
-        corresponding antenna ID for identification !- [0,1,2,....]
-        
-        
-    NOTE: units assign to positions and slope assuming meters and degree 
-    '''
-    datafile = open(path, 'r') 
-    x_pos1=[]
-    y_pos1=[]
-    z_pos1=[]
-    ID_ant=[]
-    #positions=[]
-    
-    alpha=[]
-    beta=[]
-    for line in datafile:
-    # Coreas
-        if 'AntennaPosition =' in line: #list file
-            #print(line,line.split('    ',-1) )
-            x_pos1.append(float(line.split('  ',-1)[1])/100.) #*u.cm) # cm to m
-            y_pos1.append(float(line.split('  ',-1)[2])/100.) #*u.cm) # cm to m
-            z_pos1.append(float(line.split('  ',-1)[3])/100.) #*u.cm) # cm to m
-            ID_ant.append(str(line.split('  ',-1)[4]))
-            alpha.append(0)
-            beta.append(0)
-        if 'ANTENNA' in line: #info file
-            x_pos1.append(float(line.split('  ',-1)[2])) #*u.m) 
-            y_pos1.append(float(line.split('  ',-1)[3])) #*u.m) 
-            z_pos1.append(float(line.split('  ',-1)[4])) #*u.m) 
-            ID_ant.append(str(line.split('  ',-1)[1]))
-            alpha.append(float(line.split('  ',-1)[5]))
-            beta.append(float(line.split('  ',-1)[6]))
-            
-            
-    x_pos1=np.asarray(x_pos1)
-    y_pos1=np.asarray(y_pos1)
-    z_pos1=np.asarray(z_pos1)
-    positions=np.stack((x_pos1,y_pos1, z_pos1), axis=-1 )*u.m
-    slopes=np.stack((alpha, beta), axis=-1 )*u.deg
-    #print(ID_ant)    
-    
-    return positions, ID_ant, slopes
-
-#===========================================================================================================
-
-def _get_Xmax_coreas(path_long):
-    """ read Xmax value from simulations
-        --- work in progress
-    """
-    print(path_long)
-    datafile = open(path_long, 'r') 
-    for line in datafile:
-    # Coreas
-        if 'PARAMETERS         =' in line: #list file 
-            print(line,line.split('  ',-1))
-            Xmax = float(line.split('  ',-1)[6])
-            #PARAMETERS         =   2.5632E+08 -3.1624E+02  7.2411E+02  3.6003E+01 -9.4986E-03  1.7744E-05
-            #Xmax = line[3]
-    print(Xmax)
-    return 0
-    
-#===========================================================================================================
 #===========================================================================================================
 
 def load_trace(directory, index, suffix=".trace"):
@@ -357,6 +42,9 @@ def load_trace(directory, index, suffix=".trace"):
     path = "{:}/a{:}{:}".format(directory, index, suffix)
     with open(path, "r") as f:
         return np.array([list(map(float, line.split())) for line in f])
+    
+    
+#===========================================================================================================
     
 #===========================================================================================================
     
@@ -485,10 +173,401 @@ def load_trace_to_table(path_raw,  pos=None, slopes=None, info={}, content="e", 
 
         
     return efield_ant
-        
+  
+
+  
+  
 #===========================================================================================================
 
-def _load_eventinfo_fromhdf(path_hdf5):
+
+def _load_ID_fromhdf(path_hdf5):
+    """ Load ID from hdf5 file for identification of shower event
+        
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        ID: str, float
+            shower ID, number of simulation
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+           
+    ### Get shower infomation    
+    try:        
+        ID=g.meta['ID'],               # shower ID, number of simulation
+    except:
+        ID=None
+        
+    return ID[0]
+
+#===========================================================================================================
+
+def _load_primary_fromhdf(path_hdf5):
+    """ Load primary from hdf5 file
+        
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        primary: str, float
+            type of primary
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+           
+    ### Get shower infomation    
+    try:        
+        primary=g.meta['primary'],        # primary (electron, pion)
+    except:
+        primary=None
+        
+    return primary[0]
+
+#===========================================================================================================
+
+def _load_energy_fromhdf(path_hdf5):
+    """ Load primary's energy from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        energy: float
+            primary's energy in EeV
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+
+    try:
+        energy=g.meta['energy'],               # EeV
+    except:
+        energy=None
+        
+    return energy[0]
+
+#===========================================================================================================
+
+def _load_energy_fromhdf(path_hdf5):
+    """ Load primary's energy from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        energy: float
+            primary's energy in EeV
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+
+    try:
+        energy=g.meta['energy'],               # EeV
+    except:
+        energy=None
+        
+    return energy[0]
+
+#===========================================================================================================
+
+def _load_zenith_fromhdf(path_hdf5):
+    """ Load primary's zenith from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        zenith: float
+            primary's zenith in deg (GRAND)
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+    try:
+        zenith=g.meta['zenith'],               # deg (GRAND frame)
+    except:
+        zenith=None
+    
+    return zenith[0]
+
+#===========================================================================================================
+
+def _load_azimuth_fromhdf(path_hdf5):
+    """ Load primary's azimuth from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        azimuth: float
+            primary's azimuth in deg (GRAND)
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+    try:
+        azimuth=g.meta['azimuth'],                # deg (GRAND frame)
+    except:
+        azimuth=None
+
+    return azimuth[0]
+
+#===========================================================================================================
+
+def _load_injectionheight_fromhdf(path_hdf5):
+    """ Load primary's injectionheight from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        injectionheight: float
+            primary's injectionheight in m wrt sealevel
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+    try:
+        injection_height=g.meta['injection_height'],    # m (injection height in the local coordinate system)
+    except:
+        injection_height=None
+    
+    return injectionheight[0]
+
+#===========================================================================================================
+
+def _load_task_fromhdf(path_hdf5):
+    """ Load task from hdf5 file, for identifaction
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        task: str
+            e.g. DANTON event number
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+    try:
+        task=g.meta['task'],    # Identification
+    except:
+        task=None
+        
+    return task[0]
+
+#===========================================================================================================
+
+def _load_core_fromhdf(path_hdf5):
+    """ Load shower core from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        core: numpy array
+            shower core (x,y,z) in m
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+    try:
+        core=g.meta['core'],    # m, numpy array, core position
+    except:
+        core=None
+        
+    return core[0]
+
+#===========================================================================================================
+
+def _load_simulation_fromhdf(path_hdf5):
+    """ Load shower core from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        simulation: str
+            simulation program/version identifier like  coreas or zhaires
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path="/event")
+    try:
+        simulation=g.meta['simulation'] # coreas or zhaires
+    except:
+        simulation=None
+        
+    return simulation
+
+#===========================================================================================================
+
+
+def _load_showerinfo_fromhdf(path_hdf5):
+    """Load data from hdf5 file and restore shower info, as a list
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        shower: list
+            shower parameters etc
+    """
+               
+    ID = _load_ID_fromhdf(path_hdf5)
+    primary = _load_primary_fromhdf(path_hdf5)
+    energy = _load_energy_fromhdf(path_hdf5)
+    zenith = _load_zenith_fromhdf(path_hdf5)
+    azimuth = _load_azimuth_fromhdf(path_hdf5)
+    injection_height = _load_injectionheight_fromhdf(path_hdf5)
+    task = _load_task_fromhdf(path_hdf5)
+    core = _load_core_fromhdf(path_hdf5)
+    simulation = _load_simulation_fromhdf(path_hdf5)
+    
+
+    shower = {
+        "ID" : ID,               # shower ID, number of simulation
+        "primary" : primary,        # primary (electron, pion)
+        "energy" : energy,               # EeV
+        "zenith" : zenith,               # deg (GRAND frame)
+        "azimuth" : azimuth,                # deg (GRAND frame)
+        "injection_height" : injection_height,    # m (injection height in the local coordinate system)
+        "task" : task,    # Identification
+        "core" : core,    # m, numpy array, core position
+        "simulation" : simulation # coreas or zhaires
+        }
+    
+    return shower
+
+#===========================================================================================================
+
+def _load_antID_fromhdf(path_hdf5, path1 = "/event"):
+    """ Load antIDs from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        antID: list
+            list of antenna ID contained in event 
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path= path1)
+    try:
+        ant_ID=g["ant_ID"]
+    except:
+        ant_ID=None
+
+    return ant_ID
+
+#===========================================================================================================
+
+def _load_positions_fromhdf(path_hdf5, path1 = "/event"):
+    """ Load antenna positions from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        positions: numpy array
+            list of antenna positions (x,y,z) contained in event 
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path= path1)
+    try:
+        positions=np.array([g["pos_x"], g["pos_y"],g["pos_z"]]).T*g["pos_x"].unit
+    except:
+        positions=None
+        
+    return positions
+
+
+#===========================================================================================================
+
+def _load_slopes_fromhdf(path_hdf5, path1 = "/event"):
+    """ Load antenna slopes from hdf5 file
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file     
+            
+   Returns
+   ---------
+        slopes: numpy array
+            list of antenna slopes (alpha,beta) contained in event 
+    """
+    
+    from astropy.table import Table
+
+    g=Table.read(path_hdf5, path= path1)
+    try:
+        slopes=np.array([g["alpha"], g["beta"]]).T*g["alpha"].unit
+    except:
+        slopes=None
+        
+    return slopes
+
+#===========================================================================================================
+
+def _load_eventinfo_fromhdf(path_hdf5, path1 = "/event"):
     """Load data from hdf5 file to numpy array and restore shower info
 
    Parameters
@@ -509,72 +588,16 @@ def _load_eventinfo_fromhdf(path_hdf5):
     
     from astropy.table import Table
 
-    g=Table.read(path_hdf5, path="/event")
+    g=Table.read(path_hdf5, path= path1)
            
     ### Get shower infomation    
-    try:        
-        ID=g.meta['ID'],               # shower ID, number of simulation
-    except:
-        ID=None
-    try:
-        primary=g.meta['primary'],        # primary (electron, pion)
-    except:
-        ID=None
-    try:
-        energy=g.meta['energy'],               # EeV
-    except:
-        energy=None
-    try:
-        zenith=g.meta['zenith'],               # deg (GRAND frame)
-    except:
-        zenith=None
-    try:
-        azimuth=g.meta['azimuth'],                # deg (GRAND frame)
-    except:
-        azimuth=None
-    try:
-        injection_height=g.meta['injection_height'],    # m (injection height in the local coordinate system)
-    except:
-        injection_height=None
-    try:
-        task=g.meta['task'],    # Identification
-    except:
-        task=None
-    try:
-        core=g.meta['core'],    # m, numpy array, core position
-    except:
-        core=None
-    try:
-        simulation=g.meta['simulation'] # coreas or zhaires
-    except:
-        simulation=None
-
-    shower = {
-        "ID" : ID[0],               # shower ID, number of simulation
-        "primary" : primary[0],        # primary (electron, pion)
-        "energy" : energy[0],               # EeV
-        "zenith" : zenith[0],               # deg (GRAND frame)
-        "azimuth" : azimuth[0],                # deg (GRAND frame)
-        "injection_height" : injection_height[0],    # m (injection height in the local coordinate system)
-        "task" : task[0],    # Identification
-        "core" : core[0],    # m, numpy array, core position
-        "simulation" : simulation # coreas or zhaires
-        }
+    shower = _load_showerinfo_fromhdf(path_hdf5)
     
-    try:
-        ant_ID=g["ant_ID"]
-    except:
-        ant_ID=None
+    ### Get array infomation
+    ant_ID = _load_antID_fromhdf(path_hdf5)
+    positions = _load_positions_fromhdf(path_hdf5)
+    slopes = _load_slopes_fromhdf(path_hdf5)
     
-    try:
-        positions=np.array([g["pos_x"], g["pos_y"],g["pos_z"]]).T*g["pos_x"].unit
-    except:
-        positions=None
-    
-    try:
-        slopes=np.array([g["alpha"], g["beta"]]).T*g["alpha"].unit
-    except:
-        slopes=None
     
     return shower, ant_ID, positions, slopes
 
@@ -624,8 +647,65 @@ def _load_path(path_hdf5, path="/analysis"):
     
 #===========================================================================================================
 
+def _load_efield_fromhdf(path_hdf5, ant="/"):
+    """Load electric field data from hdf5 file for a single antenna as numpy array
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file 
+        ant: int 
+            ant ID
+            
+    Returns
+    ---------
+        numpy array/None
+            electric field trace: time in ns, Ex, Ey, Ez in muV/s
+    """
+    
+    from astropy.table import Table
+    
+    try:
+        efield=Table.read(path_hdf5, path=ant+"/efield")
+        return np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']]).T
+    except:
+        return None
+    
+#===========================================================================================================
+
+def _load_voltage_fromhdf(path_hdf5, ant="/"):
+    """Load voltage data from hdf5 file for a single antenna as numpy array
+
+   Parameters
+   ---------
+        path_hdf5: str 
+            path to hdf5 file 
+        ant: int 
+            ant ID
+            
+    Returns
+    ---------
+        numpy array/None
+            voltagetrace: time in ns, Vx, Vy, Vz in muV
+            
+    TODO: How to we handle renaming of path or several voltages pathes ...
+    """
+    
+    from astropy.table import Table
+
+    try:
+        voltage=Table.read(path_hdf5, path=ant+"/voltages")
+        return np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']]).T
+    except:
+        return None
+
+#===========================================================================================================
+
+
+
+
 def _load_to_array(path_hdf5, content="efield", ant="/"):
-    """Load data from hdf5 file to numpy array and restore traces
+    """Load trace data from hdf5 file for a single antenna as numpy array and restore infomation on antenna
 
    Parameters
    ---------
@@ -651,16 +731,16 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
     from astropy.table import Table
     
     if content=="efield" or content=="e":
-        efield=Table.read(path_hdf5, path=ant+"/efield")
-        efield1=np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']]).T
-        #print(efield.T[0], efield.T[1])
+        efield1 = _load_efield_fromhdf(path_hdf5, ant=ant)
             
         try:
-            position=efield.meta['position']
+            #position=efield.meta['position']
+            position=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/efield")
         except IOError:
             position=None
         try:
-            slopes=efield.meta['slopes']
+            #slopes=efield.meta['slopes']
+            slopes=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/efield")
         except IOError:
             slopes=None
 
@@ -668,21 +748,16 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
         return efield1, efield['Time'].unit, efield['Ex'].unit, position, slopes
     
     if content=="voltages" or content=="v":
-        try:
-            voltage=Table.read(path_hdf5, path=ant+"/voltages")
-            voltage1=np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']]).T
-            #print(voltage.T[0], voltage.T[1])
-        except:
-            print("Voltages not found")
-            voltage=None
-            voltage1=None
+
         
         try:
-            position=voltage.meta['position']
+            #position=voltage.meta['position']
+            position=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/voltages")
         except IOError:
             position=None
         try:
-            slopes=voltage.meta['slopes']
+            #slopes=voltage.meta['slopes']
+            slopes=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/voltages")
         except IOError:
             slopes=None
         
@@ -690,112 +765,11 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
         return voltage1, voltage['Time'].unit, voltage['Vx'].unit, position, slopes
 
 
-
-#def _load_to_array(path_hdf5, content="efield", ant="/"):
-    #"""Load data from hdf5 file to numpy array and restore shower info
-       #works only with single antenna files -- TODO modification needed
-
-   #Parameters
-   #---------
-        #path_hdf5: str 
-            #path to hdf5 file 
-        #content: str 
-            #grep efield or voltages traces
-
-   #Returns
-   #---------
-        #efield1 or voltage1: numpy array
-            #containing the electric field or voltage trace trace: time, Ex, Ey, Ez or time, Vx, Vy, Vz
-        #efield['Time'] or voltage['Time'].unit: str
-            #unit of time column
-        #efield['Ex'] or voltage['Vx'].unit: str
-            #unit of efield or voltage field
-        #shower: list
-            #shower parameters etc
-        #position: numpy array in m (cross-check)
-        #slopes: numpy array in deg
-    #"""   
-    #from astropy.table import Table
-    
-    #if content=="efield" or content=="e":
-        #efield=Table.read(path_hdf5, path=ant+"efield")
-        #efield1=np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']])
-        ##print(efield.T[0], efield.T[1])
-    
-        #try:
-            #shower = {
-                #"ID" : efield.meta['ID'],               # shower ID, number of simulation
-                #"primary" : efield.meta['primary'],        # primary (electron, pion)
-                #"energy" : efield.meta['energy'],               # EeV
-                #"zenith" : efield.meta['zenith'],               # deg (GRAND frame)
-                #"azimuth" : efield.meta['azimuth'],                # deg (GRAND frame)
-                #"injection_height" : efield.meta['injection_height'],    # m (injection height in the local coordinate system)
-                #"task" : efield.meta['task'],    # Identification
-                #"core" : efield.meta['core'],    # m, numpy array, core position
-                #"simulation" : efield.meta['simulation'] # coreas or zhaires
-                #}
-        #except:
-            #print("NOTE: shower info not contained")
-            #shower=None
-            
-        #try:
-            #position=efield.meta['position']
-        #except IOError:
-            #position=None
-        #try:
-            #slopes=efield.meta['slopes']
-        #except IOError:
-            #slopes=None
-
-        ## TODO do we one to return atsropy units...
-        #return efield1, efield['Time'].unit, efield['Ex'].unit, shower, position, slopes
-    
-    #if content=="voltages" or content=="v":
-        #try:
-            #voltage=Table.read(path_hdf5, path=ant+"voltages")
-            #voltage1=np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']])
-            ##print(voltage.T[0], voltage.T[1])
-        #except:
-            #print("Voltages not found")
-            #voltage=None
-            #voltage1=None
-            
-        #try:
-            #shower = {
-                #"ID" : voltage.meta['ID'],               # shower ID, number of simulation
-                #"primary" : voltage.meta['primary'],        # primary (electron, pion)
-                #"energy" : voltage.meta['energy'],               # EeV
-                #"zenith" : voltage.meta['zenith'],               # deg (GRAND frame)
-                #"azimuth" : voltage.meta['azimuth'],                # deg (GRAND frame)
-                #"injection_height" : voltage.meta['injection_height'],    # m (injection height in the local coordinate system)
-                #"task" : voltage.meta['task'],    # Identification
-                #"core" : voltage.meta['core'],    # m, numpy array, core position
-                #"simulation" : voltage.meta['simulation'] # coreas or zhaires
-                #}
-        #except:
-            #print("NOTE: shower info not contained")
-            #shower=None
-        
-        #try:
-            #position=voltage.meta['position']
-        #except IOError:
-            #position=None
-        #try:
-            #slopes=voltage.meta['slopes']
-        #except IOError:
-            #slopes=None
-        
-        
-        ## TODO do we one to return atsropy units...
-        #return voltage1, voltage['Time'].unit, voltage['Vx'].unit, shower, position, slopes
-
-    
-
 #===========================================================================================================
 
 
 def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
-    """Load data from simulation to hdf5 file
+    """Load data from simulation to hdf5 file, directly savin as hdf5 file option
 
    Parameters
    ---------
@@ -854,16 +828,39 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
             print("positions not corrected for core")
         
         ending_e = "a*.trace"
-                
+        
+        
+        
+        ### taken from Matias scripts -- to be tested
+        import radio_simus.AiresInfoFunctions as AiresInfo
+        sryfile=glob.glob(path+"/*.sry")
+        zen,azim,energy,primary,xmax,distance,taskname=AiresInfo.ReadAiresSry(str(sryfile[0]),"GRAND")
+        posfile = path +'/antpos.dat'
+        positions, ID_ant, slopes = AiresInfo._get_positions_zhaires(posfile)
+        
+        from radio_simus.AiresInfoFunctions import GetSlantXmaxFromSry
+        try:
+            Xmax=GetSlantXmaxFromSry(sryfile,outmode="GRAND")
+        except:
+            Xmax = None
+        # correction of shower core
+        try:
+            positions = positions + np.array([core[0], core[1], 0.*u.m])
+        except:
+            logger.debug("No core position information availble")       
 
     if  simus == 'coreas':
+        import radio_simus.CoreasInfoFunctions as CoreasInfo
         #posfile = path +'SIM'+str(showerID)+'.list' # contains not alpha and beta
         posfile = path +'SIM'+str(showerID)+'.info' # contains original ant ID , positions , alpha and beta
-        positions, ID_ant, slopes = _get_positions_coreas(posfile)
+        positions, ID_ant, slopes = CoreasInfo._get_positions_coreas(posfile)
         #print(positions, ID_ant, slopes)
             
         inputfile = path+'/inp/SIM'+showerID+'.inp'
-        zen,azim,energy,injh,primarytype,core,task = inputfromtxt_coreas(inputfile)
+        zen,azim,energy,injh,primarytype,core,task = CoreasInfo.inputfromtxt_coreas(inputfile)
+        
+        from radio_simus.CoreasInfoFunctions import _get_Xmax_coreas
+        Xmax = _get_Xmax_coreas(path)
            
         # correction of shower core
         try:
