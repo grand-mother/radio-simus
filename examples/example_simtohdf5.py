@@ -32,10 +32,10 @@ import h5py
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 #import radio_simus 
-from radio_simus.io_utils import inputfromtxt, _get_positions_coreas, inputfromtxt_coreas, load_trace_to_table, load_eventinfo_tohdf
+from radio_simus.io_utils import load_trace_to_table, load_eventinfo_tohdf
 from radio_simus.__init__ import Vrms
 
-
+#inputfromtxt, _get_positions_coreas, inputfromtxt_coreas,
 
 
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     if voltage_compute:
         from radio_simus.computevoltage import get_voltage, compute_antennaresponse
         from radio_simus.signal_processing import standard_processing
-        from radio_simus.io_utils import _table_voltage,_get_Xmax_coreas
+        from radio_simus.io_utils import _table_voltage
         
         
         
@@ -122,9 +122,6 @@ if __name__ == '__main__':
         ##########################
         ### LOADING EVENT INFO ###
         ##########################
-        #### ongoing work to obtain Xmax from Coreas
-        #longfile = path+"DAT"+showerID+'.long'
-        #_get_Xmax_coreas(longfile)
         
         shower, ID_ant, positions, slopes = load_eventinfo_tohdf(path, showerID, simus, name_all)
 
@@ -160,7 +157,7 @@ if __name__ == '__main__':
                 #ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1])
                 # ID = ID_ant.index(ant_number) # index of antenna in positions
                 # define path for storage of hdf5 files
-
+                
 
             if  simus == 'coreas':
                 base=os.path.basename(ant)

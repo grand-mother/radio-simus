@@ -51,7 +51,7 @@ if __name__ == '__main__':
     ## choose the steps in processing of electric field
     #processing_info={'voltage': 'antennaresponse'} # calls only compute_antennaresponse
     processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
-
+    print('Processing steps: ', str(processing_info))
 
     for file in glob.glob(directory+"*.hdf5"): # loop over files in folder
         print("\n")
