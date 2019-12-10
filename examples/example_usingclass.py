@@ -106,9 +106,11 @@ if __name__ == '__main__':
 
             # create shower object and set attributes
             testshower = SimulatedShower()
+            ## TODO: shorten this by moving g=Table... to fucntion loadInfo_toShower, or do we want to have it as a dictionary to be more flexible
             g=Table.read(path, path="/event")
-            loadInfo_toShower(testshower, g.meta)
+            #loadInfo_toShower(testshower, g.meta)
             #shower, positions, slopes = _load_eventinfo(file)
+            loadInfo_toShower(testshower, g.meta)
             
             logger.info("   SUMMARY EVENT: ShowerID = "+  str(testshower.showerID)
                         + " primary = "+ str(testshower.primary)+ " energy/eV = "+ str(testshower.energy) 
