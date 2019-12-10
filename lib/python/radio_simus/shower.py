@@ -353,7 +353,14 @@ class ReconstructedShower(Shower):
 
 
 def loadInfo_toShower(name, info=None):
-    '''load meta info from hdf5 file to object attributes, object initiated beforehand
+    '''load meta info from dictionary to object attributes, object initiated beforehand
+    
+    Arguments:
+    name: (object)
+        Identifier for initiated shower object
+    info: str/dict
+        if str: path to hdf5 event file
+        if dict: dictionary with event information
     
     example:        testshower = SimulatedShower()
                     loadInfo_toShower(testshower, f.meta)
@@ -361,6 +368,16 @@ def loadInfo_toShower(name, info=None):
     TODO: 
         *add missing attributes if desired 
     '''
+    
+    if type(info) is not dict:
+        print('load information from event file')
+        g=Table.read(info, path="/event")
+        info=g.meta
+    if type(info) is dict:
+        print('load information from dictionary')
+        
+    
+    
     try:
         showerID = info["ID"]
         name.showerID = str(showerID)
