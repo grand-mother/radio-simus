@@ -730,7 +730,6 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
     
     
     shower, ant_ID,  positions, slopes = _load_eventinfo_fromhdf(path_hdf5)
-    print(ant)
     
     if content=="efield" or content=="e":
         efield1 = _load_efield_fromhdf(path_hdf5, ant=ant)
