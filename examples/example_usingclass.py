@@ -36,12 +36,16 @@ import h5py
 from os.path import split, join, realpath
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
-#import radio_simus 
-from radio_simus.signal_treatment import p2p
+
+# load config file first
+import radio_simus 
+radio_simus.load_config('./test.config')
+arrayfile = radio_simus.config.arrayfile
+
 from radio_simus.shower import *
 #from radio_simus.detector import detector, create_from_file, get_array, get_slopes, find_antennaposition, find_antennaslope
 from radio_simus.detector import Detector
-from radio_simus.__init__ import arrayfile 
+
 
 
 
@@ -106,12 +110,10 @@ if __name__ == '__main__':
 
             # create shower object and set attributes
             testshower = SimulatedShower()
-            ## TODO: shorten this by moving g=Table... to fucntion loadInfo_toShower, or do we want to have it as a dictionary to be more flexible
             #g=Table.read(path, path="/event")
             #loadInfo_toShower(testshower, g.meta)
             #shower, positions, slopes = _load_eventinfo(file)
-            g=Table.read(path, path="/event")
-            loadInfo_toShower(testshower, g.meta)
+            loadInfo_toShower(testshower, path)
             
             logger.info("   SUMMARY EVENT: ShowerID = "+  str(testshower.showerID)
                         + " primary = "+ str(testshower.primary)+ " energy/eV = "+ str(testshower.energy) 

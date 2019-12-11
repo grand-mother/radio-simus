@@ -36,7 +36,6 @@ sys.path.append(join(root_dir, "lib", "python"))
 import radio_simus 
 radio_simus.load_config('./test.config')
 Vrms = radio_simus.config.Vrms
-print(Vrms)
 
 from radio_simus.io_utils import load_trace_to_table, load_eventinfo_tohdf
 

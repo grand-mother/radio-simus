@@ -28,7 +28,11 @@ import pylab as plt
 import glob
 
 from radio_simus.signal_processing import filters
-from .__init__ import antx, anty, antz
+import radio_simus 
+#radio_simus.load_config('./test.config')
+antx = radio_simus.config.antx
+anty = radio_simus.config.anty
+antz = radio_simus.config.antz
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
