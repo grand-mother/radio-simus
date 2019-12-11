@@ -145,7 +145,8 @@ def _get_positions_coreas(path):
         corresponding antenna ID for identification !- [0,1,2,....]
         
         
-    NOTE: units assign to positions and slope assuming meters and degree 
+    NOTE: units assign to positions and slope assuming meters and degree
+    TODO: add functionality of calculation slopes on the fly 
     '''
     datafile = open(path, 'r') 
     x_pos1=[]
@@ -171,8 +172,14 @@ def _get_positions_coreas(path):
             y_pos1.append(float(line.split('  ',-1)[3])) #*u.m) 
             z_pos1.append(float(line.split('  ',-1)[4])) #*u.m) 
             ID_ant.append(str(line.split('  ',-1)[1]))
-            alpha.append(float(line.split('  ',-1)[5]))
-            beta.append(float(line.split('  ',-1)[6]))
+            try:
+                alpha.append(float(line.split('  ',-1)[5]))
+            except IOError:
+                alpha.append(0)
+            try:
+                beta.append(float(line.split('  ',-1)[6]))
+            except IOError:
+                beta.append(0)
             
             
     x_pos1=np.asarray(x_pos1)
@@ -199,13 +206,15 @@ def _get_Xmax_coreas(path):
             slant depth in g/cm^2
     """
     
+    gcm2= u.gram /(u.cm**2)
+    
     simInput_file = glob.glob(path+"/*.reas")[0]
 
     try:
         fp = open(simInput_file,'r')
         for line in fp:
             if 'DepthOfShowerMaximum' in line:
-                Xmax = float(line.split()[2])
+                Xmax = float(line.split()[2]) * gcm2
         fp.close()
     except:
         Xmax = None
