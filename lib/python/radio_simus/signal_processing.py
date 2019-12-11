@@ -11,11 +11,11 @@ import logging
 logger = logging.getLogger("Signal_Processing")
 
 import astropy.units as u
-from .__init__ import Vrms, Vrms2, tsampling
+from . import config
 #assuming units: muV , ns
-Vrms=Vrms.value
-Vrms2=Vrms2.value
-tsampling=tsampling.value
+Vrms=config.Vrms.value
+Vrms2=config.Vrms2.value
+tsampling=config.tsampling.value
 
 
 __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_create_emptytrace", "run"]
