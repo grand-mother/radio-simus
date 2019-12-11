@@ -11,11 +11,13 @@ import logging
 logger = logging.getLogger("Signal_Processing")
 
 import astropy.units as u
-from . import config
+
+# load config file first
+import radio_simus 
 #assuming units: muV , ns
-Vrms=config.Vrms.value
-Vrms2=config.Vrms2.value
-tsampling=config.tsampling.value
+Vrms = radio_simus.config.Vrms.value
+Vrms2 = radio_simus.config.Vrms2.value
+tsampling = radio_simus.config.tsampling.value
 
 
 __all__ = ["include_shadowing", "add_noise", "Digitization_2", "filter", "_create_emptytrace", "run"]
