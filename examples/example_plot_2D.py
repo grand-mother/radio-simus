@@ -42,14 +42,15 @@ import h5py
 from os.path import split, join, realpath
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
+
+# load config file first
 import radio_simus 
+radio_simus.load_config('./test.config')
+arrayfile = radio_simus.config.arrayfile
+
 from radio_simus.signal_treatment import p2p
 from radio_simus.io_utils import _load_path,_load_to_array, _load_eventinfo_fromhdf
 
-
-# load config file first
-radio_simus.load_config('./test.config')
-arrayfile = radio_simus.config.arrayfile
 
 
 ### path to full antenna array to plot in the background

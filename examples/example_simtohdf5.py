@@ -31,12 +31,14 @@ import h5py
 # Expand the PYTHONPATH
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
-#import radio_simus 
+
+# load config file first
+import radio_simus 
+radio_simus.load_config('./test.config')
+Vrms = radio_simus.config.Vrms
+print(Vrms)
+
 from radio_simus.io_utils import load_trace_to_table, load_eventinfo_tohdf
-from radio_simus.__init__ import Vrms
-
-#inputfromtxt, _get_positions_coreas, inputfromtxt_coreas,
-
 
 
 if __name__ == '__main__':
