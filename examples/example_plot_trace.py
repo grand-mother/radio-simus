@@ -70,7 +70,8 @@ i = sys.argv[3]
 keyword=str(sys.argv[2]) # efield / voltages
 
 # load trace
-trace, time_unit, unit, ant_position, ant_slopes = _load_to_array(path_hdf5, content=keyword, ant="/" + str(i) +"/" )
+trace, time_unit, unit, ant_position, ant_slopes = _load_to_array(path_hdf5, content=keyword, ant=i )
+print(trace[0], time_unit, unit, ant_position, ant_slopes )
 time_unit=str(time_unit)
 unit=str(unit)
 

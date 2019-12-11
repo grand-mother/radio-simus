@@ -730,11 +730,13 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
     
     
     shower, ant_ID,  positions, slopes = _load_eventinfo_fromhdf(path_hdf5)
+    print(ant)
     
     if content=="efield" or content=="e":
         efield1 = _load_efield_fromhdf(path_hdf5, ant=ant)
         efield = np.array([efield1['Time'], efield1['Ex'], efield1['Ey'], efield1['Ez']]).T
             
+        print(efield[0])  
         # TODO do we one to return atsropy units...
         return efield,efield1['Time'].unit,  efield1['Ex'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ant)][0]
     
@@ -743,7 +745,7 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
         voltage = np.array([voltage1['Time'], voltage1['Vx'], voltage1['Vy'], voltage1['Vz']]).T
         
         # TODO do we one to return atsropy units...
-        return voltage, voltage1['Time'].unit, voltage1['Vx'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ID)][0]
+        return voltage, voltage1['Time'].unit, voltage1['Vx'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ant)][0]
 
 
 #===========================================================================================================
