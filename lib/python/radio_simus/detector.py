@@ -34,7 +34,8 @@ import numpy as np
 from typing import Optional, List, Union
 
 
-from .__init__ import site, origin #, latitude, longitude # not yet needed
+from . import config
+site, origin = config.site, config.origin #, latitude, longitude # not yet needed
 
 
 
