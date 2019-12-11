@@ -18,6 +18,10 @@ from os.path import split, join, realpath
 root_dir = realpath(join(split(__file__)[0], "..")) # = $PROJECT
 sys.path.append(join(root_dir, "lib", "python"))
 
+# load config file first -- needed for called modules
+import radio_simus 
+radio_simus.load_config('./test.config')
+
 from radio_simus.computevoltage import  compute_antennaresponse
 from radio_simus.signal_processing import standard_processing
 from radio_simus.io_utils import _table_voltage,_load_to_array, _load_eventinfo_fromhdf, _load_path
@@ -48,10 +52,10 @@ if __name__ == '__main__':
     #path to folder with hdf5 event files
     directory = sys.argv[1]
     
-    ## choose the steps in processing of electric field
+    ## choose the steps in processing of electric field -- should be handover via config file at some point
     #processing_info={'voltage': 'antennaresponse'} # calls only compute_antennaresponse
     processing_info={'voltage': ('antennaresponse', 'noise', 'filter', 'digitise')}
-    print('Processing steps: ', str(processing_info))
+    print('Hardcoded in script -- Processing steps: ', str(processing_info))
 
     for file in glob.glob(directory+"*.hdf5"): # loop over files in folder
         print("\n")
