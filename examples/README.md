@@ -97,6 +97,9 @@ The data structure for the produced hdf5-file is:
 ## Access to data ( ID == antenna ID ):
     from astropy.table import Table
 
+    >>> f=Table.read(name_all, path="/24/efield")
+    >>> print(f)
+    
     Time           Ex                   Ey                    Ez         
     ns         u V / m              u V / m               u V / m       
     ------- -------------------- -------------------- ---------------------
