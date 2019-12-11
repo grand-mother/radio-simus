@@ -234,10 +234,10 @@ if __name__ == '__main__':
             
         a2 = Column(data=np.array(ID_ant), name='ant_ID')
                         
-        b2 = Column(data=p2p_values.T[1], unit=u.u*u.V, name='p2p_x')  
+        b2 = Column(data=p2p_values.T[0], unit=u.u*u.V, name='p2p_x')  
         c2 = Column(data=p2p_values.T[1], unit=u.u*u.V, name='p2p_y') 
-        d2 = Column(data=p2p_values.T[1], unit=u.u*u.V, name='p2p_z') 
-        e2 = Column(data=p2p_values.T[1], unit=u.u*u.V, name='p2p_xy') 
+        d2 = Column(data=p2p_values.T[2], unit=u.u*u.V, name='p2p_z') 
+        e2 = Column(data=p2p_values.T[3], unit=u.u*u.V, name='p2p_xy') 
                         
         f2 = Column(data=trigger.T[0],  name='trigger_aggr_any')
         g2 = Column(data=trigger.T[1],  name='trigger_aggr_xy')

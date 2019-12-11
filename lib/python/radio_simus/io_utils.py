@@ -123,8 +123,6 @@ def _table_voltage(voltage, pos=None, slopes=None, info={}, save=None, ant="/"):
         if 'digitise' in info['voltage']:
             path_tmp=ant+'voltages_digitise'
         
-        print(path_tmp, save)
-        
         voltage_ant.write(save, path=path_tmp, format="hdf5", append=True, compression=True,serialize_meta=True) #
     
     return voltage_ant
