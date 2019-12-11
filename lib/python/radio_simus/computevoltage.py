@@ -1,9 +1,18 @@
-# HandsOn session 19/04/2019
-#
+'''
+    original from HandsOn session 19/04/2019
+    --- several times modified
+    
+    TODO:
+        - problem with shape of A and B in computevoltage for time traces with odd number of lines
+        - handle neutrinos and in general upward going showers
+        - IMPORTANT: how to handle astropy units for electric field and voltage numpy arrays...
+        
+    ATTENTION:
+    ----- computevoltage : stacking changed,  voltage time now in ns
+'''
 
-##### AZ: 13.06.2019 compute function - introduce compute_antennaresponse()
-##### AZ: vf = np.vstack((timeNS,voltage_EW,voltage_NS,voltage_vert)) --- EW and NS switched - corrected 16.05.19
-#### read in from input file fixed
+
+
 
 #!/usr/bin/env python
 import os
@@ -11,42 +20,110 @@ from os.path import  join
 import sys
 import math
 import numpy as np
-from modules import TopoToAntenna
-from modules import compute_ZL
+
+import logging
+logger = logging.getLogger("ComuteVoltage")
+
 import pylab as plt
 import glob
-from signal_treatment import filters
-wkdir = './'
+
+from radio_simus.signal_processing import filters
+import radio_simus 
+#radio_simus.load_config('./test.config')
+antx = radio_simus.config.antx
+anty = radio_simus.config.anty
+antz = radio_simus.config.antz
 
 import linecache
 from scipy.fftpack import rfft, irfft, rfftfreq
 from scipy.interpolate import interp1d
+#import astropy.units as u
 
+
+PRINT_ON=False
+DISPLAY = 0
+
+## Earth radius in m
 EARTH_RADIUS=6370949. #m
-azstep=5 #step in azimuth in npy file
-freqscale=1 #freq*2 if h/2 and sizeant/2
-#loaded=1 #if antenna is loaded or not in npy file --- NOTE: Not needed
+## step in azimuth in npy file in deg
+azstep=5 
+## Multiplication factor: freq*2 if h/2 and sizeant/2
+freqscale=1 
+##if antenna is loaded or not in npy file --- NOTE: Not needed
+#loaded=1 
+
+
+#============================================================================
+def compute_ZL(freq, DISPLAY = False, R = 300, C = 6.5e-12, L = 1e-6): 
+#============================================================================
+
+  ''' Function to compute impedance from GRAND load    
+        
+  Arguments:
+  ----------
+  freq: float
+    frequency in Hz
+  DISPLAY: True/False
+    optional, plotting function
+  R, C, L: float
+    SI UNits: Ohms, Farrads, Henry
+  
+  Returns:
+  ----------
+  RL, XL: float
+    Impdedance  
+  '''
+  
+  w = 2*np.pi*freq # Pulsation
+  w2 = w*w
+  # ZC = 1./(i*C*w)
+  # ZL = i*L*w
+  # ZR = R
+  # Analytic formulas for R//C//L
+  deno = (L*L*w2+R*R*(1-L*C*w2)*(1-L*C*w2))
+  RL = R*L*L*w2/deno  # Computed formula
+  XL = R*R*L*w*(1-L*C*w2)/deno  # Computed formula
+  if DISPLAY:
+    plt.figure(1)
+    plt.plot(freq/1e6,RL,label="R$_L$")
+    plt.plot(freq/1e6,XL,label="X$_L$")
+    plt.legend(loc="best")
+    plt.xlabel("Frequency (MHz)")
+    plt.ylabel("Load impedance ($\Omega$)")
+    plt.xlim([min(freq/1e6), max(freq/1e6)])
+    plt.show()
+
+  return RL, XL
+#============================================================================
+
+
 
 # Compute load impendance
 #impRLC R = 300;C = 6.5e-12;L = 1e-6; 20 300 MHz
 fr=np.arange(20,301,5)
 RLp, XLp = compute_ZL(fr*1e6)
 
-DISPLAY = 0
-print('--- ATTENTION: current version only valid for Cosmic Rays')  
+print('--- ATTENTION: current version of computevoltage only valid for Cosmic Rays') 
 
+#wkdir = '/home/laval1NS/zilles/radio-simus/lib/python/radio_simus/GRAND_antenna/'
 # Load antenna response files
 freespace = 0
-if freespace==1:
-  fileleff_x=wkdir+'butthalftripleX4p5mfreespace_leff.npy' # 
-  fileleff_y=wkdir+'butthalftripleY4p5mfreespace_leff.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
-  fileleff_z=wkdir+'butthalftripleZ4p5mfreespace_leff.npy'
-else:
-  fileleff_x=wkdir+'HorizonAntenna_SNarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, NS component
-  fileleff_y=wkdir+'HorizonAntenna_EWarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
-  fileleff_z=wkdir+'HorizonAntenna_Zarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, Vert component
+#if freespace==1:
+  #fileleff_x=wkdir+'butthalftripleX4p5mfreespace_leff.npy' # 
+  #fileleff_y=wkdir+'butthalftripleY4p5mfreespace_leff.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
+  #fileleff_z=wkdir+'butthalftripleZ4p5mfreespace_leff.npy'
+#else:
+  #fileleff_x=wkdir+'HorizonAntenna_SNarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, NS component
+  #fileleff_y=wkdir+'HorizonAntenna_EWarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, EW component
+  #fileleff_z=wkdir+'HorizonAntenna_Zarm_leff_loaded.npy' # 'HorizonAntenna_leff_notloaded.npy' if loaded=0, Vert component
+  
+fileleff_x = antx
+fileleff_y = anty
+fileleff_z = antz
 
-print('Loading',fileleff_x,'...')  
+if PRINT_ON:
+    print('Loading',fileleff_x,'...')  
+logger.debug("Loading antenna files " + fileleff_x +"....")
 freq1,realimp1,reactance1,theta1,phi1,lefftheta1,leffphi1,phasetheta1,phasephi1=np.load(fileleff_x) ### this line cost 6-7s
 RL1=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
 XL1=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq1[:,0])
@@ -56,13 +133,96 @@ XL2=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq2[:,0])
 freq3,realimp3,reactance3,theta3,phi3,lefftheta3,leffphi3,phasetheta3,phasephi3=np.load(fileleff_z) ### this line cost 6-7s
 RL3=interp1d(fr, RLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
 XL3=interp1d(fr, XLp, bounds_error=False, fill_value=0.0)(freq3[:,0])
-print('Done.')
+if PRINT_ON:
+    print('Done.')
+
+
+
+
+#============================================================================
+def TopoToAntenna(u,alpha,beta): 
+#============================================================================
+
+    '''from coordinates in the topography frame to coordinates in the antenna
+    
+    Arguments:
+    ----------
+    u: numpy array
+        shower vector
+    alpha: float 
+        surface angle alpha in deg
+    beta: float 
+        surface beta alpha in deg  
+        
+    Returns:
+    ----------
+    numpy array:
+        shower vector in coordinates of antenna
+    
+    '''
+    
+    alpha=alpha*np.pi/180 #around y
+    beta=beta*np.pi/180 #around z
+    cb = np.cos(beta)
+    sb = np.sin(beta)
+    ca = np.cos(alpha)
+    sa = np.sin(alpha)
+    roty = np.array([[ca,0,sa],[0,1,0],[-sa,0,ca]])
+    roty = np.linalg.inv(roty)  # Since we rotate referential, inverse transformation should be applied
+    rotz = np.array([[cb,-sb,0],[sb,cb,0],[0,0,1]])
+    rotz = np.linalg.inv(rotz) # Since we rotate referential, inverse transformation should be applied
+    rotyz=roty.dot(rotz)  # beta and then alpha rotation. This induces a EW component for x arm
+
+    # Now rotate along zp so that we are back with x along NS
+    xarm = [1,0,0]  #Xarm
+    xarmp = rotyz.dot(xarm)  # Rotate Xarm along slope
+    # Compute antrot, angle of NS direction in antenna ref = angle to turn Xarm back to North
+    antrot = math.atan2(xarmp[1],xarmp[0])*180/np.pi
+    cz = np.cos(antrot*np.pi/180)
+    sz = np.sin(antrot*np.pi/180)
+    rotzant = np.array([[cz,-sz,0],[sz,cz,0],[0,0,1]])
+    rotzant = np.linalg.inv(rotzant)
+    rottot = rotzant.dot(rotyz)
+
+    [xp,yp,zp] = rottot.dot(u)
+    return np.array([xp,yp,zp])
+
+
 
 
 #===========================================================================================================
 def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ="X"):
 #===========================================================================================================
-    # Note: azim & zenith are in GRAND convention
+    ''' Applies the antenna response
+    
+    Arguments:
+    ----------
+    time1: numpy array
+        time in s (ATTENTION)
+    Ex: numpy array
+        x component in muV/m
+    Ey: numpy array
+        y component in muV/m
+    Ez: numpy array
+        z component in muV/m
+    zenith_sim: float
+        GRAND zenith in deg
+    azimuth_sim: float
+        GRAND azimuth in deg
+    alpha: float
+        surface angle alpha in deg
+    beta: float
+        surface angle beta in deg
+    typ: str
+        hand over arm (X,Y,Z)
+        
+    Returns:
+    --------
+    voltage: numpy array
+        voltage trace in one arm
+    time: numpy array
+        time trace
+    '''
     
     # Load proper antenna response matrix
     if typ=="X":
@@ -119,16 +279,19 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     elif azim<0:
         azim = azim+360
     if typ=='X':
-        print('Zenith & azimuth in GRAND framework:',zenith_sim, azimuth_sim)
-        print('Zenith & azimuth in antenna framework:',zen, azim)
+        if PRINT_ON:
+            print('Alpha and beta of surface slope:',alpha, beta)
+            print('Zenith & azimuth in GRAND framework:',zenith_sim, azimuth_sim)
+            print('Zenith & azimuth in antenna framework:',zen, azim)
     
     if (freespace==0) and (zen>90):
         print('Signal originates below antenna horizon! No antenna response computed. Abort.')
+        logger.info('Signal originates below antenna horizon! No antenna response computed. Abort.')
         return([],[])
     
     # Now take care of Efield signals
-    delt = time1[1]-time1[0];
-    Fs = 1/delt
+    delt = np.mean(np.diff(time1));
+    Fs = round(1/delt)
     timeoff=time1[0] # time offset, to get absolute time
     time1 = (time1-time1[0]) #reset to zero
     # Rotate Efield to antenna frame (x along actual arm)
@@ -169,6 +332,7 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
         roundazimuth=round(azim)
     else:
         print('Error on azimuth step!')
+        logger.error('Error on azimuth step!')
         return(0)
     if roundazimuth>=91 and roundazimuth<=180:
         roundazimuth=180-roundazimuth
@@ -205,7 +369,8 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     fmin=f[0]
     fmax=f[-1]
     f=f*1e6
-    nf  = int(2**np.floor(np.log(len(amplitudet))/np.log(2)))
+    #nf  = int(2**np.floor(np.log(len(amplitudet))/np.log(2))) # changed in July2019 - shortens the trace
+    nf = len(amplitudet)
     while Fs/nf > fmin*1e6:   # <== Make sure that the DFT resolution is at least fmin.
         nf *= 2
     F = rfftfreq(nf)*Fs
@@ -244,14 +409,13 @@ def get_voltage(time1, Ex, Ey, Ez, zenith_sim, azimuth_sim,alpha=0, beta=0, typ=
     voltage = vp + vt
     timet     = np.arange(0, len(vt))/Fs
     timep     = np.arange(0, len(vp))/Fs
-
+    
     return(voltage, timet+timeoff)
 
 
 #===========================================================================================================
 def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
 #===========================================================================================================
-
     ''' 
     calls compute voltage for each component and stacks the results
     
@@ -269,69 +433,91 @@ def compute_antennaresponse(signal, zenith_sim, azimuth_sim, alpha=0., beta=0.):
     Returns
     ---------
     numpy array
-        voltage traces, Time in s, Vx,Vy,Vz in muV
+        voltage traces, Time in ns, Vx,Vy,Vz in muV
     '''
     
-    voltage_NS, timeNS = get_voltage(signal[0]*1e-9, signal[1], signal[2], signal[3], zenith_sim, azimuth_sim, alpha, beta, typ="X")
-    voltage_EW, timeEW = get_voltage(signal[0]*1e-9, signal[1], signal[2], signal[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
-    voltage_vert, timevert = get_voltage(signal[0]*1e-9, signal[1], signal[2], signal[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
+    voltage_NS, timeNS = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="X")
+    voltage_EW, timeEW = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3], zenith_sim, azimuth_sim, alpha, beta, typ="Y")
+    voltage_vert, timevert = get_voltage(signal.T[0]*1e-9, signal.T[1], signal.T[2], signal.T[3],zenith_sim, azimuth_sim, alpha, beta, typ="Z")
         
-    # ATTENTION EW AND NS WERE SWITCHED    
-    return np.vstack((timeNS,voltage_NS,voltage_EW,voltage_vert))
-    
-
-#===========================================================================================================
-def inputfromtxt(input_file_path):
-#===========================================================================================================
-    particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
-    ,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
+    # ATTENTION EW AND NS WERE SWITCHED 
+    # ATTENTION voltage time now in ns 
+    #return np.vstack((timeNS*1e9,voltage_NS,voltage_EW,voltage_vert)) # switched to be consistent to efield treatment
+    return np.stack([timeNS*1e9,voltage_NS,voltage_EW,voltage_vert], axis=-1)
 
 
-    showerID=str(input_file_path).split("/")[-2] # should be equivalent to folder name
-    datafile = input_file_path+'/inp/'+showerID+'.inp'
-    #datafile = glob.glob(input_file_path+'/inp/*.inp')[0]
-    if os.path.isfile(datafile) ==  False:  # File does not exist 
-        try:
-            datafile = input_file_path+'/'+showerID+'.inp' 
-            if os.path.isfile(datafile) ==  True:  # File does not exist 
-                print('\n Get shower parameters from ', datafile )
-        except IOError:
-            print('--- ATTENTION: Could not find ZHaireS input file in folder',datafile,'! Aborting.')
-            exit()
-    else: # File exists
-      print('\n Get shower parameters from ', datafile )
-    # ToDo: implement line-by-line reading 
-    data = open(datafile, 'r') 
-    for line in data:
-        if 'PrimaryZenAngle' in line:
-            zen=float(line.split(' ',-1)[1])
-            zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-        if 'PrimaryAzimAngle' in line:
-            azim = float(line.split(' ',-1)[1])+180 #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
-            if azim>=360:
-                azim= azim-360
-    try:
-        zen
-    except NameError:
-        print('--- ATTENTION: zenith could not be read-in')
-        zen = 100. #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km by ZHAireS
-    try:
-        azim
-    except NameError:
-        print('--- ATTENTION: azimuth could not be read-in')
-        azim = 0
+##===========================================================================================================
+#def inputfromtxt(input_file_path):
+##===========================================================================================================
+    #''' ATTENTION Should be deleted and substituted in modules
+    #'''
+
+    #particule = ['eta','pi+','pi-','pi0','Proton','p','proton','gamma','Gamma','electron','Electron','e-','K+','K-','K0L','K0S','K*+'
+    #,'muon+','muon-','Muon+','Muon-','mu+','mu-','tau+','tau-','nu(t)','Positron','positron','e+']
+
+
+    #showerID=str(input_file_path).split("/")[-2] # should be equivalent to folder name
+    #datafile = input_file_path+'/inp/'+showerID+'.inp'
+    ##datafile = glob.glob(input_file_path+'/inp/*.inp')[0]
+    #if os.path.isfile(datafile) ==  False:  # File does not exist 
+        #try:
+            #datafile = input_file_path+'/'+showerID+'.inp' 
+            #if os.path.isfile(datafile) ==  True:  # File does not exist 
+                #print('\n Get shower parameters from ', datafile )
+        #except IOError:
+            #print('--- ATTENTION: Could not find ZHaireS input file in folder',datafile,'! Aborting.')
+            #exit()
+    #else: # File exists
+      #print('\n Get shower parameters from ', datafile )
+    ## ToDo: implement line-by-line reading 
+    #data = open(datafile, 'r') 
+    #for line in data:
+        #if 'PrimaryZenAngle' in line:
+            #zen=float(line.split(' ',-1)[1])
+            #zen = 180-zen  #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
+        #if 'PrimaryAzimAngle' in line:
+            #azim = float(line.split(' ',-1)[1])+180 #conversion to GRAND convention i.e. pointing towards antenna/propagtion direction
+            #if azim>=360:
+                #azim= azim-360
+    #try:
+        #zen
+    #except NameError:
+        #print('--- ATTENTION: zenith could not be read-in')
+        #zen = 100. #Case of a cosmic for which no injection height is defined in the input file and is then set to 100 km by ZHAireS
+    #try:
+        #azim
+    #except NameError:
+        #print('--- ATTENTION: azimuth could not be read-in')
+        #azim = 0
         
-    print('Shower direction from input file -- azmimuth/deg ='+str(azim)+' , zenith/deg = '+str(zen))
+    #print('Shower direction from input file -- azmimuth/deg ='+str(azim)+' , zenith/deg = '+str(zen))
 
-    return zen,azim
+    #return zen,azim
 
 #===========================================================================================================
 def compute(opt_input,path, zenith_sim, azimuth_sim):
 #===========================================================================================================
-
-    ##########################################################################################
-    ###Handing over one antenna or a whole array
-    # By default grep all antennas from the antenna file
+    ''' Reads in efield in ascii format (zhaires) and applies the antenna reponse t one antenna or whole array
+        By default grep all antennas from the antenna file
+        
+        Arguments:
+        ----------
+        opt_input: str
+            hand over mode txt or manual
+        path: str
+            path to event
+        zenith_sim: float
+            GRAND zenith in deg
+        zenith_sim: float
+            GRAND zenith in deg
+        
+        Returns:
+        --------
+            --
+        Note: Possible plot of traces if desired
+    '''
+    
+    
     posfile = path + '/antpos.dat'
     positions=np.genfromtxt(posfile)
     start=0
@@ -437,9 +623,10 @@ if __name__ == '__main__':
     print("opt_input = ",opt_input)
 
     if opt_input=='txt':
+        import in_out
         # Read the ZHAireS input (.inp) file to extract the primary type, the energy, the injection height and the direction
         inp_file = str(sys.argv[1])
-        zenith_sim,azimuth_sim = inputfromtxt(inp_file)
+        zenith_sim,azimuth_sim ,energy,injh,primarytype,core,task= in_out.inputfromtxt(inp_file)
 
     elif opt_input=='manual':
         zenith_sim = float(sys.argv[3]) #deg
