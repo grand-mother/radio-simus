@@ -781,40 +781,8 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
    """     
     
     if simus == 'zhaires':
-        ####################################### NOTE zhaires --- THOSE HAS TO BE UPDATED
-        # Get the antenna positions from file
-        positions = np.loadtxt(path+"antpos.dat")
-        ID_ant = []
-        slopes = []
-        # TODO adopt reading in positions, ID_ant and slopes to coreas style - read in from SIM*info    
-        #posfile = path +'SIM'+str(showerID)+'.info'
-        #positions, ID_ant, slopes = _get_positions_coreas(posfile)
-        ##print(positions, ID_ant, slopes)
-                
-        # Get shower info
-        inputfile = path+showerID+'.inp'
-        #inputfile = path+"/inp/"+showerID+'.inp'
-        #print("Check inputfile path: ", inputfile)
-        try:
-            zen,azim,energy,injh,primarytype,core,task = inputfromtxt(inputfile)
-        except:
-            print("no TASK, no CORE")
-            inputfile = path+showerID+'.inp'
-            zen,azim,energy,injh,primarytype = inputfromtxt(inputfile)
-            task=None
-            core=None 
-            
-        # correction of shower core
-        try:
-            positions = positions + np.array([core[0], core[1], 0.])
-        except:
-            print("positions not corrected for core")
-        
-        ending_e = "a*.trace"
-        
-        
-        
-        ### taken from Matias scripts -- to be tested
+    
+        ### taken from Matias scripts -- slighty modified functions,  to be tested
         import radio_simus.AiresInfoFunctions as AiresInfo
         sryfile=glob.glob(path+"/*.sry")
         zen,azim,energy,primary,xmax,distance,taskname=AiresInfo.ReadAiresSry(str(sryfile[0]),"GRAND")
@@ -824,6 +792,7 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         from radio_simus.AiresInfoFunctions import GetSlantXmaxFromSry
         try:
             Xmax=GetSlantXmaxFromSry(sryfile,outmode="GRAND")
+            core = np.array([0,0,0]) # infomation not yet accessible
         except:
             Xmax = None
         # correction of shower core
@@ -842,8 +811,10 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
         inputfile = path+'/inp/SIM'+showerID+'.inp'
         zen,azim,energy,injh,primarytype,core,task = CoreasInfo.inputfromtxt_coreas(inputfile)
         
-        from radio_simus.CoreasInfoFunctions import _get_Xmax_coreas
-        Xmax = _get_Xmax_coreas(path)
+        try:
+            Xmax = CoreasInfo._get_Xmax_coreas(path)
+        except:
+            Xmax = None
            
         # correction of shower core
         try:
@@ -864,6 +835,7 @@ def load_eventinfo_tohdf(path, showerID, simus, name_all=None):
             "injection_height" : injh,    # m (injection height in the local coordinate system)
             "task" : task,    # Identification
             "core" : core,    # m, numpy array, core position
+            "Xmax" : Xmax,    # depth of shower maximum in g/cm2
             "simulation" : simus # coreas or zhaires
             }
         ####################################
