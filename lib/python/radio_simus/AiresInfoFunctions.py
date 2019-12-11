@@ -1,7 +1,7 @@
 #### TODO: set default = 'GRAND'
 #### TODO: add docstrings
 
-
+#### TODO add access to infomation about shower core position
 
 
 
