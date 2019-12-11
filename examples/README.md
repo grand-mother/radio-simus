@@ -197,6 +197,7 @@ Units:
 * energy: eV (primary energy)
 * injection_height: m (for CR = 100km, for nu = injection height above sealevel) 
 * primary: string (primary nature)
+* Xamx: g/cm2 (depth of shower maximum from simulations)
 * simulation: string (coreas/zhaires/RM,...)
 * task: string (task ID, eg from DANTON or RETRO output)
 * trigger threshold: muV
