@@ -22,6 +22,7 @@ before_install:
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip3.7 install codecov; fi
   - pip3.7 install astropy
+  - pip3.7 install scipy
   #- pip3.7 install git+https://github.com/grand-mother/framework.git@master
   #- python3.7 setup.py install --user --prefix=
 
