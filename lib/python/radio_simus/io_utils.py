@@ -364,7 +364,7 @@ def _load_injectionheight_fromhdf(path_hdf5):
     except:
         injection_height=None
     
-    return injectionheight[0]
+    return injection_height[0]
 
 #===========================================================================================================
 
@@ -659,15 +659,14 @@ def _load_efield_fromhdf(path_hdf5, ant="/"):
             
     Returns
     ---------
-        numpy array/None
+        astropy table/None
             electric field trace: time in ns, Ex, Ey, Ez in muV/s
     """
     
     from astropy.table import Table
     
     try:
-        efield=Table.read(path_hdf5, path=ant+"/efield")
-        return np.array([efield['Time'], efield['Ex'], efield['Ey'], efield['Ez']]).T
+        return Table.read(path_hdf5, path=ant+"/efield")
     except:
         return None
     
@@ -685,7 +684,7 @@ def _load_voltage_fromhdf(path_hdf5, ant="/"):
             
     Returns
     ---------
-        numpy array/None
+        astropy table/None
             voltagetrace: time in ns, Vx, Vy, Vz in muV
             
     TODO: How to we handle renaming of path or several voltages pathes ...
@@ -694,8 +693,7 @@ def _load_voltage_fromhdf(path_hdf5, ant="/"):
     from astropy.table import Table
 
     try:
-        voltage=Table.read(path_hdf5, path=ant+"/voltages")
-        return np.array([voltage['Time'], voltage['Vx'], voltage['Vy'], voltage['Vz']]).T
+        return Table.read(path_hdf5, path=ant+"/voltages")
     except:
         return None
 
@@ -730,39 +728,22 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
     
     from astropy.table import Table
     
+    
+    shower, ant_ID,  positions, slopes = _load_eventinfo_fromhdf(path_hdf5)
+    
     if content=="efield" or content=="e":
         efield1 = _load_efield_fromhdf(path_hdf5, ant=ant)
+        efield = np.array([efield1['Time'], efield1['Ex'], efield1['Ey'], efield1['Ez']]).T
             
-        try:
-            #position=efield.meta['position']
-            position=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/efield")
-        except IOError:
-            position=None
-        try:
-            #slopes=efield.meta['slopes']
-            slopes=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/efield")
-        except IOError:
-            slopes=None
-
         # TODO do we one to return atsropy units...
-        return efield1, efield['Time'].unit, efield['Ex'].unit, position, slopes
+        return efield,efield1['Time'].unit,  efield1['Ex'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ant)][0]
     
     if content=="voltages" or content=="v":
-
-        
-        try:
-            #position=voltage.meta['position']
-            position=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/voltages")
-        except IOError:
-            position=None
-        try:
-            #slopes=voltage.meta['slopes']
-            slopes=_load_slopes_fromhdf(path_hdf5, path1 = ant+"/voltages")
-        except IOError:
-            slopes=None
+        voltage1 = _load_voltage_fromhdf(path_hdf5, ant=ant)
+        voltage = np.array([voltage1['Time'], voltage1['Vx'], voltage1['Vy'], voltage1['Vz']]).T
         
         # TODO do we one to return atsropy units...
-        return voltage1, voltage['Time'].unit, voltage['Vx'].unit, position, slopes
+        return voltage, voltage1['Time'].unit, voltage1['Vx'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ID)][0]
 
 
 #===========================================================================================================

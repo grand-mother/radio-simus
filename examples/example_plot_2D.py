@@ -3,7 +3,7 @@ Script to read in a whole event in hdf5 files and to plot the field strengths.
 
 
 Usage: python3 example_plot_2D.py <path to event in hdf5 format> <input format>
-Example: python3.6 example_plot_2D.py ../../CoREAS/GP300-v3/000002/ v
+Example: python3.6 example_plot_2D.py event_000001.hdf5 v
 
 Parameters:
     path: path to folder containing the trace files and antpos.dat
@@ -45,7 +45,11 @@ sys.path.append(join(root_dir, "lib", "python"))
 import radio_simus 
 from radio_simus.signal_treatment import p2p
 from radio_simus.io_utils import _load_path,_load_to_array, _load_eventinfo_fromhdf
-from radio_simus.__init__ import arrayfile 
+
+
+# load config file first
+radio_simus.load_config('./test.config')
+arrayfile = radio_simus.config.arrayfile
 
 
 ### path to full antenna array to plot in the background
@@ -61,11 +65,12 @@ def plot_2D(path1, key, save=None):
     ## get information on event from hdf5 file -- in principle not needed here
     shower, ant_ID,  positions, slopes = _load_eventinfo_fromhdf(path1)
     #print( len(positions[0]) , "antenna positions simulated in Event ", shower["ID"])
+    
         
     ## get information on analysis already performed
     analysis, ana_info, ana_meta = _load_path(path1, path="/analysis")
     
-    # short way -- but works only for voltages
+    # short way -- but works only for voltages since the p2p values in hdf5 files are only valid for voltage traces by default
     if key == "voltages":
         trigger_any=analysis["trigger_aggr_any"]
         trigger_xy=analysis["trigger_aggr_xy"]
@@ -73,10 +78,11 @@ def plot_2D(path1, key, save=None):
         p2p_Ey=analysis["p2p_y"]
         p2p_Ez=analysis["p2p_z"]
         p2p_total=analysis["p2p_xy"]
+        unit=str(analysis["p2p_x"].unit)
+        
         x_pos=positions.T[0]
         y_pos=positions.T[1]
         z_pos=positions.T[2]
-        unit=str(analysis["p2p_x"].unit)
         
     # long way
     if key == "efield":   
@@ -93,31 +99,29 @@ def plot_2D(path1, key, save=None):
         trigger_any=[]
         trigger_xy=[]
         
+
         f = h5py.File(path1, 'r') # open event files
         for ID in f.keys(): #loop over antennas in event 
             try:
-                # obtain electric field trace from hdf5 file
-                trace, time_unit, unit, ant_position, ant_slopes = _load_to_array(path1, content=key, ant=ID)
-                unit=str(unit)
-                time_unit=str(time_unit)
-                    
+                
                 # Note: Be aware of that trigger was done on voltages
                 if analysis["trigger_aggr_xy"][np.where(ant_ID==ID)]:
                     trigger_xy.append(ID)
                 if analysis["trigger_aggr_any"][np.where(ant_ID==ID)]:
                     trigger_any.append(ID)
+                    
+                # obtain electric field trace from hdf5 file
+                trace, time_unit1, unit1, ant_position, ant_slopes = _load_to_array(path1, content=key, ant=ID)
+                unit=str(unit1)
+                time_unit=str(time_unit1)  
                 
                 # get antenna position
                 #position = positions[np.where(ant_ID==ID)].value[0]
                 position = ant_position
-                x_pos.append(position[0])
-                y_pos.append(position[1])
-                z_pos.append(position[2])   
-                
-                
-                ## convert astropy table to np array
-                #trace=np.array(keywords).T
-                
+                x_pos.append(position[0].value)
+                y_pos.append(position[1].value)
+                z_pos.append(position[2].value)   
+                         
                 ## call p2p function 
                 ### or mcuh simpler: call p2p from analysis in hdf outside the loop
                 p2ps = p2p(trace)
