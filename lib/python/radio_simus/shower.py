@@ -369,6 +369,8 @@ def loadInfo_toShower(name, info=None):
         *add missing attributes if desired 
     '''
     
+    from astropy.table import Table
+    
     if type(info) is not dict:
         print('load information from event file')
         g=Table.read(info, path="/event")
