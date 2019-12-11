@@ -165,7 +165,7 @@ if __name__ == '__main__':
                 #coreas
                 #ID == ant_number for coreas
                 ID=(os.path.splitext(base)[0]).split("_a")[1] # remove raw , original ant ID
-                ant_number = ID_ant.index(ID) # index of antenna in positions list
+                ant_number = ID_ant.index(ID) # index of antenna in positions list, can be also done by positions
                 # define path for storage of hdf5 files
                 #print(ant_number, ID)
 
