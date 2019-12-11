@@ -14,23 +14,28 @@
 _Add a brief description_
 
 ## Description
+THE PHILOSOPHY
 
 <!-- Add here a description of the package -->
 
-## NOTES
-Open issues are marked with a TODO, Comments are marked with NOTE.
-Those scripts are still under devlopement and not yet working in the new framework!
-Tests for the script have still to be written.
 
-If you find any bug etc, please raise an issue and we will try to fix it asap. 
-This will give us the chance to improve the coding and to think about the best way to solve the problem.
+## How to contribute to the code development
 
-At the moment we can just guarantee that the script work with python3.7.
+* If you are new to github, please, create a user account and send your username to Olivier or Valentin#1 to get added to the grand-mother poeple.
+    - a useful start is to checkout provided Git Cheat Sheets, e.g. [link to one short git guide](https://www.digitalocean.com/community/tutorials/how-to-use-git-a-reference-guide) or [link to a sheet](https://education.github.com/git-cheat-sheet-education.pdf)
 
-ATTENTION: The electric field should be given un muV/s!
+* clone this repository: '''git clone https://github.com/grand-mother/radio-simus.git'''
+* Implement your ideas/changes etc. Be aware that those ones are not in conflict with other user's needs. Therefore run the tests: '''python3 -m tests'''
+* Write up a documentation to your implemented function etc. (tool to be identified, worst case: docstring in code). Implement tests to prevent other user to break your needed functionality.
+* Commit with messages and push: '''git commit -m '<what was done>' <file>; git push'''
+    NOTE: This will be change to a pull request soon-ish.
+* Validate that travis build tests pass after commitment
+
+
 
 
 ## Installation
+The code will become available as a package.
 
 <!--_GRAND packages require python3.7. If can be installed from the
 [tarball](https://www.python.org/downloads) on Linux or with brew on OSX._
@@ -46,6 +51,20 @@ Alternatively one can also install the latest development commit directly from
 ```bash
 pip3 install --user git+https://github.com/grand-mother/radio-simus.git@master
 ```-->
+
+
+
+## NOTES
+Open issues are marked with a TODO, Comments are marked with NOTE.
+Those scripts are still under devlopement and are currently merging with the grand package!
+Tests for some parts of the code have still to be written.
+
+If you find any bug etc, please raise an issue and we will try to fix it asap. 
+This will give us the chance to improve the coding and to think about the best way to solve the problem.
+
+At the moment we can just guarantee that the script work with python3.7 on Linux.
+
+ATTENTION: The electric field should be given un muV/s!
 
 
 ## License
