@@ -24,7 +24,7 @@ Use: python3.7 detectors.py
 '''
 
 
-
+## grand package does not want to work for me, sorry
 #from grand import *
 import astropy.units as u
 import collections
@@ -44,15 +44,14 @@ import logging
 logger = logging.getLogger("Detector")
 #logger.info("================   Detector set up at: " +site +"    ================")
 
-## grand package does not want to work for me, sorry
-#DEFAULT: add this info to confog file, != shower core
-#origin_default = grand.ECEF(x = 0 * u.m, y = 0 * u.m, z = 0 * u.m)
+## Detector origin with respect to array location at Earth
 try:
     print("Detector origin =", str(origin) )
     origin_default = origin
 except:
     origin_default = np.array([ 0 * u.m, 0 * u.m, 0 * u.m])
-
+    #origin_default = grand.ECEF(x = 0 * u.m, y = 0 * u.m, z = 0 * u.m)
+    ##LTP()
 
 
 class AlreadySet(Exception):
