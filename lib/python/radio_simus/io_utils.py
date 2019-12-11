@@ -734,17 +734,18 @@ def _load_to_array(path_hdf5, content="efield", ant="/"):
     if content=="efield" or content=="e":
         efield1 = _load_efield_fromhdf(path_hdf5, ant=ant)
         efield = np.array([efield1['Time'], efield1['Ex'], efield1['Ey'], efield1['Ez']]).T
-            
-        print(efield[0])  
+
         # TODO do we one to return atsropy units...
-        return efield,efield1['Time'].unit,  efield1['Ex'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ant)][0]
+        #return efield,efield1['Time'].unit,  efield1['Ex'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ant)][0]
+        return efield,efield1['Time'].unit,  efield1['Ex'].unit, efield1.meta['position'], efield1.meta['slopes']
     
     if content=="voltages" or content=="v":
         voltage1 = _load_voltage_fromhdf(path_hdf5, ant=ant)
         voltage = np.array([voltage1['Time'], voltage1['Vx'], voltage1['Vy'], voltage1['Vz']]).T
         
         # TODO do we one to return atsropy units...
-        return voltage, voltage1['Time'].unit, voltage1['Vx'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ant)][0]
+        #return voltage, voltage1['Time'].unit, voltage1['Vx'].unit, positions[np.where(ant_ID==ant)][0], slopes[np.where(ant_ID==ant)][0]
+        return voltage, voltage1['Time'].unit, voltage1['Vx'].unit, voltage1.meta['position'], voltage1.meta['slopes']
 
 
 #===========================================================================================================
